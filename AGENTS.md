@@ -17,7 +17,8 @@ Perfis dev (PostgreSQL, Flyway, validate) e test (H2, sem Flyway, create-drop). 
 ## Segurança e qualidade
 Segurança é responsabilidade do backend: nunca confiar no front. Não colocar segredos, senhas reais ou tokens no Git nem nos logs. Credenciais de .env.example são exemplos locais, nunca de produção.
 Toda regra de negócio exige teste automatizado. Atualizar a documentação antes de concluir tarefas.
-NÃO implementar: cache (@Cacheable), HATEOAS e Actuator (dispensa informada pelo solicitante); GPS, rota ou coordenadas; agendamento ou reserva; push, e-mail ou SMS; integração SUS/RNDS; QR Code; mapa de surtos; IA.
+Spring Cache, Spring HATEOAS e Spring Actuator são exigências oficiais previstas para próximas etapas; não implementar na J1. A orientação anterior de dispensa foi corrigida pelo solicitante em 06/11/2026 (D-007).
+NÃO implementar no projeto: GPS, rota ou coordenadas; agendamento ou reserva; push, e-mail ou SMS; integração SUS/RNDS; QR Code; mapa de surtos; IA.
 
 ## Comandos
 Com JAVA_HOME apontando para JDK 21 e seu bin no PATH:
