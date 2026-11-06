@@ -1,0 +1,1 @@
+-- Baseline inicial: sem entidades, tabelas ou dados na etapa J1.
