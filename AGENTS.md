@@ -6,12 +6,12 @@ A fonte de verdade da API é docs/ESPECIFICACAO.md. docs/dossie, se existir, é 
 
 ## Projeto e escopo
 Protótipo acadêmico FIAP GS 2026/2, CitizenTech: monitoramento térmico de lotes em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Somente dados fictícios; não é sistema clínico.
-J1 cria apenas bootstrap, infraestrutura local e documentação. Entidades e regras ficam para J2; segurança para J4 e OpenAPI para J5. Compose final API + banco é de DevOps.
+J1 criou bootstrap, infraestrutura local e documentação. J2 implementa entidades, repositories, regras térmicas e auditoria, sem controllers; segurança para J4 e OpenAPI para J5. Compose final API + banco é de DevOps.
 Não expandir o escopo nem inventar requisitos. Em ambiguidade, adotar a opção mais conservadora e registrar em DUVIDAS.md, incluindo alternativas, impacto e reversão.
 
 ## Convenções
 Nomes de domínio e contrato em português, exatamente como docs/ESPECIFICACAO.md: entidades, enums, campos JSON e rotas nunca devem ser traduzidos. Sufixos técnicos Java em inglês: Controller, Service, Repository, Dto. Comentários e documentos em português.
-Java 21, Maven na raiz, pacote br.com.fiap.vacismart. Estrutura: config; domain/entity, domain/enums, domain/rules; repository; service; web/controller, web/dto, web/advice; security. Na J1, esses pacotes contêm somente package-info.java.
+Java 21, Maven na raiz, pacote br.com.fiap.vacismart. Estrutura: config; domain/entity, domain/enums, domain/rules; repository; service; web/controller, web/dto, web/advice; security. Na J2, config, domain, repository e service contêm implementações; web e security permanecem reservados.
 Perfis dev (PostgreSQL, Flyway, validate) e test (H2, sem Flyway, create-drop). Fuso America/Sao_Paulo; datas ISO-8601.
 
 ## Segurança e qualidade
@@ -54,4 +54,7 @@ Estrutura obrigatória:
 - K. Critérios de aceite com classificação fundamentada: APROVADO, PENDENTE, NÃO TESTADO ou FALHOU.
 - L. Próxima etapa: pronto, correções, impedimentos e recomendação, sem execução automática.
 Separar evidências históricas de verificações atuais; nunca inventar resultados nem tratar o próprio relatório como evidência de teste. Não incluir credenciais, tokens, senhas reais ou conteúdo sensível; não ampliar o escopo para preencher o documento. Distinguir implementado de planejado.
-Na entrega, informar o caminho completo do relatório, confirmar que está pronto para copiar e apresentar síntese curta. Aguardar revisão e aprovação explícita antes da próxima etapa; não avançar automaticamente à J2.
+Na entrega, informar o caminho completo do relatório, confirmar que está pronto para copiar e apresentar síntese curta. Aguardar revisão e aprovação explícita antes da próxima etapa; não avançar automaticamente à próxima etapa.
+
+## Convenções do núcleo J2
+Temperaturas e parâmetros usam BigDecimal, numeric(10,3), sem arredondamento na entrada. Relacionamentos ManyToOne LAZY, unidirecionais e sem cascade. Entidades não usam @Data nem setters genéricos de estado. Regras coordenadas pelo MonitoramentoService transacional, serializadas pelo lock do transporte. Datas usam OffsetDateTime e relógio Clock injetável. Toda nova mutação de estado exige evento de auditoria; normalização/encerramento nunca libera lote. Testes H2 não comprovam migrations PostgreSQL. Não avançar à J3 sem revisão explícita.

@@ -34,3 +34,35 @@ Data de referência: 06/11/2026 (America/Sao_Paulo). ABERTA indica confirmação
 - `docker compose -f compose.dev.yml config --quiet`: sucesso. `docker compose -f compose.dev.yml up -d --wait`: falha por daemon indisponível (D-013). Não foram validados PostgreSQL, aplicação da V0 ou inicialização dev. `spring-boot:run` com dev não foi executado.
 - `git diff --check`: sucesso. `.env` e target ignorados. docs/ESPECIFICACAO.md comparado por igualdade com o conteúdo do pedido: idêntico.
 - Sem entidades, regras ou recursos de J2 implementados. Cache, HATEOAS e Actuator apenas previstos para etapas futuras (D-007).
+
+## Decisões e ambiguidades da J2 — 08/11/2026
+
+O pedido J2 confirma os critérios de D-006: leitura somente EM_TRANSPORTE, uma ABERTA por transporte/tipo e retomada encerrando telemetria. As evidências anteriores são históricas da J1; nenhuma afirma validação atual de PostgreSQL.
+
+| ID | Decisão adotada | Alternativa / reversão | Impacto e situação |
+|---|---|---|---|
+| D-015 | Faixas distintas: classificar individualmente por vacina; leitura registra a pior classificação, bloqueia só lotes afetados EM_MONITORAMENTO. | Rejeitar remessas mistas ou criar avaliação persistida por vacina/leitura; exige alinhar contrato e migration adicional. | Conservadora para um sensor ambiental compartilhado, sem inferência clínica. Associação individual fica nos eventos de bloqueio; leitura agregada não é classificação universal. Provisória para revisão. |
+| D-016 | Adicionar inicioMonitoramentoEm; início interno CADASTRADO → EM_TRANSPORTE exige lotes e audita SISTEMA. | Referência externa ao cadastro/início; substituir com migration e alinhamento da origem do relógio. | Evita ausência de referência para primeira leitura na RN05. Ações de recebimento/decisão e seus perfis não implementadas. Provisória. |
+| D-017 | Aceitar medidaEm entre início e recebimento, inclusive atrasada; rejeitar futura, anterior ao início, dispositivo vazio ou decimal incompatível com numeric(10,3). | Tolerância de relógio do dispositivo e janela de atraso configurável; exigem decisão de contrato. | Sem arredondamento na classificação; precisão de três casas não limita as faixas a valores demo. Provisória. |
+| D-018 | Lock PESSIMISTIC_WRITE no transporte para todas as operações do serviço e índice único parcial PostgreSQL para ocorrência ABERTA. | Versionamento otimista com retry; exige implementação e novos testes. | Evita corrida leitura/verificação e duplicação por instâncias da aplicação. H2 testa lock; índice parcial requer PostgreSQL real. Provisória. |
+| D-019 | Normalização não encerra ocorrência térmica; encerramento interno explícito exige justificativa e não libera lote. Retomada encerra somente telemetria. | Encerrar térmica automaticamente mantendo lote bloqueado; mudar serviço/testes após decisão. | Preserva conferência humana. Autor SISTEMA nesta simulação, sem usuário/autenticação/decisão técnica. Provisória. |
+| D-020 | Auditoria: entidade imutável no Hibernate, colunas não atualizáveis, sem setters/serviço de exclusão. | Trigger/permissões PostgreSQL para impedir alteração SQL por usuários privilegiados; migration e infraestrutura futuras. | JpaRepository tem métodos genéricos de exclusão, que não são expostos por endpoints/serviços; não há promessa de proteção contra SQL direto. Provisória. |
+| D-021 | Sem seed nesta J2; fixtures criam dados fictícios nos testes. | Migration exclusiva de seed demo após alinhamento. | Preserva domínio e não presume campos ainda não definidos. Provisória. |
+| D-022 | blogBackend consultado no commit 2f3f5aaba185267023f4aace702fd2a4c6be81cf. Manter arquitetura existente e Boot 4.1.2. | Adotar CRUD genérico, QueryDSL ou cascades do exemplo só com necessidade posterior demonstrada. | Uso didático de JPA/UUID/validação/repos/services/testes; nenhuma classe copiada integralmente, dependência nova ou versão alterada. Confirmada pelo escopo J2. |
+
+### Pendências e testes fora desta etapa
+
+- PostgreSQL/Flyway V0+V1, índice parcial, checks e startup dev: validação operacional ainda pendente. O perfil test continua H2/create-drop/Flyway desabilitado. Não tratar H2 como evidência da migration. D-013 permanece aberta.
+- Recebimento, liberação/descarte por gestor, aplicação rejeitada, confirmação de disponibilidade e acesso por unidade/papel ainda não implementados. A restrição de liberação pela perda de telemetria será verificada no fluxo futuro de decisão/conferência; a J2 não oferece liberação.
+- Não executados: endpoints HTTP, JWT, Windows Wrapper, integração Arduino/Azure e agendamento (fora de escopo). Sem push e sem avanço à J3.
+- docs/ESPECIFICACAO.md preservada integralmente; as decisões acima documentam escolhas de implementação sem substituir requisitos funcionais.
+
+## Regressão atual da J2
+
+| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
+|---|---|---|---|---|---|---|---|
+| 1 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 14.871 s | 2026-11-08T00:56:43-03:00 |
+| 2 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.321 s | 2026-11-08T00:59:35-03:00 |
+| 3 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.353 s | 2026-11-08T00:59:47-03:00 |
+
+Cada rodada executou `./mvnw -B test` com JAVA_HOME/PATH do JDK 21 temporário. Execução preliminar: 43 testes aprovados. Relatórios Surefire locais; PostgreSQL/Flyway e testes de funcionalidades futuras permanecem pendentes conforme D-013 e lista acima.
