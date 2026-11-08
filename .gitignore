@@ -15,3 +15,5 @@
 *.log
 .DS_Store
 Thumbs.db
+# Relatório local de revisão externa
+/RELATORIO_REVISAO_CHATGPT.md

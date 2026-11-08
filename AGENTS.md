@@ -26,6 +26,32 @@ Com JAVA_HOME apontando para JDK 21 e seu bin no PATH:
 - `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
 - `docker compose -f compose.dev.yml up -d` (após copiar .env.example para .env)
 
+## Workspace e procedimento antes de cada etapa
+O diretório exclusivo do projeto é `/home/gio/Documentos/Global Solution/VaciSmart`. O caminho antigo não deve ser utilizado.
+Antes de cada etapa: executar `git status -sb`, `git log --oneline -5`, verificar `git diff` e `git diff --cached` e ler os quatro documentos obrigatórios. Preservar alterações preexistentes e conferir o estado real antes de qualquer operação.
+
 ## Git e definição de pronto
-Commits pequenos, progressivos, em português e no imperativo. Nunca um único commit gigante.
-Pronto significa: compila, testes passam, documentação atualizada e commits feitos. Validações impedidas devem ser relatadas com resultado real em DUVIDAS.md e README.md.
+Nas próximas etapas, usar Conventional Commits com descrições objetivas em português, representando alterações reais: `feat: implementa cadastro de lotes`, `fix: corrige validação de temperatura`, `refactor: simplifica serviço de transportes`, `test: adiciona testes de bloqueio preventivo`, `docs: atualiza instruções de execução`, `build: configura dependências de segurança`.
+Não mencionar ferramentas de assistência nos títulos dos commits; manter as declarações acadêmicas verdadeiras na documentação apropriada.
+Criar commits locais pequenos e progressivos somente quando autorizados pelo escopo da tarefa. Adicionar apenas arquivos relacionados; inspecionar `git diff` e `git diff --cached` antes dos commits. Não incluir temporários, credenciais ou relatórios de revisão. Nunca um único commit gigante.
+Não modificar os commits existentes. Não realizar push sem autorização explícita, push --force, reset --hard, clean com remoção de arquivos, rebase ou alterações do histórico sem autorização.
+Executar os testes disponíveis. Ao finalizar: verificar Git, listar os commits realizados e arquivos pendentes e registrar resultados reais. Pronto significa compila, testes passam, documentação atualizada e commits feitos quando autorizados; validações impedidas devem ser relatadas, sem afirmar aceite completo. Restrições específicas de cada tarefa prevalecem; commits locais exigem autorização no escopo vigente e push exige autorização explícita própria.
+
+## Protocolo obrigatório de revisão externa
+Ao concluir cada etapa (J1, J2, J3 etc.), gerar ou sobrescrever na raiz um único `RELATORIO_REVISAO_CHATGPT.md`, refletindo o estado real e suficiente para revisão técnica externa antes de autorizar a próxima implementação.
+Não adicionar esse relatório ao Git nem incluí-lo em commits sem autorização explícita do solicitante. Antes de qualquer add/commit, conferir que o relatório está fora do índice; evitar comandos que adicionem todos os arquivos indiscriminadamente.
+Estrutura obrigatória:
+- A. Identificação: etapa, objetivo, data, estado, HEAD/branch e conclusão ou execução parcial.
+- B. Resumo: implementação, funcionalidades/regras efetivas, pendências e exclusões deliberadas.
+- C. Estrutura: árvore sem gerados/dependências, arquivos criados/alterados/excluídos, responsabilidades e dependências.
+- D. Configurações/arquitetura: versões reais, pom, perfis, persistência, migrations, relacionamentos, segurança e trechos sem segredos.
+- E. Código: classes/métodos, regras, validações, erros e relação com a especificação; incluir código relevante suficiente para revisão.
+- F. Endpoints, quando existirem: método, rota, perfil, request/response, códigos, validações e regras.
+- G. Testes: comandos realmente executados, resultados exatos e resumos Maven, contagens, falhas/correções e testes não executados com motivos.
+- H. Git: saídas de `git status -sb`, `git log --oneline -5`, diff relevante, commits da etapa e arquivos pendentes.
+- I. Documentação: mudanças em README, AGENTS, DUVIDAS e ESPECIFICACAO e eventuais divergências.
+- J. Decisões: confirmadas/provisórias, dúvidas abertas, riscos, problemas não resolvidos e autorizações necessárias.
+- K. Critérios de aceite com classificação fundamentada: APROVADO, PENDENTE, NÃO TESTADO ou FALHOU.
+- L. Próxima etapa: pronto, correções, impedimentos e recomendação, sem execução automática.
+Separar evidências históricas de verificações atuais; nunca inventar resultados nem tratar o próprio relatório como evidência de teste. Não incluir credenciais, tokens, senhas reais ou conteúdo sensível; não ampliar o escopo para preencher o documento. Distinguir implementado de planejado.
+Na entrega, informar o caminho completo do relatório, confirmar que está pronto para copiar e apresentar síntese curta. Aguardar revisão e aprovação explícita antes da próxima etapa; não avançar automaticamente à J2.
