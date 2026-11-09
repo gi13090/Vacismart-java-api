@@ -68,7 +68,7 @@ public class MonitoramentoService {
         List<Lote> afetados = new ArrayList<>();
         for (Lote lote : lotesTransporte) {
             ClassificacaoTemperatura classificacao = classificador.classificar(temperaturaC, lote.getVacina());
-            if (classificacao.ordinal() > pior.ordinal()) pior = classificacao;
+            if (classificacao.maisGraveQue(pior)) pior = classificacao;
             if (classificacao == ClassificacaoTemperatura.FORA_DA_FAIXA) afetados.add(lote);
         }
         LeituraTemperatura leitura = leituras.save(new LeituraTemperatura(transporte, dispositivoId,
