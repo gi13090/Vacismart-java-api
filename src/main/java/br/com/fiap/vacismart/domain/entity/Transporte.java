@@ -45,4 +45,11 @@ public class Transporte extends Entidade {
         estado = EstadoTransporte.EM_TRANSPORTE;
     }
 
+    public void atualizar(String codigo, UnidadeSaude unidadeSaude) {
+        if (estado != EstadoTransporte.CADASTRADO) {
+            throw new IllegalStateException("Somente transporte CADASTRADO pode ser atualizado");
+        }
+        this.codigo = Validacoes.texto(codigo, 60, "Código");
+        this.unidadeSaude = Objects.requireNonNull(unidadeSaude);
+    }
 }

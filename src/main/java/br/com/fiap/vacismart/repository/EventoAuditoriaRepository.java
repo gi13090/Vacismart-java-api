@@ -9,4 +9,7 @@ import java.util.*;
 
 public interface EventoAuditoriaRepository extends JpaRepository<EventoAuditoria, UUID> {
     List<EventoAuditoria> findByReferenciaIdOrderByDataHoraAsc(UUID referenciaId);
+    org.springframework.data.domain.Page<EventoAuditoria> findByEntidadeAndReferenciaId(
+            String entidade, UUID referenciaId, org.springframework.data.domain.Pageable pageable);
+    boolean existsByReferenciaId(UUID referenciaId);
 }

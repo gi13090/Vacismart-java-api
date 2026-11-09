@@ -7,8 +7,9 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import java.util.*;
 
-public interface TransporteRepository extends JpaRepository<Transporte, UUID> {
+public interface TransporteRepository extends JpaRepository<Transporte, UUID>, JpaSpecificationExecutor<Transporte> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from Transporte t where t.id = :id")
     Optional<Transporte> buscarParaAtualizacao(@Param("id") UUID id);
+    boolean existsByUnidadeSaudeId(UUID unidadeId);
 }

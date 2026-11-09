@@ -46,4 +46,11 @@ public class Vacina extends Entidade {
         Validacoes.faixa(temperaturaMinC, temperaturaMaxC, margemAtencaoC);
     }
 
+    public void atualizar(String nome, BigDecimal min, BigDecimal max, BigDecimal margem) {
+        Validacoes.faixa(min, max, margem);
+        this.nome = Validacoes.texto(nome, 150, "Nome");
+        this.temperaturaMinC = Validacoes.decimal(min);
+        this.temperaturaMaxC = Validacoes.decimal(max);
+        this.margemAtencaoC = Validacoes.decimal(margem);
+    }
 }

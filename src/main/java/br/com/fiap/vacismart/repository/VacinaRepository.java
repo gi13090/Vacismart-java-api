@@ -9,4 +9,7 @@ import java.util.*;
 
 public interface VacinaRepository extends JpaRepository<Vacina, UUID> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from Vacina e where e.id = :id")
+    Optional<Vacina> buscarParaAtualizacao(@Param("id") UUID id);
 }

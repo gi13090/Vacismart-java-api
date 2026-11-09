@@ -52,4 +52,10 @@ public class Lote extends Entidade {
         return true;
     }
 
+    public void atualizarCodigo(String codigo) {
+        if (estado != EstadoLote.EM_MONITORAMENTO || transporte.getEstado() != EstadoTransporte.CADASTRADO) {
+            throw new IllegalStateException("Lote somente pode ser atualizado antes do monitoramento");
+        }
+        this.codigo = Validacoes.texto(codigo, 60, "Código");
+    }
 }

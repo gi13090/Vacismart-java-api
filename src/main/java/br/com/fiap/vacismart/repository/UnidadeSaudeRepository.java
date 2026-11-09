@@ -9,4 +9,7 @@ import java.util.*;
 
 public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, UUID> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from UnidadeSaude e where e.id = :id")
+    Optional<UnidadeSaude> buscarParaAtualizacao(@Param("id") UUID id);
 }

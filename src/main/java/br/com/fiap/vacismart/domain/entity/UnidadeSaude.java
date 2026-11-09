@@ -25,4 +25,7 @@ public class UnidadeSaude extends Entidade {
         this.nome = Validacoes.texto(nome, 150, "Nome");
     }
 
+    public void atualizar(String nome) {
+        this.nome = Validacoes.texto(nome, 150, "Nome");
+    }
 }

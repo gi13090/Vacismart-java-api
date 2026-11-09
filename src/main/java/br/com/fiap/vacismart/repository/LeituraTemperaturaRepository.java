@@ -10,4 +10,7 @@ import java.util.*;
 public interface LeituraTemperaturaRepository extends JpaRepository<LeituraTemperatura, UUID> {
     List<LeituraTemperatura> findByTransporteIdOrderByRecebidaEmAsc(UUID transporteId);
     Optional<LeituraTemperatura> findFirstByTransporteIdOrderByRecebidaEmDesc(UUID transporteId);
+    org.springframework.data.domain.Page<LeituraTemperatura> findByTransporteId(UUID transporteId,
+            org.springframework.data.domain.Pageable pageable);
+    boolean existsByTransporteId(UUID transporteId);
 }
