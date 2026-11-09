@@ -66,3 +66,39 @@ O pedido J2 confirma os critérios de D-006: leitura somente EM_TRANSPORTE, uma 
 | 3 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.353 s | 2026-11-08T00:59:47-03:00 |
 
 Cada rodada executou `./mvnw -B test` com JAVA_HOME/PATH do JDK 21 temporário. Execução preliminar: 43 testes aprovados. Relatórios Surefire locais; PostgreSQL/Flyway e testes de funcionalidades futuras permanecem pendentes conforme D-013 e lista acima.
+
+## Decisões e ambiguidades da J3 — 08/11/2026
+
+Pedido J3 autoriza a etapa e commits locais, preservando master e sem push. HEAD inicial confirmado 0fc7717, árvore limpa. Workspace real exclusivo: /home/gio/Documentos/Global Solution/VaciSmart; o caminho informado inicialmente pelo ambiente não existia. Escritas e Maven executados com autorização do ambiente para o diretório obrigatório.
+
+| ID | Decisão adotada | Alternativa / reversão | Impacto e situação |
+|---|---|---|---|
+| D-023 | Gravidade explícita NORMAL=0, ATENCAO=10, FORA_DA_FAIXA=20; maisGraveQue substitui ordinal. | Outra escala explícita; preservar ordem de gravidade e testes. | Confirmada pelo pedido; parâmetros térmicos inalterados; 12 casos adicionais. |
+| D-024 | Rotas complementares /vacinas, CRUD por ID, POST /transportes/{id}/monitoramento e GET de leituras/ocorrências/historico. Mantidas /unidades, /lotes e POST /transportes/{id}/leituras da especificação. | Alinhar nomes complementares com grupo antes de consumo externo; ajustar Controllers/testes/documentação sem editar silenciosamente a especificação. | Especificação não detalha os contratos complementares. Provisória para revisão; nenhuma rota definida foi renomeada. |
+| D-025 | transporteId obrigatório no DTO de leitura como no exemplo da especificação; deve coincidir com a rota. | Remover redundância somente após alinhamento de contrato; alterar DTO/testes/documentação. | Divergência ou ausência retorna 400; UUID e datas com offset. Provisória. |
+| D-026 | Faixas congeladas para toda vacina com lotes, mesmo antes do monitoramento. Nome atualizável; parâmetros numericamente iguais permitidos. | Snapshot de parâmetros por lote ou versionamento, exigindo migration/novo desenho; revisão futura explícita. | Evita reinterpretação histórica. Margem informada explicitamente, demo=1; numeric(10,3) mantém precisão J2 (5.2000 aceito). Provisória conservadora. |
+| D-027 | Transporte editável somente CADASTRADO. Lote: só código, EM_MONITORAMENTO e transporte CADASTRADO; vacina/transporte imutáveis; nenhum DELETE de lote. Cadastro de lote só antes do início. | Fluxo de retificação/remoção com auditoria e revisão de ciclo; fora da J3. | Impede inserção tardia de lote e mudanças em lotes bloqueados. Provisória conservadora. |
+| D-028 | Bind 127.0.0.1, sem autenticação provisória, JWT, CORS irrestrito ou papéis simulados. | J4 deve implementar segurança antes de qualquer publicação; rever bind somente nessa etapa autorizada. | Somente testes locais; roles da especificação ainda não protegidas. Confirmada pelo escopo J3. |
+| D-029 | PaginaDto próprio com conteudo/pagina/tamanho/totalElementos/totalPaginas; Pageable padrão20/máximo100, sort permitido por recurso e id como desempate. Filtros com AND. | Contrato Page Spring/Data ou validação estrita de page/size; mudar DTO/resolver e testes mediante alinhamento. | Resolver Spring normaliza parâmetros de paginação inválidos; sort de campo interno retorna400. Sem paginação em memória. Provisória. |
+| D-030 | JPQL de ocorrências por transporte/estado; Specifications para lotes e transportes; derivadas paginadas para leituras/auditoria e exists para dependências. | QBE atende filtros simples, mas Specification facilita composição; substituir sem alterar contrato HTTP. | Consultas com utilidade operacional; sem QueryDSL ou nova dependência. Confirmada pelo pedido. |
+| D-031 | Histórico por entidade/referência em /lotes/{id}/historico e /transportes/{id}/historico; transporte não agrega eventos dos filhos. Ocorrências somente consultadas. | Timeline agregada futura com filtros/paginação próprios e escopo de acesso da J4. | Sem CRUD de eventos ou endpoint de encerramento/liberação/descarte. Provisória. |
+| D-032 | Locks de unidade/vacina em referências e exclusões; mesmo lock de transporte da J2 nas mutações de transporte/lote. FKs e constraints reforçam proteção; conflitos de integridade/concorrência retornam409 seguro. | Versionamento otimista/retry exige análise adicional; manter invariantes/testes ao reverter. | Não altera migrations. Concorrência de cadastro em PostgreSQL não testada; SQL direto fica fora da proteção do Service. Provisória. |
+| D-033 | Testes HTTP com servidor real RANDOM_PORT, HttpClient JDK, H2 separado e Clock fixo; Advice ProblemDetail. | MockMvc com módulo de testes adequado ao Boot4; exigiria dependência adicional desnecessária aqui. | 32 casos HTTP reais; 45 da J2 preservados; sem testes superficiais substituindo domínio. Confirmada pela execução. |
+
+Referência didática: cópia temporária /tmp/vacismart-professor-j2/blogBackend, mesmo commit 2f3f5aaba185267023f4aace702fd2a4c6be81cf. Consultados CommentResource, AbstractCrudResource, CommentDTO, CommentService, CommentRepository e GlobalExceptionHandler. Aproveitados records/validação, ResponseEntity/Location, Pageable e Advice, adaptados ao VaciSmart sem copiar classes. Boot4.1.2 e pom preservados; sem Swagger/QueryDSL/Security do exemplo. Resposta500 não expõe a mensagem interna usada pelo exemplo.
+
+Problemas: shell inicial não abriu porque o cwd informado no ambiente não existia; resolvido usando /bin/bash sem login e workspace obrigatório existente. Nenhuma falha de implementação/teste foi encontrada nas execuções Maven da J3. Não é evidência de ausência de defeitos; resultados completos abaixo. Não houve clone/download adicional do professor.
+
+Recursos deliberadamente não implementados: autenticação/JWT, autorização por unidade/papel, Swagger/OpenAPI, Cache, HATEOAS, Actuator, cidadão, recebimento, decisão técnica, confirmação de disponibilidade, aplicações, liberação/descarte, seed, agendador, Arduino/Mobile/Azure. Não se avançou à J4 nem realizou push. Especificação e AGENTS preservados. Revisão externa continua necessária.
+
+Pendências: PostgreSQL real, Flyway V0/V1, índice único parcial/checks e startup dev continuam NÃO TESTADOS nesta etapa; D-013 segue aberta. Três regressões H2 não encerram essa pendência. Novos locks cadastros foram implementados e exercitados sequencialmente via HTTP; não houve stress de concorrência de cadastro nem teste desses locks no PostgreSQL real. Os testes concorrentes originais de monitoramento continuam passando.
+
+### Regressões finais da J3
+
+| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
+|---|---|---|---|---|---|---|---|
+| 1 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 17.187 s | 2026-11-08T22:47:57-03:00 |
+| 2 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.076 s | 2026-11-08T22:48:15-03:00 |
+| 3 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.016 s | 2026-11-08T22:48:33-03:00 |
+
+Compilação/empacotamento `./mvnw -B -DskipTests package`: BUILD SUCCESS após as regressões, com JDK Temurin21.0.13 temporário e Maven3.9.11. Logs reais e limitações no README. Relatório A–L exclusivamente local, ignorado e fora do índice.
