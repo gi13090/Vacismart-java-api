@@ -326,3 +326,36 @@ JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B tes
 | 3 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.016 s | 2026-11-08T22:48:33-03:00 |
 
 Compilação e empacotamento: `./mvnw -B -DskipTests package`, com o mesmo JDK 21, BUILD SUCCESS; testes omitidos somente nesse comando após as três regressões completas. Artefato local: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Logs em `/tmp/vacismart-j3-regressao-{1,2,3}.log` e `/tmp/vacismart-j3-package.log`; Surefire em target/surefire-reports. Avisos não fatais de annotation processing e Mockito/Byte Buddy persistem.
+
+## Correção de mapeamento JPA/PostgreSQL — 09/11/2026
+
+A execução real em dev revelou `missing column [temperaturac]` em leitura_temperatura. A configuração do projeto não substitui a nomenclatura padrão do Boot4.1.2: estratégia física `org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl` e implícita `org.springframework.boot.hibernate.SpringImplicitNamingStrategy`, confirmadas nas propriedades efetivas do Hibernate. A estratégia física não insere underscore antes da maiúscula final isolada `C`: os quatro campos abaixo divergiam da V1.
+
+| Entidade / atributo Java | Nome físico inferido antes | Coluna da V1 / mapeamento corrigido |
+|---|---|---|
+| LeituraTemperatura.temperaturaC | temperaturac | temperatura_c |
+| Vacina.temperaturaMinC | temperatura_minc | temperatura_min_c |
+| Vacina.temperaturaMaxC | temperatura_maxc | temperatura_max_c |
+| Vacina.margemAtencaoC | margem_atencaoc | margem_atencao_c |
+
+Correção mínima: quatro `@Column(name = ...)` em LeituraTemperatura e Vacina, preservando precisão/escala/nullability, atributos Java, JSON, regras e estratégia global. As outras cinco entidades, os IDs herdados de Entidade e todos os JoinColumn já correspondiam à V1. Nenhuma migration, dependência, contrato HTTP ou configuração de perfil foi alterada. dev continua `ddl-auto=validate`.
+
+Por que H2 não detectou antes: o perfil test usa create-drop; o Hibernate criava as colunas com os mesmos nomes inferidos que usava nas consultas. O novo `MapeamentoSchemaTest` compara os nomes físicos efetivos de todas as sete entidades (38 colunas, incluindo IDs/FKs) com os CREATE TABLE do recurso V1. Antes da correção: 7 testes, 2 falhas (vacina/leitura), 0 erros/ignorados. Depois: suíte completa com **96 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 22.018s, conclusão 2026-11-09T00:01:01-03:00. Os 89 testes anteriores permanecem inalterados. O teste compara nomes; não executa SQL PostgreSQL, não valida índices/checks nem substitui startup real.
+
+Validação operacional atual: container existente postgres:17.6 saudável; consulta PostgreSQL confirmou versão17.6 e V0/V1 com success=true. Inicialização real com perfil dev e porta local livre (41293): Flyway `Successfully validated 2 migrations`, schema public na versão1 e `No migration necessary`; Hibernate `Initialized JPA EntityManagerFactory`; aplicação `Started VaciSmartApplication in 5.558 seconds` às 2026-11-09T00:03:16-03:00. O processo temporário foi encerrado após o startup. Banco/volume/container foram preservados; nenhuma migration foi reaplicada. Isto valida o startup/esquema existente, não todos os fluxos funcionais ou concorrência em PostgreSQL. As pendências anteriores de startup/validação de esquema acima são evidências históricas, superadas por esta execução; testes funcionais PostgreSQL, checks/índice parcial sob carga e segurança continuam fora desta correção.
+
+Logs locais: `/tmp/vacismart-mapeamento-antes.log`, `/tmp/vacismart-mapeamento-depois.log` e `/tmp/vacismart-mapeamento-dev.log`. O primeiro registra a falha esperada de regressão antes da correção. Não confundir com falha no código final.
+
+Para repetir no Ubuntu com o PostgreSQL existente, use JDK21 completo no JAVA_HOME/PATH e o .env local já configurado (não o sobrescreva):
+```bash
+cd "/home/gio/Documentos/Global Solution/VaciSmart"
+java -version
+javac -version
+./mvnw -B test
+docker compose -f compose.dev.yml ps
+set -a
+. ./.env
+set +a
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+O .env deve conter atribuições confiáveis: o comando acima o executa no shell. Aguarde as mensagens de validação Flyway, `Initialized JPA EntityManagerFactory` e `Started VaciSmartApplication`, sem `Schema validation: missing column`. Caso a porta8080 já esteja em uso, acrescente `-Dspring-boot.run.arguments=--server.port=8081` ao último comando. Em outro terminal, `curl -i http://127.0.0.1:8080/api/v1/unidades?page=0` deve retornar200 com a página (ajuste a porta, se necessário). Ctrl+C encerra somente a API. Não é necessário apagar banco/volume, alterar migrations ou usar ddl-auto=update/create. API ainda somente local; sem J4, push ou deploy.

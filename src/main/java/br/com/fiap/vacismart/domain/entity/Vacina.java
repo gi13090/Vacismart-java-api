@@ -22,15 +22,15 @@ public class Vacina extends Entidade {
     private String nome;
 
     @NotNull @Digits(integer = 7, fraction = 3)
-    @Column(nullable = false, precision = 10, scale = 3)
+    @Column(name = "temperatura_min_c", nullable = false, precision = 10, scale = 3)
     private BigDecimal temperaturaMinC;
 
     @NotNull @Digits(integer = 7, fraction = 3)
-    @Column(nullable = false, precision = 10, scale = 3)
+    @Column(name = "temperatura_max_c", nullable = false, precision = 10, scale = 3)
     private BigDecimal temperaturaMaxC;
 
     @NotNull @Digits(integer = 7, fraction = 3)
-    @Column(nullable = false, precision = 10, scale = 3)
+    @Column(name = "margem_atencao_c", nullable = false, precision = 10, scale = 3)
     private BigDecimal margemAtencaoC;
 
     public Vacina(String nome, BigDecimal min, BigDecimal max, BigDecimal margem) {

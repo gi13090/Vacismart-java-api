@@ -27,7 +27,7 @@ public class LeituraTemperatura extends Entidade {
     private String dispositivoId;
 
     @NotNull @Digits(integer = 7, fraction = 3)
-    @Column(nullable = false, precision = 10, scale = 3)
+    @Column(name = "temperatura_c", nullable = false, precision = 10, scale = 3)
     private BigDecimal temperaturaC;
 
     @NotNull @Column(nullable = false)
