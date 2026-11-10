@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import java.util.*;
 
-public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, UUID> {
+public interface UnidadeSaudeRepository extends JpaRepository<UnidadeSaude, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<UnidadeSaude> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from UnidadeSaude e where e.id = :id")

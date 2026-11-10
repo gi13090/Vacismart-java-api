@@ -11,16 +11,18 @@ import java.util.*;
 @Service
 @Transactional(readOnly = true)
 public class ConsultaOperacionalService {
+    private final br.com.fiap.vacismart.security.AcessoService acesso;
     private final TransporteRepository transportes;
     private final LoteRepository lotes;
     private final LeituraTemperaturaRepository leituras;
     private final OcorrenciaRepository ocorrencias;
     private final EventoAuditoriaRepository auditoria;
-    public ConsultaOperacionalService(TransporteRepository transportes, LoteRepository lotes,
+    public ConsultaOperacionalService(br.com.fiap.vacismart.security.AcessoService acesso, TransporteRepository transportes, LoteRepository lotes,
             LeituraTemperaturaRepository leituras, OcorrenciaRepository ocorrencias, EventoAuditoriaRepository auditoria) {
-        this.transportes = transportes; this.lotes = lotes; this.leituras = leituras; this.ocorrencias = ocorrencias; this.auditoria = auditoria;
+        this.acesso = acesso; this.transportes = transportes; this.lotes = lotes; this.leituras = leituras; this.ocorrencias = ocorrencias; this.auditoria = auditoria;
     }
     private void exigirTransporte(UUID id) {
+        acesso.transporte(id);
         if (!transportes.existsById(id)) throw new NoSuchElementException("Transporte não encontrado");
     }
     public LeituraSaidaDto leitura(UUID transporteId, UUID id) {
@@ -40,6 +42,7 @@ public class ConsultaOperacionalService {
         exigirTransporte(id); return historico("Transporte", id, p);
     }
     public PaginaDto<EventoSaidaDto> historicoLote(UUID id, Pageable p) {
+        acesso.lote(id);
         if (!lotes.existsById(id)) throw new NoSuchElementException("Lote não encontrado");
         return historico("Lote", id, p);
     }

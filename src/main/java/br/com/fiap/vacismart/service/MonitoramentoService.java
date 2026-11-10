@@ -15,6 +15,7 @@ import java.util.*;
 @Service
 @Transactional
 public class MonitoramentoService {
+    private final br.com.fiap.vacismart.security.AcessoService acesso;
     private final TransporteRepository transportes;
     private final LoteRepository lotes;
     private final LeituraTemperaturaRepository leituras;
@@ -24,14 +25,14 @@ public class MonitoramentoService {
     private final Clock relogio;
     private final Duration limiteTelemetria;
 
-    public MonitoramentoService(TransporteRepository transportes, LoteRepository lotes,
+    public MonitoramentoService(br.com.fiap.vacismart.security.AcessoService acesso, TransporteRepository transportes, LoteRepository lotes,
             LeituraTemperaturaRepository leituras, OcorrenciaRepository ocorrencias,
             EventoAuditoriaRepository auditoria, ClassificadorTemperatura classificador,
             Clock relogio, @Value("${vacismart.telemetria.limite:PT3M}") Duration limiteTelemetria) {
         if (limiteTelemetria == null || limiteTelemetria.isNegative() || limiteTelemetria.isZero()) {
             throw new IllegalArgumentException("Limite de telemetria deve ser positivo");
         }
-        this.transportes = transportes;
+        this.acesso = acesso; this.transportes = transportes;
         this.lotes = lotes;
         this.leituras = leituras;
         this.ocorrencias = ocorrencias;
@@ -106,9 +107,12 @@ public class MonitoramentoService {
 
     private Transporte buscarComBloqueio(UUID id) {
         Objects.requireNonNull(id, "Transporte obrigatório");
+        acesso.transporte(id);
         // Serializa leitura, início e verificação por transporte, inclusive entre instâncias da API.
-        return transportes.buscarParaAtualizacao(id)
+        Transporte transporte = transportes.buscarParaAtualizacao(id)
                 .orElseThrow(() -> new NoSuchElementException("Transporte não encontrado: " + id));
+        acesso.unidade(transporte.getUnidadeSaude().getId());
+        return transporte;
     }
 
     private void exigirEmTransporte(Transporte transporte) {

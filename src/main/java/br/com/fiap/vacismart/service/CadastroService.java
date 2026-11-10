@@ -13,6 +13,7 @@ import java.util.*;
 @Service
 @Transactional(readOnly = true)
 public class CadastroService {
+    private final br.com.fiap.vacismart.security.AcessoService acesso;
     private final UnidadeSaudeRepository unidades;
     private final VacinaRepository vacinas;
     private final TransporteRepository transportes;
@@ -21,46 +22,55 @@ public class CadastroService {
     private final OcorrenciaRepository ocorrencias;
     private final EventoAuditoriaRepository auditoria;
 
-    public CadastroService(UnidadeSaudeRepository unidades, VacinaRepository vacinas,
+    public CadastroService(br.com.fiap.vacismart.security.AcessoService acesso, UnidadeSaudeRepository unidades, VacinaRepository vacinas,
             TransporteRepository transportes, LoteRepository lotes, LeituraTemperaturaRepository leituras,
             OcorrenciaRepository ocorrencias, EventoAuditoriaRepository auditoria) {
-        this.unidades = unidades; this.vacinas = vacinas; this.transportes = transportes;
+        this.acesso = acesso; this.unidades = unidades; this.vacinas = vacinas; this.transportes = transportes;
         this.lotes = lotes; this.leituras = leituras; this.ocorrencias = ocorrencias; this.auditoria = auditoria;
     }
     private static NoSuchElementException ausente() { return new NoSuchElementException("Recurso não encontrado"); }
-    private UnidadeSaude unidadeBloqueada(UUID id) { return unidades.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente); }
+    private UnidadeSaude unidadeBloqueada(UUID id) { acesso.unidade(id); return unidades.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente); }
     private Vacina vacinaBloqueada(UUID id) { return vacinas.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente); }
-    private Transporte transporteBloqueado(UUID id) { return transportes.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente); }
-    public UnidadeSaidaDto unidade(UUID id) { return MapeadorDto.de(unidades.findById(id).orElseThrow(CadastroService::ausente)); }
-    public VacinaSaidaDto vacina(UUID id) { return MapeadorDto.de(vacinas.findById(id).orElseThrow(CadastroService::ausente)); }
-    public TransporteSaidaDto transporte(UUID id) { return MapeadorDto.de(transportes.findById(id).orElseThrow(CadastroService::ausente)); }
-    public LoteSaidaDto lote(UUID id) { return MapeadorDto.de(lotes.findById(id).orElseThrow(CadastroService::ausente)); }
-    public PaginaDto<UnidadeSaidaDto> unidades(Pageable p) { return PaginaDto.de(unidades.findAll(Paginacao.validar(p, "id", "nome")).map(MapeadorDto::de)); }
-    public PaginaDto<VacinaSaidaDto> vacinas(Pageable p) { return PaginaDto.de(vacinas.findAll(Paginacao.validar(p, "id", "nome")).map(MapeadorDto::de)); }
+    private Transporte transporteBloqueado(UUID id) {
+        acesso.transporte(id);
+        Transporte transporte = transportes.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente);
+        acesso.unidade(transporte.getUnidadeSaude().getId());
+        return transporte;
+    }
+    public UnidadeSaidaDto unidade(UUID id) { acesso.unidade(id); return MapeadorDto.de(unidades.findById(id).orElseThrow(CadastroService::ausente)); }
+    public VacinaSaidaDto vacina(UUID id) { acesso.operacional(); return MapeadorDto.de(vacinas.findById(id).orElseThrow(CadastroService::ausente)); }
+    public TransporteSaidaDto transporte(UUID id) { acesso.transporte(id); return MapeadorDto.de(transportes.findById(id).orElseThrow(CadastroService::ausente)); }
+    public LoteSaidaDto lote(UUID id) { acesso.lote(id); return MapeadorDto.de(lotes.findById(id).orElseThrow(CadastroService::ausente)); }
+    public PaginaDto<UnidadeSaidaDto> unidades(Pageable p) { UUID escopo = acesso.unidadeEscopo(); return PaginaDto.de(unidades.findAll((r, q, cb) -> escopo == null ? cb.conjunction() : cb.equal(r.get("id"), escopo), Paginacao.validar(p, "id", "nome")).map(MapeadorDto::de)); }
+    public PaginaDto<VacinaSaidaDto> vacinas(Pageable p) { acesso.operacional(); return PaginaDto.de(vacinas.findAll(Paginacao.validar(p, "id", "nome")).map(MapeadorDto::de)); }
     public PaginaDto<TransporteSaidaDto> transportes(UUID unidadeId, EstadoTransporte estado, Pageable p) {
+        unidadeId = acesso.filtrarUnidade(unidadeId);
         return PaginaDto.de(transportes.findAll(Filtros.transportes(unidadeId, estado), Paginacao.validar(p, "id", "codigo", "estado", "inicioMonitoramentoEm")).map(MapeadorDto::de));
     }
     public PaginaDto<LoteSaidaDto> lotes(UUID transporteId, UUID vacinaId, EstadoLote estado, Pageable p) {
-        return PaginaDto.de(lotes.findAll(Filtros.lotes(transporteId, vacinaId, estado), Paginacao.validar(p, "id", "codigo", "estado")).map(MapeadorDto::de));
+        UUID escopo = acesso.unidadeEscopo();
+        if (transporteId != null) acesso.transporte(transporteId);
+        return PaginaDto.de(lotes.findAll(Filtros.lotes(transporteId, vacinaId, estado).and((r, q, cb) ->
+                escopo == null ? cb.conjunction() : cb.equal(r.get("transporte").get("unidadeSaude").get("id"), escopo)), Paginacao.validar(p, "id", "codigo", "estado")).map(MapeadorDto::de));
     }
     @Transactional
-    public UnidadeSaidaDto criarUnidade(UnidadeEntradaDto d) { return MapeadorDto.de(unidades.save(new UnidadeSaude(d.nome()))); }
+    public UnidadeSaidaDto criarUnidade(UnidadeEntradaDto d) { acesso.gestor(); return MapeadorDto.de(unidades.save(new UnidadeSaude(d.nome()))); }
     @Transactional
-    public UnidadeSaidaDto atualizarUnidade(UUID id, UnidadeEntradaDto d) {
+    public UnidadeSaidaDto atualizarUnidade(UUID id, UnidadeEntradaDto d) { acesso.gestor();
         UnidadeSaude e = unidadeBloqueada(id); e.atualizar(d.nome()); return MapeadorDto.de(e);
     }
     @Transactional
-    public void excluirUnidade(UUID id) {
+    public void excluirUnidade(UUID id) { acesso.gestor();
         UnidadeSaude e = unidadeBloqueada(id);
         if (transportes.existsByUnidadeSaudeId(id) || auditoria.existsByReferenciaId(id)) throw new IllegalStateException("Unidade possui dependências históricas");
         unidades.delete(e);
     }
     @Transactional
-    public VacinaSaidaDto criarVacina(VacinaEntradaDto d) {
+    public VacinaSaidaDto criarVacina(VacinaEntradaDto d) { acesso.gestor();
         return MapeadorDto.de(vacinas.save(new Vacina(d.nome(), d.temperaturaMinC(), d.temperaturaMaxC(), d.margemAtencaoC())));
     }
     @Transactional
-    public VacinaSaidaDto atualizarVacina(UUID id, VacinaEntradaDto d) {
+    public VacinaSaidaDto atualizarVacina(UUID id, VacinaEntradaDto d) { acesso.gestor();
         Vacina e = vacinaBloqueada(id);
         Validacoes.faixa(d.temperaturaMinC(), d.temperaturaMaxC(), d.margemAtencaoC());
         boolean mudou = e.getTemperaturaMinC().compareTo(d.temperaturaMinC()) != 0
@@ -71,13 +81,14 @@ public class CadastroService {
         return MapeadorDto.de(e);
     }
     @Transactional
-    public void excluirVacina(UUID id) {
+    public void excluirVacina(UUID id) { acesso.gestor();
         Vacina e = vacinaBloqueada(id);
         if (lotes.existsByVacinaId(id) || auditoria.existsByReferenciaId(id)) throw new IllegalStateException("Vacina possui dependências históricas");
         vacinas.delete(e);
     }
     @Transactional
     public TransporteSaidaDto criarTransporte(TransporteEntradaDto d) {
+        acesso.unidade(d.unidadeSaudeId());
         return MapeadorDto.de(transportes.save(new Transporte(d.codigo(), unidadeBloqueada(d.unidadeSaudeId()))));
     }
     @Transactional
@@ -95,13 +106,14 @@ public class CadastroService {
         transportes.delete(e);
     }
     @Transactional
-    public LoteSaidaDto criarLote(LoteEntradaDto d) {
+    public LoteSaidaDto criarLote(LoteEntradaDto d) { acesso.gestor();
         Transporte t = transporteBloqueado(d.transporteId());
         if (t.getEstado() != EstadoTransporte.CADASTRADO) throw new IllegalStateException("Cadastro de lote exige transporte CADASTRADO");
         return MapeadorDto.de(lotes.save(new Lote(d.codigo(), vacinaBloqueada(d.vacinaId()), t)));
     }
     @Transactional
     public LoteSaidaDto atualizarLote(UUID id, LoteAtualizacaoDto d) {
+        acesso.lote(id);
         Lote referencia = lotes.findById(id).orElseThrow(CadastroService::ausente);
         Transporte t = transporteBloqueado(referencia.getTransporte().getId());
         // O estado é conferido sob o mesmo lock usado pelo monitoramento.
