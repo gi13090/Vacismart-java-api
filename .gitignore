@@ -17,3 +17,9 @@
 Thumbs.db
 # Relatório local de revisão externa
 /RELATORIO_REVISAO_CHATGPT.md
+
+# Material criptográfico local (chaves devem ficar fora do projeto)
+*.pem
+*.key
+*.p12
+*.jks

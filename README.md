@@ -1,4 +1,6 @@
 # VaciSmart — API Java
+
+Estado atual: J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente.
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
 ## Problema, beneficiário e ODS
@@ -34,7 +36,7 @@ set -a
 set +a
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
-O arquivo .env deve conter somente atribuições de variáveis confiáveis; o comando acima o executa no shell. A API também aceita DB_URL, DB_USER e DB_PASSWORD já exportadas. Defaults de exemplo existem somente no perfil dev. Não há perfil padrão nem credenciais de produção. API operacional em http://127.0.0.1:8080/api/v1; 404 é esperado na raiz. O servidor fica vinculado a 127.0.0.1 para testes locais até a J4. Não disponibilizar por proxy/túnel nem publicar a API sem segurança.
+O arquivo .env deve conter somente atribuições de variáveis confiáveis; o comando acima o executa no shell. A API também aceita DB_URL, DB_USER e DB_PASSWORD já exportadas. Defaults de exemplo existem somente no perfil dev. Não há perfil padrão nem credenciais de produção. API operacional em http://127.0.0.1:8080/api/v1; A raiz não possui endpoint; sem token, a proteção padrão responde401. O servidor continua vinculado a 127.0.0.1 para demonstração local. Configure as chaves RSA externas antes do startup, conforme Segurança — J4. Endpoints operacionais exigem JWT.
 
 O perfil dev usa PostgreSQL, Flyway e `ddl-auto=validate`. `V0__baseline.sql` contém somente comentário e foi preservada. `V1__modela_nucleo_termico.sql` cria as sete tabelas do núcleo, chaves estrangeiras, checks e índices; não há seed automático na J2. O perfil test usa H2 em memória (modo PostgreSQL), sem Flyway e `create-drop`. Fuso America/Sao_Paulo e JSON com datas ISO-8601. Nunca usar as credenciais de exemplo fora do ambiente local.
 
@@ -44,7 +46,7 @@ docker compose -f compose.dev.yml down
 ```
 
 ## Estrutura
-`pom.xml` e Maven Wrapper na raiz; código em `src/main/java/br/com/fiap/vacismart`; pacotes config, domain (entity, enums, rules), repository, service, web (controller, dto, advice), security. Domínio, repositories, service e config implementam o núcleo J2; web contém Controllers, DTOs e Advice da J3. security permanece reservado. Especificação em [docs/ESPECIFICACAO.md](docs/ESPECIFICACAO.md); governança em [AGENTS.md](AGENTS.md); decisões em [DUVIDAS.md](DUVIDAS.md).
+`pom.xml` e Maven Wrapper na raiz; código em `src/main/java/br/com/fiap/vacismart`; pacotes config, domain (entity, enums, rules), repository, service, web (controller, dto, advice), security. Domínio, repositories, service e config implementam o núcleo J2; web contém Controllers, DTOs e Advice da J3. security contém configuração JWT, respostas 401/403 e autorização baseada nos vínculos persistidos. Especificação em [docs/ESPECIFICACAO.md](docs/ESPECIFICACAO.md); governança em [AGENTS.md](AGENTS.md); decisões em [DUVIDAS.md](DUVIDAS.md).
 
 ## Entidades e relacionamentos
 A J2 modela UnidadeSaude, Vacina, Transporte, Lote, LeituraTemperatura, Ocorrencia e EventoAuditoria com UUID gerado pelo Hibernate. `Entidade` centraliza somente o identificador. Nomes de tabelas/colunas seguem snake_case. Os estados e a disponibilidade são enums persistidos como STRING.
@@ -86,15 +88,11 @@ Os vínculos são unidirecionais do lado N para 1. Auditoria identifica o objeto
 Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade e transições posteriores continuam pendentes. Enums desses estados estão modelados; não há métodos para executá-los nesta J2.
 
 ## Usuários de teste por papel
-| Papel | Usuário fictício |
-|---|---|
-| CIDADAO | A preencher em J4 |
-| FUNCIONARIO | A preencher em J4 |
-| GESTOR | A preencher em J4 |
-O dispositivo terá credencial própria; não é usuário. Nenhum usuário ou autenticação implementado agora.
+
+O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
 
 ## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Rotas de cidadão, recebimento e decisão continuam pendentes.
+A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão, recebimento e decisão continuam pendentes; cadastro/login e própria conta estão na seção J4.
 
 ## Justificativas: consultas, cascade e fetch
 Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
@@ -104,14 +102,14 @@ Sete interfaces estendem JpaRepository. As consultas derivadas do núcleo J2 ate
 ## Testes
 Execute `./mvnw -B test` com JDK 21 completo. A suíte contém teste de contexto, testes isolados do classificador e integração do serviço/repositories com `@SpringBootTest`, perfil test e H2. Os testes controlam `Clock`, sem Thread.sleep, e cobrem limites, parâmetros inválidos, transporte misto, persistência, auditoria, bloqueio seletivo, ausência de liberação/descarte automático, duplicidade sequencial/concorrente, rollback e perda de telemetria.
 
-T01–T03 e T09 têm cobertura de domínio nesta J2. T04–T08/T10 dependem de etapas posteriores, HTTP e/ou segurança. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. Evidências históricas da J1/J2 e resultados atuais da J3 aparecem separados abaixo.
+T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 dependiam de etapas posteriores; T06/T10 têm cobertura HTTP de segurança na J4. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. Evidências históricas da J1/J2 e resultados atuais da J3 aparecem separados abaixo.
 
 ## Limitações e escopo
-J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros. Sem seed, Security, JWT ou OpenAPI; J4 segurança; J5 documentação OpenAPI. Compose final API + banco e implantação Azure ficam com DevOps.
+J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI continua para J5. Compose final API + banco e implantação Azure ficam com DevOps.
 Spring Cache, Spring HATEOAS e Spring Actuator são requisitos oficiais previstos para próximas etapas, sem implementação ou dependências nesta J2. A orientação inicial de dispensa foi corrigida pelo solicitante (D-007). Não implementar GPS, rota/coordenadas, agendamento/reserva, push/e-mail/SMS, integração SUS/RNDS, QR Code, mapa de surtos ou IA. A especificação da API prevalece sobre os materiais de referência.
 
 ## Declaração de uso de IA
-Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nesta execução. A equipe deve complementar apenas com seu uso real e registrar a revisão humana realizada; não há declaração de revisão humana já concluída.
+Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Na J4 foi usado para implementar autenticação/autorização, testes, documentação e relatório local; revisão humana permanece pendente. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nesta execução. A equipe deve complementar apenas com seu uso real e registrar a revisão humana realizada; não há declaração de revisão humana já concluída.
 
 ## Status por funcionalidade
 | Funcionalidade | Status |
@@ -124,7 +122,7 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
 | CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
 | Spring Cache, HATEOAS e Actuator | Previstos para próximas etapas, fora da J2 |
-| Segurança (J4) | Pendente |
+| Segurança (J4) | Implementada; validações e limites na seção J4 |
 | OpenAPI (J5) | Pendente |
 | Compose final / Azure | Pendente — DevOps |
 
@@ -168,7 +166,7 @@ Execução preliminar anterior ao ajuste de normalização decimal: BUILD SUCCES
 
 ## API REST operacional — J3
 
-**Uso exclusivamente local, sem autenticação ou autorização até a J4.** Bind padrão 127.0.0.1. Nenhuma configuração de CORS irrestrito. Os papéis da especificação ainda não estão protegidos; não há API pública de dados internos. Não publicar, criar proxy/túnel ou implantar na Azure nesta etapa.
+**Registro histórico da J3, anterior à segurança. A J4 exige JWT e aplica a matriz de permissões abaixo.** Bind padrão 127.0.0.1. Nenhuma configuração de CORS irrestrito. Na J3 os papéis da especificação ainda não estavam protegidos; não há API pública de dados internos. Não publicar, criar proxy/túnel ou implantar na Azure nesta etapa.
 
 Arquitetura: Controller recebe/valida → Service transacional aplica regras e mapeia DTOs → Repository consulta/persiste. Os Controllers não classificam temperatura. `OperacaoTransporteController` chama diretamente `MonitoramentoService.registrarLeitura`; a entidade retornada é convertida em `LeituraSaidaDto`, nunca serializada. Demais consultas mapeiam dentro da transação, com open-in-view desabilitado. Relacionamentos seguem LAZY/sem cascade; DTOs usam somente os IDs dos vínculos, sem carregar nomes de pais. O EntityGraph da J2 continua atendendo a classificação térmica.
 
@@ -358,4 +356,141 @@ set -a
 set +a
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
-O .env deve conter atribuições confiáveis: o comando acima o executa no shell. Aguarde as mensagens de validação Flyway, `Initialized JPA EntityManagerFactory` e `Started VaciSmartApplication`, sem `Schema validation: missing column`. Caso a porta8080 já esteja em uso, acrescente `-Dspring-boot.run.arguments=--server.port=8081` ao último comando. Em outro terminal, `curl -i http://127.0.0.1:8080/api/v1/unidades?page=0` deve retornar200 com a página (ajuste a porta, se necessário). Ctrl+C encerra somente a API. Não é necessário apagar banco/volume, alterar migrations ou usar ddl-auto=update/create. API ainda somente local; sem J4, push ou deploy.
+Na versão atual, configure também as chaves JWT descritas abaixo. O .env deve conter atribuições confiáveis: o comando acima o executa no shell. Aguarde as mensagens de validação Flyway, `Initialized JPA EntityManagerFactory` e `Started VaciSmartApplication`, sem `Schema validation: missing column`. Caso a porta8080 já esteja em uso, acrescente `-Dspring-boot.run.arguments=--server.port=8081` ao último comando. Em outro terminal, `curl -i -H "Authorization: Bearer $JWT_ACESSO" "http://127.0.0.1:8080/api/v1/unidades?page=0"` deve retornar200 com a página para funcionário/gestor autenticado (JWT_ACESSO é obtido no login); sem token, retorna401 (ajuste a porta, se necessário). Ctrl+C encerra somente a API. Não é necessário apagar banco/volume, alterar migrations ou usar ddl-auto=update/create. API continua somente local; sem push ou deploy.
+
+
+## Segurança — J4
+
+### Arquitetura e persistência
+
+`AuthController → AutenticacaoService → UsuarioRepository` cadastra somente CIDADAO e autentica com BCrypt (custo12). `Usuario` contém UUID, nome, e-mail normalizado em minúsculas/único, hash, perfil, unidade opcional e ativo. FUNCIONARIO exige unidade; os demais perfis não têm vínculo. `V2__modela_usuarios.sql` cria tabela, FK, índice e checks; V0/V1 permanecem intactas. Não há CRUD público de usuários, perfis ou vínculos.
+
+Spring Security Resource Server valida assinatura RS256, emissor, expiração e claims obrigatórias; NimbusJwtEncoder oficial emite tokens. Claims: `sub` (UUID), `perfil`, `iss`, `iat`, `exp`. Validade padrão15 minutos, configurável entre um valor positivo e uma hora (`JWT_VALIDADE`, ISO-8601), sem tolerância adicional na expiração. Não há refresh token. API stateless, sem HTTP Basic, login por formulário ou sessão. CSRF desabilitado porque a credencial é Bearer explícita no cabeçalho, sem autenticação automática por cookie.
+
+A cada requisição, o usuário ativo e o perfil são consultados no banco. Os serviços também consultam a identidade persistida e aplicam o escopo da unidade; `perfil` no token é informativo. Desativação, mudança de perfil ou troca de vínculo valem na próxima requisição, inclusive com token anterior. Não se promete interromper uma operação que já estava em execução. Chaves privadas e senhas nunca são respostas HTTP; DTOs de autenticação omitem dados em `toString`.
+
+### Matriz de permissões vigente
+
+| Operação | CIDADAO | FUNCIONARIO | GESTOR |
+|---|---|---|---|
+| POST /auth/cadastro e /auth/login | Públicas | Públicas | Públicas |
+| GET /auth/me | Própria conta | Própria conta | Própria conta |
+| GET /unidades e /unidades/{id} | Negado | Somente própria unidade | Todas |
+| POST, PUT, DELETE /unidades | Negado | Negado | Permitido conforme vínculos |
+| GET /vacinas e /vacinas/{id} | Negado | Permitido | Permitido |
+| POST, PUT, DELETE /vacinas | Negado | Negado | Permitido conforme regras |
+| GET, POST, PUT, DELETE /transportes e consulta por ID | Negado | Somente própria unidade | Todas conforme regras |
+| GET /lotes, /lotes/{id}; PUT /lotes/{id} | Negado | Somente própria unidade | Todas conforme regras |
+| POST /lotes | Negado | Negado | Permitido, como exige a especificação |
+| POST /transportes/{id}/monitoramento | Negado | Somente própria unidade | Todas conforme regras |
+| GET/POST /transportes/{id}/leituras, GET de leitura por ID | Negado | Somente própria unidade, simulação local | Todas, simulação local |
+| GET de ocorrências e históricos operacionais existentes | Negado | Somente própria unidade | Todas |
+| Alterar auditoria, liberar/descartar, recebimento e decisão técnica | Não implementado | Não implementado | Não implementado |
+
+Todas as rotas usam `/api/v1`. Somente os dois POSTs exatos de cadastro/login são públicos; demais métodos e caminhos exigem autenticação. Rotas novas ficam protegidas por padrão. Cidadão não recebe catálogo operacional, transporte, lote, leitura, dispositivo, ocorrência ou auditoria. A consulta de disponibilidade e a caderneta não fazem parte desta etapa.
+
+Funcionário não pode transferir transporte para outra unidade. Cadastros/edições/exclusões respeitam estados, dependências e histórico da J3. O escopo das listagens de unidades, transportes e lotes é aplicado na consulta SQL antes da paginação, incluindo contagem e filtros. Históricos, ocorrências e leituras verificam o transporte/lote pai. Após obter o lock do transporte, a entidade é recarregada com EntityManager.refresh sob PESSIMISTIC_WRITE e a unidade é conferida novamente. Isso evita autorizar com a unidade antiga mantida no cache JPA antes de uma transferência concorrente. O gestor mantém as mesmas restrições térmicas; normalização nunca libera lote, não há descarte automático e auditoria continua imutável. Eventos automáticos de monitoramento preservam o autor SISTEMA da J2; os fluxos humanos de recebimento/decisão com autoria individual permanecem futuros.
+
+Erros: 401 para credenciais inválidas, usuário inativo/inexistente, ausência de Bearer ou JWT inválido/expirado; `WWW-Authenticate: Bearer`. 403 para perfil/escopo negado. Para funcionário, UUID de transporte/lote inexistente e UUID de outra unidade produzem a mesma resposta403, sem revelar existência. Gestor recebe404 para recurso inexistente; leitura inexistente sob transporte autorizado também404. Erros continuam em `application/problem+json` com campos `type`, `title`, `status`, `detail`; 400/404/405/409/500 da J3 são preservados. CORS rejeitado pelo filtro pode responder403 sem corpo ProblemDetail.
+
+### Chaves e ambiente local
+
+Não há chave padrão, segredo embutido ou geração automática em dev. Sem os arquivos, a aplicação falha no startup. Use OpenSSL localmente para gerar um par **exclusivo da demonstração**, fora do Git:
+
+```bash
+umask 077
+mkdir -p "$HOME/.config/vacismart-dev"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$HOME/.config/vacismart-dev/privada.pem"
+openssl pkey -in "$HOME/.config/vacismart-dev/privada.pem" -pubout -out "$HOME/.config/vacismart-dev/publica.pem"
+export JWT_CHAVE_PRIVADA="file:$HOME/.config/vacismart-dev/privada.pem"
+export JWT_CHAVE_PUBLICA="file:$HOME/.config/vacismart-dev/publica.pem"
+export JWT_EMISSOR=vacismart
+export JWT_VALIDADE=PT15M
+export CORS_ORIGENS=http://localhost:5173
+```
+
+A chave privada usa PEM PKCS#8, pública X.509; o par deve corresponder e ter ao menos2048 bits. Não gerar novas chaves a cada reinício se quiser preservar tokens até a expiração. Rotação por substituição coordenada invalida tokens assinados pela chave anterior; múltiplas chaves/JWKS e revogação individual não estão implementados. Proteger arquivos, ambiente e transporte TLS na futura infraestrutura; não reutilizar as chaves de demonstração. O perfil test recebe par efêmero gerado exclusivamente em `src/test`, sem chaves fixas no repositório.
+
+CORS: `CORS_ORIGENS` aceita lista separada por vírgulas de origens exatas (`http(s)://host:porta`), sem caminho, wildcard ou credenciais. Vazio desabilita origens de navegador. Métodos GET/POST/PUT/DELETE/OPTIONS, cabeçalhos Authorization/Content-Type e resposta Location são autorizados para as origens configuradas. Não habilita cookies. Preflight permitido não fornece acesso aos dados; a requisição real exige JWT. Clientes Flutter nativos e Arduino não dependem de CORS para proteção: continuam precisando de autenticação.
+
+### Provisionamento fictício opcional
+
+O bootstrap é desabilitado por padrão. Exige **somente o perfil dev**, `VACISMART_DEMO_HABILITADO=true` e `VACISMART_DEMO_CONFIRMACAO=DADOS_FICTICIOS_LOCAIS`; não é ativado com prod/test e rejeita qualquer perfil adicional. Forneça os quatro pares de credenciais; não há senha padrão:
+
+```bash
+export DEMO_CIDADAO_EMAIL=cidadao@demo.invalid
+export DEMO_FUNCIONARIO_A_EMAIL=funcionario.a@demo.invalid
+export DEMO_FUNCIONARIO_B_EMAIL=funcionario.b@demo.invalid
+export DEMO_GESTOR_EMAIL=gestor@demo.invalid
+for papel in CIDADAO FUNCIONARIO_A FUNCIONARIO_B GESTOR; do
+  read -r -s -p "Senha fictícia para $papel: " "DEMO_${papel}_SENHA"
+  echo
+  export "DEMO_${papel}_SENHA"
+done
+export VACISMART_DEMO_HABILITADO=true
+export VACISMART_DEMO_CONFIRMACAO=DADOS_FICTICIOS_LOCAIS
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Configure também banco/JDK/chaves antes desse comando. O bootstrap cria duas unidades fictícias A/B e quatro usuários numa transação, codifica senhas e não registra credenciais. Exige e-mails novos e válidos; se alguma conta já existir, falha sem sobrescrevê-la. Depois da primeira execução, retire `VACISMART_DEMO_HABILITADO`, a confirmação e as variáveis de credenciais do ambiente (ou abra uma sessão limpa e reconfigure apenas banco/JWT). Não repetir o bootstrap para alterar usuários. Os testes automatizados comprovam as condições do runner; execução real desse provisionamento no PostgreSQL permanece não testada nesta sessão.
+
+### Cadastro, login e uso do Bearer
+
+Cadastro público aceita exclusivamente `nome`, `email`, `senha`; `perfil`, `unidadeSaudeId`, `ativo` e outros campos desconhecidos retornam400. Nome até150 caracteres; e-mail válido até254, normalizado; senha de12 a72 caracteres ASCII imprimíveis (evita ultrapassar72 bytes do BCrypt). Senha não é normalizada nem removida de espaços. E-mail duplicado retorna409, inclusive com caixa diferente. As strings entre `<...>` abaixo são marcadores para dados fictícios escolhidos localmente, não credenciais prontas:
+
+```http
+POST /api/v1/auth/cadastro
+Content-Type: application/json
+
+{"nome":"Cidadão fictício","email":"novo@demo.invalid","senha":"<senha-ficticia-local>"}
+```
+
+Resposta201: `{id,nome,email,perfil:"CIDADAO",unidadeSaudeId:null}`, com Location `/api/v1/auth/me` (consulta exige login). Login:
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{"email":"novo@demo.invalid","senha":"<senha-ficticia-local>"}
+```
+
+Resposta200: `{token,tipo:"Bearer",expiraEm,usuario:{id,nome,email,perfil,unidadeSaudeId}}`. Guarde o token apenas no cliente local e envie em todas as operações autenticadas, incluindo os exemplos operacionais da J3 acima:
+
+```http
+GET /api/v1/auth/me
+Authorization: Bearer <token-retornado-no-login>
+
+GET /api/v1/transportes?page=0&size=20
+Authorization: Bearer <token-de-funcionario-ou-gestor>
+```
+
+O segundo exemplo é negado ao cidadão. Não incluir tokens reais em arquivos versionados, logs ou capturas de apresentação. As credenciais pessoais do funcionário não serão usadas pelo Arduino. A ingestão atual é exclusivamente a simulação autenticada: autenticação própria de dispositivos continua pendente e nenhuma rota pública de leitura foi criada.
+
+### Validação e limites atuais
+
+Execute com JDK21 completo: `./mvnw -B test`; para empacotar após as regressões: `./mvnw -B -DskipTests package`. Os testes existentes foram preservados: HTTP J3 agora autentica um gestor fictício; os testes de regras térmicas isolam somente a autorização com Mockito, mantendo regras, persistência, concorrência, locks, rollback e auditoria reais. Novos testes HTTP de segurança exercitam o Resource Server, login e serviços/repositories reais com cidadão, gestor e funcionários A/B; verificam revogação por estado/vínculo, JWTs inválidos, paginação/contagem, filtros, IDs e fluxo térmico autorizado. MapeamentoSchemaTest também compara a entidade Usuario com V2, sem substituir PostgreSQL real.
+
+PostgreSQL não esteve acessível nesta execução: sockets dos contextos default e desktop-linux ausentes. Não foram executados V2/Flyway em PostgreSQL, startup dev atual, checks/FKs reais ou provisionamento dev real. A validação PostgreSQL anterior de09/11/2026 refere-se somente a V0/V1. Quando o ambiente voltar, repetir startup dev com as chaves externas, conferir V2 e `ddl-auto=validate`, e executar a demonstração autorizada. O fluxo térmico completo manual no PostgreSQL continua pendente. Não há alegação de validação de produção, hardware ou implantação.
+
+Não foram adicionados Swagger/OpenAPI, Cache, HATEOAS, Actuator, integração Arduino, Flutter, Azure, recebimento, decisão técnica, disponibilidade, doses, agendamento, reserva, GPS ou notificações. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
+
+
+### Regressões finais independentes da J4 — 10/11/2026
+
+Temurin21.0.13+9 (JDK temporário com SHA-256 oficial conferido), Maven Wrapper3.9.11, Boot4.1.2/Security7.1.2 e H2. Cada rodada executou um processo Maven/JVM independente com o código final, recompilando a partir de `clean`:
+
+```bash
+JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B clean test
+```
+
+| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
+|---|---|---|---|---|---|---|---|
+| 1 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 58.924 s | 2026-11-10T13:16:18.650746-03:00 |
+| 2 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 59.176 s | 2026-11-10T13:17:19.354027-03:00 |
+| 3 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 59.327 s | 2026-11-10T13:18:20.170805-03:00 |
+
+Total180 =96 casos anteriores preservados +1 novo caso de mapeamento Usuario/V2 +74 casos de integração de segurança (HTTP e serviços) +9 casos de entidade/provisionamento. Empacotamento posterior com Java21: `./mvnw -B -DskipTests package`, BUILD SUCCESS, 2.549 s, concluído 2026-11-10T13:18:24-03:00. Artefato: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Nenhuma alteração de código entre as três regressões e o empacotamento.
+
+Logs locais: `/tmp/vacismart-j4-regressao-{1,2,3}.log`, `/tmp/vacismart-j4-resultados.json`, `/tmp/vacismart-j4-package.log`; relatórios Surefire em `target/surefire-reports/`. Avisos não fatais de annotation processing e autoanexação Mockito/Byte Buddy permanecem. Desenvolvimento preliminar: compilação inicialmente corrigiu import ambíguo de RSAKey; primeira suíte163/0/1/0 corrigiu asserção que tentava converter o emissor textual em URL; suíte ajustada175/0/0/0. Antes da revisão final também passaram três rodadas com179 testes (logs /tmp/vacismart-j4-antes-refresh-*). O reforço com refresh sob lock e o teste de transferência concorrente foram adicionados depois; essas rodadas anteriores não validam essa última correção. Teste concorrente isolado:1/0/0/0, BUILD SUCCESS (15.526s; /tmp/vacismart-j4-concorrencia.log). Somente as três rodadas com180 testes acima representam o código final.
+
+MigrationV2 no PostgreSQL, startup dev e bootstrap real: NÃO TESTADOS pelos sockets Docker indisponíveis. Relatório A–L exclusivamente local em `RELATORIO_REVISAO_CHATGPT.md`, ignorado e fora do Git. Aguardar revisão antes da próxima etapa. Nenhum push.
