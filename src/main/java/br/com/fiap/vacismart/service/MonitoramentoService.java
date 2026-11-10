@@ -15,6 +15,8 @@ import java.util.*;
 @Service
 @Transactional
 public class MonitoramentoService {
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
     private final br.com.fiap.vacismart.security.AcessoService acesso;
     private final TransporteRepository transportes;
     private final LoteRepository lotes;
@@ -111,6 +113,8 @@ public class MonitoramentoService {
         // Serializa leitura, início e verificação por transporte, inclusive entre instâncias da API.
         Transporte transporte = transportes.buscarParaAtualizacao(id)
                 .orElseThrow(() -> new NoSuchElementException("Transporte não encontrado: " + id));
+        // O primeiro acesso pode ter preenchido o contexto JPA antes de outra transação transferir a unidade.
+        entityManager.refresh(transporte, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         acesso.unidade(transporte.getUnidadeSaude().getId());
         return transporte;
     }

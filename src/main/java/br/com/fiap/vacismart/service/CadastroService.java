@@ -13,6 +13,8 @@ import java.util.*;
 @Service
 @Transactional(readOnly = true)
 public class CadastroService {
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
     private final br.com.fiap.vacismart.security.AcessoService acesso;
     private final UnidadeSaudeRepository unidades;
     private final VacinaRepository vacinas;
@@ -34,6 +36,8 @@ public class CadastroService {
     private Transporte transporteBloqueado(UUID id) {
         acesso.transporte(id);
         Transporte transporte = transportes.buscarParaAtualizacao(id).orElseThrow(CadastroService::ausente);
+        // O primeiro acesso pode ter preenchido o contexto JPA antes de outra transação transferir a unidade.
+        entityManager.refresh(transporte, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         acesso.unidade(transporte.getUnidadeSaude().getId());
         return transporte;
     }

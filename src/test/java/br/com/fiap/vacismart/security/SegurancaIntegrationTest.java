@@ -262,6 +262,25 @@ class SegurancaIntegrationTest {
         assertThatThrownBy(() -> cadastro.transporte(tb.getId())).isInstanceOf(AccessDeniedException.class);
         assertThatThrownBy(() -> cadastro.lote(lb.getId())).isInstanceOf(AccessDeniedException.class);
     }
+    @Test void transferenciaConcorrenteRevalidaEntidadeJaCarregadaSobLock() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(funcionario.getId().toString(),null,List.of()));
+        try (var executor=java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            assertThatThrownBy(() -> new TransactionTemplate(txManager).executeWithoutResult(tx -> {
+                // Preenche o cache de primeiro nível com a unidade A, sem bloquear o transporte.
+                assertThat(transportes.findById(ta.getId()).orElseThrow().getUnidadeSaude().getId()).isEqualTo(a.getId());
+                var transferencia=executor.submit(() -> {
+                    SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(gestor.getId().toString(),null,List.of()));
+                    try {
+                        return cadastro.atualizarTransporte(ta.getId(),new br.com.fiap.vacismart.web.dto.TransporteEntradaDto("TRANSFERIDO",b.getId()));
+                    } finally { SecurityContextHolder.clearContext(); }
+                });
+                try { transferencia.get(10,java.util.concurrent.TimeUnit.SECONDS); }
+                catch(Exception ex) { throw new IllegalStateException("Falha ao preparar transferência concorrente",ex); }
+                cadastro.atualizarTransporte(ta.getId(),new br.com.fiap.vacismart.web.dto.TransporteEntradaDto("INDEVIDO",a.getId()));
+            })).isInstanceOf(AccessDeniedException.class);
+        }
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getCodigo()).isEqualTo("TRANSFERIDO");
+    }
     @Test void corsPermiteApenasOrigemExplicitaEAuthorization() throws Exception {
         for(String origem: List.of("http://localhost:5173","https://nao-autorizada.invalid")) {
             var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+porta+"/api/v1/transportes"))
