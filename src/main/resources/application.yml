@@ -1,6 +1,15 @@
 server:
   address: 127.0.0.1
 
+vacismart:
+  jwt:
+    emissor: ${JWT_EMISSOR:vacismart}
+    validade: ${JWT_VALIDADE:PT15M}
+    chave-publica: ${JWT_CHAVE_PUBLICA:}
+    chave-privada: ${JWT_CHAVE_PRIVADA:}
+  cors:
+    origens: ${CORS_ORIGENS:}
+
 spring:
   data:
     web:

@@ -34,6 +34,15 @@ public class ErroApiAdvice extends ResponseEntityExceptionHandler {
     public ProblemDetail integridade(Exception ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Operação em conflito com vínculos, dados existentes ou operação concorrente");
     }
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> naoAutenticado(Exception ex) {
+        return ResponseEntity.status(401).header("WWW-Authenticate", "Bearer")
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Autenticação necessária ou inválida"));
+    }
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail negado(Exception ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Acesso negado");
+    }
     @ExceptionHandler(Exception.class)
     public ProblemDetail inesperado(Exception ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno ao processar a requisição");
