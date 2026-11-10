@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Compara nomes físicos efetivos com a V1, independentemente do DDL gerado pelo H2. */
+/** Compara nomes físicos efetivos com as migrations V1 e V2, independentemente do DDL gerado pelo H2. */
+@org.springframework.context.annotation.Import(br.com.fiap.vacismart.security.ChavesTesteConfig.class)
 @SpringBootTest
 @ActiveProfiles("test")
 class MapeamentoSchemaTest {
@@ -23,24 +24,25 @@ class MapeamentoSchemaTest {
 
     static Stream<Class<?>> entidades() {
         return Stream.of(UnidadeSaude.class, Vacina.class, Transporte.class, Lote.class,
-                LeituraTemperatura.class, Ocorrencia.class, EventoAuditoria.class);
+                LeituraTemperatura.class, Ocorrencia.class, EventoAuditoria.class, Usuario.class);
     }
 
     @ParameterizedTest
     @MethodSource("entidades")
-    void colunasFisicasCorrespondemAMigrationV1(Class<?> entidade) throws Exception {
+    void colunasFisicasCorrespondemAMigration(Class<?> entidade) throws Exception {
         var factory = entityManagerFactory.unwrap(SessionFactoryImplementor.class);
         var persister = (AbstractEntityPersister) factory.getMappingMetamodel().getEntityDescriptor(entidade);
         Set<String> colunasJpa = new TreeSet<>(Arrays.asList(persister.getIdentifierColumnNames()));
         for (String propriedade : persister.getPropertyNames()) {
             colunasJpa.addAll(Arrays.asList(persister.getPropertyColumnNames(propriedade)));
         }
-        String sql = new ClassPathResource("db/migration/V1__modela_nucleo_termico.sql")
+        String migration = entidade == Usuario.class ? "V2__modela_usuarios.sql" : "V1__modela_nucleo_termico.sql";
+        String sql = new ClassPathResource("db/migration/" + migration)
                 .getContentAsString(StandardCharsets.UTF_8);
-        var tabela = Pattern.compile("(?ms)^CREATE TABLE " + Pattern.quote(persister.getRootTableName())
+        var tabela = Pattern.compile("(?ims)^CREATE TABLE " + Pattern.quote(persister.getRootTableName())
                 + " [(]\\n(.*?)^[)];").matcher(sql);
         assertThat(tabela.find()).as("Tabela %s na V1", persister.getRootTableName()).isTrue();
-        var coluna = Pattern.compile("(?m)^    ([a-z_]+) (?:UUID|VARCHAR|NUMERIC|TIMESTAMP)\\b")
+        var coluna = Pattern.compile("(?im)^    ([a-z_]+) (?:UUID|VARCHAR|NUMERIC|TIMESTAMP|BOOLEAN)\\b")
                 .matcher(tabela.group(1));
         Set<String> colunasV1 = new TreeSet<>();
         while (coluna.find()) colunasV1.add(coluna.group(1));

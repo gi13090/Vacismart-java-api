@@ -31,9 +31,11 @@ import static br.com.fiap.vacismart.domain.enums.TipoOcorrencia.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(MonitoramentoServiceIntegrationTest.RelogioTesteConfig.class)
+@Import({br.com.fiap.vacismart.security.ChavesTesteConfig.class, MonitoramentoServiceIntegrationTest.RelogioTesteConfig.class})
 @Transactional
 class MonitoramentoServiceIntegrationTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    br.com.fiap.vacismart.security.AcessoService acesso;
     @Autowired MonitoramentoService service;
     @Autowired TransporteRepository transportes;
     @Autowired UnidadeSaudeRepository unidades;

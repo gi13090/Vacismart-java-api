@@ -20,9 +20,13 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = "spring.datasource.url=jdbc:h2:mem:vacismart-http;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE")
 @ActiveProfiles("test")
-@Import(ApiIntegrationTest.Config.class)
+@Import({br.com.fiap.vacismart.security.ChavesTesteConfig.class, ApiIntegrationTest.Config.class})
 class ApiIntegrationTest {
     @LocalServerPort int porta;
+    @Autowired br.com.fiap.vacismart.repository.UsuarioRepository usuarios;
+    @Autowired org.springframework.security.crypto.password.PasswordEncoder senhas;
+    @Autowired br.com.fiap.vacismart.service.AutenticacaoService autenticacao;
+    String token;
     @Autowired ObjectMapper json;
     @Autowired EventoAuditoriaRepository auditoria;
     @Autowired OcorrenciaRepository ocorrencias;
@@ -46,13 +50,17 @@ class ApiIntegrationTest {
     }
     @BeforeEach
     void limpar() {
+        usuarios.deleteAllInBatch();
         auditoria.deleteAllInBatch(); ocorrencias.deleteAllInBatch(); leituras.deleteAllInBatch();
         lotes.deleteAllInBatch(); transportes.deleteAllInBatch(); vacinas.deleteAllInBatch(); unidades.deleteAllInBatch();
+        usuarios.saveAndFlush(new br.com.fiap.vacismart.domain.entity.Usuario("Gestor fictício", "gestor@teste.invalid",
+                senhas.encode("SenhaFicticia!123"), br.com.fiap.vacismart.domain.enums.Perfil.GESTOR, null));
+        token = autenticacao.login(new br.com.fiap.vacismart.web.dto.LoginEntradaDto("gestor@teste.invalid", "SenhaFicticia!123")).token();
     }
     record Resposta(int status, JsonNode corpo, HttpHeaders headers) { }
     Resposta requisicao(String metodo, String rota, Object corpo) throws Exception {
         var builder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + porta + rota))
-                .header("Content-Type", "application/json");
+                .header("Content-Type", "application/json").header("Authorization", "Bearer " + token);
         String texto = corpo == null ? "" : corpo instanceof String s ? s : json.writeValueAsString(corpo);
         var resposta = cliente.send(builder.method(metodo, HttpRequest.BodyPublishers.ofString(texto)).build(), HttpResponse.BodyHandlers.ofString());
         return new Resposta(resposta.statusCode(), resposta.body().isEmpty() ? json.nullNode() : json.readTree(resposta.body()), resposta.headers());
