@@ -1,7 +1,7 @@
 # VaciSmart — API Java
 
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
-Em 13/11/2026, J5-A e J5-B estão aprovadas; PostgreSQL permanece reservado à J5-E. A J5-C acrescenta confirmação e retirada de disponibilidade internas, descritas ao final, em revisão. As referências anteriores a funcionalidades pendentes registram seus marcos históricos. A J5 inteira permanece incompleta.
+Em 13/11/2026, J5-A, J5-B e J5-C estão aprovadas; PostgreSQL permanece reservado à J5-E. A J5-D acrescenta consulta informativa autenticada ao cidadão, descrita ao final, em revisão. As referências anteriores a funcionalidades pendentes registram seus marcos históricos. A J5 inteira permanece incompleta.
 
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
@@ -102,9 +102,9 @@ Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade 
 O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
 
 ## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Consulta de disponibilidade ao cidadão continua pendente; recebimento foi acrescentado na J5-A, decisão técnica na J5-B e alteração interna de disponibilidade na J5-C; cadastro/login e própria conta estão na seção J4.
+A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Consulta de disponibilidade ao cidadão implementada na J5-D, em revisão; recebimento foi acrescentado na J5-A, decisão técnica na J5-B e alteração interna de disponibilidade na J5-C; cadastro/login e própria conta estão na seção J4.
 
-Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e os adendos de recebimento J5-A, decisão técnica J5-B e disponibilidade J5-C, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
+Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4 e adendos J5](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e os adendos de recebimento J5-A, decisão técnica J5-B disponibilidade interna J5-C e consulta cidadã J5-D, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
 
 ## Justificativas: consultas, cascade e fetch
 Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
@@ -118,7 +118,7 @@ T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 
 
 ## Limitações e escopo
 J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI continua para J5. Compose final API + banco e implantação Azure ficam com DevOps.
-Por decisão definitiva do responsável em 12/11/2026, **Spring Cache, Spring HATEOAS e Spring Boot Actuator não serão implementados** e não integram J5/J6/J7; o planejamento histórico D-007 foi superado por D-046. OpenAPI/Swagger permanece previsto. Continuam fora do MVP: GPS/rastreamento de veículos, rotas/localização de transporte, agendamento/reserva, notificações externas (push/e-mail/SMS), integração SUS/RNDS, QR Code, mapa de surtos, IA e funcionalidades clínicas reais. A especificação da API prevalece sobre os materiais de referência; caderneta digital e disponibilidade informativa ao cidadão não estão implementadas.
+Por decisão definitiva do responsável em 12/11/2026, **Spring Cache, Spring HATEOAS e Spring Boot Actuator não serão implementados** e não integram J5/J6/J7; o planejamento histórico D-007 foi superado por D-046. OpenAPI/Swagger permanece previsto. Continuam fora do MVP: GPS/rastreamento de veículos, rotas/localização de transporte, agendamento/reserva, notificações externas (push/e-mail/SMS), integração SUS/RNDS, QR Code, mapa de surtos, IA e funcionalidades clínicas reais. A especificação da API prevalece sobre os materiais de referência; caderneta digital continua pendente; disponibilidade informativa ao cidadão está descrita na seção J5-D ao final.
 
 ## Declaração de uso de IA
 Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Na J4 foi usado para implementar autenticação/autorização, testes, documentação e relatório local. Em 12/11/2026, após a validação operacional final e a revisão externa dos relatórios pelo ChatGPT, o responsável aprovou oficialmente a conclusão da J4. A atualização documental pré-push também utilizou Codex, sem implementação nova. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nas execuções relatadas. A equipe deve complementar apenas com seu uso real, sem atribuir revisões ou atividades não comprovadas.
@@ -136,7 +136,8 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
 | Recebimento de transporte (J5-A) | Concluído e aprovado; PostgreSQL reservado à J5-E |
 | Decisão técnica de lote (J5-B) | Concluída e aprovada; PostgreSQL reservado à J5-E |
-| Confirmação/retirada de disponibilidade (J5-C) | Implementada; em revisão |
+| Confirmação/retirada de disponibilidade (J5-C) | Concluída e aprovada; PostgreSQL reservado à J5-E |
+| Consulta informativa ao cidadão (J5-D) | Implementada; em revisão |
 | OpenAPI (J5) | Pendente |
 | Compose final / Azure | Pendente — DevOps |
 
@@ -383,7 +384,7 @@ Spring Security Resource Server valida assinatura RS256, emissor, expiração e 
 
 A cada requisição, o usuário ativo e o perfil são consultados no banco. Os serviços também consultam a identidade persistida e aplicam o escopo da unidade; `perfil` no token é informativo. Desativação, mudança de perfil ou troca de vínculo valem na próxima requisição, inclusive com token anterior. Não se promete interromper uma operação que já estava em execução. Chaves privadas e senhas nunca são respostas HTTP; DTOs de autenticação omitem dados em `toString`.
 
-### Matriz de permissões do marco J4 (adendos J5-A/J5-B/J5-C ao final)
+### Matriz de permissões do marco J4 (adendos J5-A/J5-B/J5-C/J5-D ao final)
 
 | Operação | CIDADAO | FUNCIONARIO | GESTOR |
 |---|---|---|---|
@@ -564,3 +565,32 @@ Sucesso 204 sem corpo: NAO_DISPONIVEL → CONFIRMADA ou CONFIRMADA → NAO_DISPO
 O serviço reutiliza AcessoService.lote, lock pessimista do transporte e revalidação de unidade sob lock, seguido de refresh explícito do lote. Somente alterações efetivas geram um evento de Lote DISPONIBILIDADE_CONFIRMADA ou DISPONIBILIDADE_RETIRADA, com UUID autenticado, Clock e descrição técnica fixa. Campo e evento são persistidos na mesma transação; sem justificativa humana adicional. Concorrências são serializadas: comandos iguais auditam uma vez; comandos opostos seguem uma ordem serial válida, sem prometer deduplicação de um reenvio após alteração oposta interveniente.
 
 Sem alterações de tabelas/colunas/migrations/dependências/segurança. Nenhuma coluna atualizadoEm foi criada; a futura J5-D poderá derivar horário dos eventos de disponibilidade e deverá definir o caso sem evento, sem inventar data. Testes atuais e resultados reais no relatório privado A–L; as evidências anteriores de 214 testes J5-B são históricas. Codex foi usado para implementar, testar e documentar a J5-C. PostgreSQL e três regressões independentes permanecem reservados à J5-E. Não há reserva, dose garantida, agendamento, consulta cidadã, finalização ou implementação J5-D/J5-E/J6/DevOps.
+
+
+## Consulta informativa ao cidadão — J5-D — 13/11/2026
+
+`GET /api/v1/disponibilidade` exige Bearer JWT válido e usuário ativo. CIDADAO, FUNCIONARIO e GESTOR recebem a mesma visão pública global; funcionário pode consultar qualquer unidade por esta rota. As permissões operacionais J4/J5-A/J5-B/J5-C permanecem preservadas. Somente o GET da rota exata recebe a nova autorização; não há acesso cidadão aos catálogos operacionais, lotes, transportes, leituras, ocorrências ou auditoria.
+
+Filtros UUID opcionais e cumulativos: `unidadeId` e `vacinaId`. Paginação `page=0`, `size=20`, máximo 100. Ordenação somente por `unidadeNome` e `vacinaNome`, asc/desc; padrão nessa ordem ascendente, sempre com desempate por unidadeId e vacinaId ascendentes. Exemplo: `/api/v1/disponibilidade?unidadeId=<UUID>&page=0&size=20&sort=vacinaNome,asc`. Sort inválido ou UUID malformado retorna 400/ProblemDetail. UUID válido inexistente ou página além do total retorna 200 com conteúdo vazio; autenticação ausente/inválida/inativa retorna 401.
+
+Envelope `PaginaDto`: conteudo, pagina, tamanho, totalElementos, totalPaginas. Cada item contém exclusivamente vacina e unidade (cada uma com id/nome públicos), situacao, atualizadoEm e mensagem. Os nomes/UUIDs de catálogo são identificações públicas do protótipo fictício, não dados pessoais ou códigos de remessa; os parâmetros térmicos de Vacina não integram essa projeção.
+
+O universo é o produto dos catálogos de unidades e vacinas, filtrado e paginado no banco. A presença de um par NÃO afirma oferta da vacina pela unidade, existência de estoque, transporte ou recebimento. Pares sem lotes e com logística ainda não publicada têm o mesmo resultado SEM_INFORMACAO. A existência de lote/transporte não define quais linhas aparecem.
+
+| situacao | Significado informativo |
+|---|---|
+| CONFIRMADA | Há pelo menos um lote LIBERADO + CONFIRMADA em transporte RECEBIDO, sem divulgar quantidades |
+| CONFIRMACAO_RETIRADA | Nenhuma confirmação válida atual, há evento explícito de retirada e não há flag CONFIRMADA residual inconsistente; não significa falta real de estoque |
+| SEM_INFORMACAO | Sem evidência suficiente; inclui pares sem lotes/publicação e estados operacionais não publicados. NAO_DISPONIVEL não significa ausência de doses |
+
+AtualizadoEm é o maior dataHora dos eventos de Lote DISPONIBILIDADE_CONFIRMADA/DISPONIBILIDADE_RETIRADA de todos os lotes da mesma unidade/vacina, inclusive os já retirados. Sem evento pertinente, null, inclusive para uma flag elegível legada sem auditoria. Não é o horário da consulta, de leitura, decisão técnica ou último evento genérico. Representa a última alteração efetiva de publicação no grupo, mesmo se a situação agregada continuar igual. Repetição idempotente não muda horário.
+
+Exemplo: A e B confirmados; retirar B mantém CONFIRMADA pelo lote A, com horário da retirada de B. Retirar A muda para CONFIRMACAO_RETIRADA; reconfirmar A volta a CONFIRMADA. Estado agregado prevalece sobre a ação mais recente, inclusive com horários empatados. Flag CONFIRMADA inelegível não sustenta positividade e, sem outra confirmação válida, produz SEM_INFORMACAO em vez de inventar retirada.
+
+Mensagem fixa em todas as situações: "Disponibilidade informada pela unidade. Consulte as condições de atendimento; não há reserva ou garantia de dose." Sem identificadores de lotes, transportes, pessoas/dispositivos, parâmetros térmicos, ocorrências, justificativas, histórico ou quantidades no JSON.
+
+Repository específico usa projeção escalar, página de pares em CTE e agregações independentes de estado e eventos, evitando N+1 e multiplicação de pares por eventos. Conteúdo e contagem usam os mesmos filtros vinculados; ordenação passa por whitelist de fragmentos constantes. Serviço somente leitura valida identidade ativa, mapeia apenas a página e não executa mutações, auditoria ou locks operacionais. Sem novas entidades, dependências, migrations, índices ou alterações de configuração.
+
+Testes e resultados reais estão no relatório privado A–L; 234 testes J5-C são evidência histórica. Codex foi usado para implementar, testar e documentar a J5-D. H2 não comprova PostgreSQL nem desempenho em carga; validação PostgreSQL e três regressões independentes permanecem reservadas à J5-E. D-002 de integração Mobile segue aberta. Sem commit/push, finalização de transporte ou avanço J5-E/J6/DevOps/J7; a J5 inteira permanece incompleta.
+
+Validação J5-D em 13/11/2026 com Java 21.0.13: testes direcionados finais, 22 aprovados (27.566 s, conclusão 14:25:44-03:00); regressão completa `./mvnw -B test`, 256 aprovados, 0 falhas/erros/ignorados (01:24 min, conclusão 14:29:02-03:00). Primeira rodada direcionada teve três falhas de status de sort inválido (500 em vez de 400), corrigidas com validação no serviço antes do proxy de persistência. A regressão final inclui a fixture reforçada de múltiplos transportes da mesma unidade. Nenhuma mudança de código após essa execução; alterações finais apenas documentais.

@@ -50,6 +50,7 @@ class SegurancaIntegrationTest {
     @Autowired JwtDecoder jwtDecoder;
     @Autowired CadastroService cadastro;
     @Autowired br.com.fiap.vacismart.service.FluxoOperacionalService fluxo;
+    @Autowired br.com.fiap.vacismart.service.ConsultaDisponibilidadeService disponibilidadeConsulta;
     @Autowired Clock clock;
     @Autowired PlatformTransactionManager txManager;
     static final String SENHA = "FicticiaSomenteTeste!123";
@@ -671,6 +672,212 @@ class SegurancaIntegrationTest {
         DisponibilidadeLote fim=lotes.findById(la.getId()).orElseThrow().getDisponibilidade();
         assertThat(auditoria.count()).isEqualTo(eventosAntes+(fim==DisponibilidadeLote.CONFIRMADA ? 1 : 2));
         assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.LIBERADO);
+    }
+    static final String CONSULTA_DISPONIBILIDADE = "/api/v1/disponibilidade";
+    static final String MENSAGEM_DISPONIBILIDADE = "Disponibilidade informada pela unidade. Consulte as condições de atendimento; não há reserva ou garantia de dose.";
+    Resposta consultarDisponibilidade(String parametros, String token) throws Exception {
+        var res = req("GET", CONSULTA_DISPONIBILIDADE + parametros, null, token);
+        status(res, 200); return res;
+    }
+    JsonNode itemDisponibilidade(UUID unidade, UUID vacinaId, String token) throws Exception {
+        var pagina = consultarDisponibilidade("?unidadeId=" + unidade + "&vacinaId=" + vacinaId, token).corpo();
+        assertThat(pagina.get("totalElementos").asLong()).isEqualTo(1);
+        assertThat(pagina.get("conteudo").size()).isEqualTo(1);
+        return pagina.get("conteudo").get(0);
+    }
+    void conferirDisponibilidade(UUID unidade, UUID vacinaId, String token, String situacao, OffsetDateTime atualizado) throws Exception {
+        var item = itemDisponibilidade(unidade, vacinaId, token);
+        assertThat(item.get("situacao").asString()).isEqualTo(situacao);
+        if (atualizado == null) assertThat(item.get("atualizadoEm").isNull()).isTrue();
+        else assertThat(OffsetDateTime.parse(item.get("atualizadoEm").asString()).toInstant()).isEqualTo(atualizado.toInstant());
+    }
+    OffsetDateTime ultimoEventoDisponibilidade() {
+        return auditoria.findAll().stream().filter(e -> e.getEntidade().equals("Lote")
+                && Set.of("DISPONIBILIDADE_CONFIRMADA", "DISPONIBILIDADE_RETIRADA").contains(e.getAcao()))
+                .map(EventoAuditoria::getDataHora).max(Comparator.comparing(OffsetDateTime::toInstant)).orElseThrow();
+    }
+    Set<String> campos(JsonNode node) {
+        var nomes = new HashSet<String>(); node.properties().forEach(e -> nomes.add(e.getKey())); return nomes;
+    }
+    void eventoDisponibilidade(UUID id, String entidade, String acao, OffsetDateTime horario) {
+        auditoria.saveAndFlush(new EventoAuditoria(entidade, id, acao, gestor.getId().toString(), horario, "JUSTIFICATIVA-INTERNA-NAO-PUBLICAR"));
+    }
+    // Somente fixtures de legado: estas alterações diretas não são operações da API.
+    void estadoConsulta(Lote lote, String estado, String disponibilidade) {
+        jdbc.update("update lote set estado = ?, disponibilidade = ? where id = ?", estado, disponibilidade, lote.getId());
+    }
+    void transporteConsulta(Transporte transporte, String estado) {
+        jdbc.update("update transporte set estado = ?, inicio_monitoramento_em = ? where id = ?", estado,
+                OffsetDateTime.now(clock).minusMinutes(1), transporte.getId());
+    }
+    @ParameterizedTest @ValueSource(strings={"CIDADAO", "FUNCIONARIO", "GESTOR"})
+    void consultaDisponibilidadePermiteMesmaVisaoGlobalAosTresPerfis(String perfil) throws Exception {
+        Usuario usuario = switch (perfil) { case "CIDADAO" -> cidadao; case "FUNCIONARIO" -> funcionario; default -> gestor; };
+        var pagina = consultarDisponibilidade("", token(usuario)).corpo();
+        assertThat(campos(pagina)).containsExactlyInAnyOrder("conteudo", "pagina", "tamanho", "totalElementos", "totalPaginas");
+        assertThat(pagina.get("pagina").asInt()).isZero(); assertThat(pagina.get("tamanho").asInt()).isEqualTo(20);
+        assertThat(pagina.get("totalElementos").asLong()).isEqualTo(2);
+        assertThat(pagina.get("totalPaginas").asInt()).isEqualTo(1);
+        assertThat(pagina.get("conteudo").get(1).get("unidade").get("id").asString()).isEqualTo(b.getId().toString());
+        conferirDisponibilidade(b.getId(), vacina.getId(), token(usuario), "SEM_INFORMACAO", null);
+    }
+    @Test void consultaDisponibilidadeExigeIdentidadeAtivaNoHttpENoServico() throws Exception {
+        status(req("GET", CONSULTA_DISPONIBILIDADE, null, null), 401);
+        status(req("GET", CONSULTA_DISPONIBILIDADE, null, "invalido"), 401);
+        assertThatThrownBy(() -> disponibilidadeConsulta.consultar(null, null, org.springframework.data.domain.PageRequest.of(0, 20)))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+        String token = token(cidadao);
+        new TransactionTemplate(txManager).executeWithoutResult(tx -> usuarios.findById(cidadao.getId()).orElseThrow().desativar());
+        status(req("GET", CONSULTA_DISPONIBILIDADE, null, token), 401);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(cidadao.getId().toString(), null, List.of()));
+        assertThatThrownBy(() -> disponibilidadeConsulta.consultar(null, null, org.springframework.data.domain.PageRequest.of(0, 20)))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+    }
+    @Test void consultaDisponibilidadeNaoAbreRotasOuOperacoesTecnicas() throws Exception {
+        String token = token(cidadao);
+        for (String rota : List.of("/api/v1/lotes", "/api/v1/transportes", "/api/v1/vacinas", "/api/v1/unidades",
+                "/api/v1/lotes/" + la.getId() + "/historico", "/api/v1/transportes/" + ta.getId() + "/ocorrencias",
+                CONSULTA_DISPONIBILIDADE + "/interno")) status(req("GET", rota, null, token), 403);
+        for (String metodo : List.of("POST", "PUT", "DELETE")) status(req(metodo, CONSULTA_DISPONIBILIDADE, null, token), 403);
+        status(req("POST", rotaDisponibilidade(la.getId()), Map.of("disponibilidade", "CONFIRMADA"), token), 403);
+        status(req("GET", "/api/v1/lotes/" + lb.getId(), null, token(funcionario)), 403);
+        assertThat(auditoria.count()).isZero();
+    }
+    @Test void consultaDisponibilidadePublicaSomenteWhitelistESemEfeitosDeEscrita() throws Exception {
+        liberarParaDisponibilidade(token(gestor));
+        status(req("POST", rotaDisponibilidade(la.getId()), Map.of("disponibilidade", "CONFIRMADA"), token(funcionario)), 204);
+        var eventosAntes = auditoria.findAll();
+        long leiturasAntes = leituras.count(), ocorrenciasAntes = ocorrencias.count();
+        String lotesAntes = jdbc.queryForList("select * from lote order by codigo").toString();
+        String transportesAntes = jdbc.queryForList("select * from transporte order by codigo").toString();
+        var pagina = consultarDisponibilidade("", token(cidadao)).corpo();
+        for (JsonNode item : pagina.get("conteudo")) {
+            assertThat(campos(item)).containsExactlyInAnyOrder("vacina", "unidade", "situacao", "atualizadoEm", "mensagem");
+            assertThat(campos(item.get("vacina"))).containsExactlyInAnyOrder("id", "nome");
+            assertThat(campos(item.get("unidade"))).containsExactlyInAnyOrder("id", "nome");
+            assertThat(item.get("mensagem").asString()).isEqualTo(MENSAGEM_DISPONIBILIDADE);
+        }
+        assertThat(pagina.toString()).doesNotContain(la.getId().toString(), lb.getId().toString(), ta.getId().toString(), tb.getId().toString(),
+                funcionario.getId().toString(), gestor.getId().toString(), "dispositivoId", "temperaturaMinC", "justificativa", "ocorrencias");
+        assertThat(jdbc.queryForList("select * from lote order by codigo").toString()).isEqualTo(lotesAntes);
+        assertThat(jdbc.queryForList("select * from transporte order by codigo").toString()).isEqualTo(transportesAntes);
+        assertThat(auditoria.findAll()).extracting(EventoAuditoria::getId).containsExactlyInAnyOrderElementsOf(eventosAntes.stream().map(EventoAuditoria::getId).toList());
+        assertThat(leituras.count()).isEqualTo(leiturasAntes); assertThat(ocorrencias.count()).isEqualTo(ocorrenciasAntes);
+    }
+    @Test void consultaDisponibilidadeCicloRealComDoisLotesRetiradaDaUltimaEReconfirmacao() throws Exception {
+        Lote segundo = lotes.saveAndFlush(new Lote("LA-SEGUNDO", vacina, ta));
+        String gestorToken = token(gestor), publico = token(cidadao);
+        prepararDecisao(gestorToken, false);
+        for (Lote lote : List.of(la, segundo)) status(req("POST", rotaDecisao(lote.getId()),
+                Map.of("decisao", "LIBERAR", "justificativa", "JUSTIFICATIVA-INTERNA-NAO-PUBLICAR"), gestorToken), 204);
+        conferirDisponibilidade(a.getId(), vacina.getId(), publico, "SEM_INFORMACAO", null);
+        for (Lote lote : List.of(la, segundo)) {
+            status(req("POST", rotaDisponibilidade(lote.getId()), Map.of("disponibilidade", "CONFIRMADA"), gestorToken), 204);
+            conferirDisponibilidade(a.getId(), vacina.getId(), publico, "CONFIRMADA", ultimoEventoDisponibilidade());
+        }
+        status(req("POST", rotaDisponibilidade(segundo.getId()), Map.of("disponibilidade", "NAO_DISPONIVEL"), gestorToken), 204);
+        conferirDisponibilidade(a.getId(), vacina.getId(), publico, "CONFIRMADA", ultimoEventoDisponibilidade());
+        status(req("POST", rotaDisponibilidade(la.getId()), Map.of("disponibilidade", "NAO_DISPONIVEL"), gestorToken), 204);
+        conferirDisponibilidade(a.getId(), vacina.getId(), publico, "CONFIRMACAO_RETIRADA", ultimoEventoDisponibilidade());
+        var antes = itemDisponibilidade(a.getId(), vacina.getId(), publico);
+        long eventos = auditoria.count();
+        status(req("POST", rotaDisponibilidade(la.getId()), Map.of("disponibilidade", "NAO_DISPONIVEL"), gestorToken), 204);
+        assertThat(itemDisponibilidade(a.getId(), vacina.getId(), publico)).isEqualTo(antes);
+        assertThat(auditoria.count()).isEqualTo(eventos);
+        status(req("POST", rotaDisponibilidade(la.getId()), Map.of("disponibilidade", "CONFIRMADA"), gestorToken), 204);
+        conferirDisponibilidade(a.getId(), vacina.getId(), publico, "CONFIRMADA", ultimoEventoDisponibilidade());
+        assertThat(consultarDisponibilidade("", publico).corpo().get("totalElementos").asLong()).isEqualTo(2);
+        assertThat(itemDisponibilidade(a.getId(), vacina.getId(), publico).toString()).doesNotContain("JUSTIFICATIVA-INTERNA-NAO-PUBLICAR");
+    }
+    @Test void consultaDisponibilidadeHorarioIncluiLoteRetiradoIgnoraEventosGenericosESeparaPares() throws Exception {
+        Transporte mesmaUnidade = transportes.saveAndFlush(new Transporte("OUTRO-TRANSPORTE-A", a));
+        transporteConsulta(mesmaUnidade, "RECEBIDO");
+        Lote segundo = lotes.saveAndFlush(new Lote("LA-SEGUNDO", vacina, mesmaUnidade));
+        Vacina outraVacina = vacinas.saveAndFlush(new Vacina("Outra", new BigDecimal("2"), new BigDecimal("8"), BigDecimal.ONE));
+        Lote terceiro = lotes.saveAndFlush(new Lote("LA-OUTRA-VACINA", outraVacina, ta));
+        transporteConsulta(ta, "RECEBIDO"); transporteConsulta(tb, "RECEBIDO");
+        estadoConsulta(la, "LIBERADO", "CONFIRMADA"); estadoConsulta(segundo, "LIBERADO", "NAO_DISPONIVEL");
+        estadoConsulta(lb, "LIBERADO", "CONFIRMADA");
+        OffsetDateTime t = OffsetDateTime.parse("2026-11-13T09:00:00-03:00");
+        eventoDisponibilidade(la.getId(), "Lote", "DISPONIBILIDADE_CONFIRMADA", t);
+        eventoDisponibilidade(segundo.getId(), "Lote", "DISPONIBILIDADE_CONFIRMADA", t.plusMinutes(1));
+        eventoDisponibilidade(segundo.getId(), "Lote", "DISPONIBILIDADE_RETIRADA", t.plusMinutes(2));
+        eventoDisponibilidade(la.getId(), "Lote", "LIBERADO", t.plusDays(1));
+        eventoDisponibilidade(la.getId(), "Transporte", "DISPONIBILIDADE_RETIRADA", t.plusDays(2));
+        eventoDisponibilidade(terceiro.getId(), "Lote", "DISPONIBILIDADE_RETIRADA", t.plusMinutes(3));
+        eventoDisponibilidade(lb.getId(), "Lote", "DISPONIBILIDADE_CONFIRMADA", t.plusMinutes(4));
+        String token = token(cidadao);
+        conferirDisponibilidade(a.getId(), vacina.getId(), token, "CONFIRMADA", t.plusMinutes(2));
+        conferirDisponibilidade(a.getId(), outraVacina.getId(), token, "CONFIRMACAO_RETIRADA", t.plusMinutes(3));
+        conferirDisponibilidade(b.getId(), vacina.getId(), token, "CONFIRMADA", t.plusMinutes(4));
+        conferirDisponibilidade(b.getId(), outraVacina.getId(), token, "SEM_INFORMACAO", null);
+        // Mesmos horários não dão precedência à última ação do grupo: vale o estado atual agregado.
+        eventoDisponibilidade(la.getId(), "Lote", "DISPONIBILIDADE_RETIRADA", t.plusMinutes(2));
+        conferirDisponibilidade(a.getId(), vacina.getId(), token, "CONFIRMADA", t.plusMinutes(2));
+        assertThat(consultarDisponibilidade("", token).corpo().get("totalElementos").asLong()).isEqualTo(4);
+    }
+    @ParameterizedTest @ValueSource(strings={"EM_MONITORAMENTO", "AGUARDANDO_CONFERENCIA", "BLOQUEADO_PREVENTIVAMENTE", "DESCARTADO",
+            "CADASTRADO", "EM_TRANSPORTE", "FINALIZADO"})
+    void consultaDisponibilidadeNaoPublicaFlagsInconsistentesNemInventaRetirada(String estado) throws Exception {
+        boolean alterarTransporte = Set.of("CADASTRADO", "EM_TRANSPORTE", "FINALIZADO").contains(estado);
+        transporteConsulta(ta, alterarTransporte ? estado : "RECEBIDO");
+        estadoConsulta(la, alterarTransporte ? "LIBERADO" : estado, "CONFIRMADA");
+        OffsetDateTime t = OffsetDateTime.parse("2026-11-13T09:00:00-03:00");
+        eventoDisponibilidade(la.getId(), "Lote", "DISPONIBILIDADE_RETIRADA", t);
+        conferirDisponibilidade(a.getId(), vacina.getId(), token(cidadao), "SEM_INFORMACAO", t);
+    }
+    @Test void consultaDisponibilidadeNaoInfereEstoqueOuLogisticaPelaExistenciaDeLinha() throws Exception {
+        String token = token(cidadao);
+        var comLotesInternos = consultarDisponibilidade("", token).corpo();
+        for (EstadoLote estado : EstadoLote.values()) {
+            estadoConsulta(la, estado.name(), "NAO_DISPONIVEL");
+            assertThat(consultarDisponibilidade("", token).corpo()).isEqualTo(comLotesInternos);
+        }
+        lotes.deleteAllInBatch(); transportes.deleteAllInBatch();
+        assertThat(consultarDisponibilidade("", token).corpo()).isEqualTo(comLotesInternos);
+        // Uma flag elegível legada sem evento não ganha um horário inventado.
+        Transporte transporte = transportes.saveAndFlush(new Transporte("SEM-HISTORICO", a));
+        Lote lote = lotes.saveAndFlush(new Lote("LEGADO", vacina, transporte));
+        transporteConsulta(transporte, "RECEBIDO"); estadoConsulta(lote, "LIBERADO", "CONFIRMADA");
+        conferirDisponibilidade(a.getId(), vacina.getId(), token, "CONFIRMADA", null);
+    }
+    @Test void consultaDisponibilidadeFiltraPaginaContaParesEOrdenaComDesempate() throws Exception {
+        Vacina outraVacina = vacinas.saveAndFlush(new Vacina("Outra", new BigDecimal("2"), new BigDecimal("8"), BigDecimal.ONE));
+        lotes.saveAndFlush(new Lote("REPETIDO", vacina, ta));
+        String token = token(cidadao);
+        var filtrada = consultarDisponibilidade("?unidadeId=" + b.getId(), token).corpo();
+        assertThat(filtrada.get("totalElementos").asLong()).isEqualTo(2);
+        for (JsonNode item : filtrada.get("conteudo")) assertThat(item.get("unidade").get("id").asString()).isEqualTo(b.getId().toString());
+        assertThat(consultarDisponibilidade("?vacinaId=" + outraVacina.getId(), token).corpo().get("totalElementos").asLong()).isEqualTo(2);
+        conferirDisponibilidade(b.getId(), outraVacina.getId(), token, "SEM_INFORMACAO", null);
+        var desc = consultarDisponibilidade("?sort=vacinaNome,desc&sort=unidadeNome,desc", token).corpo().get("conteudo");
+        assertThat(desc.get(0).get("vacina").get("id").asString()).isEqualTo(outraVacina.getId().toString());
+        assertThat(desc.get(0).get("unidade").get("id").asString()).isEqualTo(b.getId().toString());
+        jdbc.update("update unidade_saude set nome = 'Mesmo nome'"); jdbc.update("update vacina set nome = 'Mesmo nome'");
+        var esperado = new ArrayList<String>();
+        for (UUID u : List.of(a.getId(), b.getId())) for (UUID v : List.of(vacina.getId(), outraVacina.getId())) esperado.add(u + "/" + v);
+        Collections.sort(esperado);
+        var recebido = new ArrayList<String>();
+        for (int pagina = 0; pagina < 4; pagina++) {
+            var res = consultarDisponibilidade("?page=" + pagina + "&size=1&sort=unidadeNome,asc", token).corpo();
+            assertThat(res.get("pagina").asInt()).isEqualTo(pagina); assertThat(res.get("tamanho").asInt()).isEqualTo(1);
+            assertThat(res.get("totalElementos").asLong()).isEqualTo(4); assertThat(res.get("totalPaginas").asInt()).isEqualTo(4);
+            assertThat(res.get("conteudo").size()).isEqualTo(1);
+            var item = res.get("conteudo").get(0); recebido.add(item.get("unidade").get("id").asString() + "/" + item.get("vacina").get("id").asString());
+        }
+        assertThat(recebido).containsExactlyElementsOf(esperado);
+        assertThat(consultarDisponibilidade("?size=1000", token).corpo().get("tamanho").asInt()).isEqualTo(100);
+        var vazia = consultarDisponibilidade("?page=4&size=1", token).corpo();
+        assertThat(vazia.get("conteudo").isEmpty()).isTrue(); assertThat(vazia.get("totalElementos").asLong()).isEqualTo(4);
+        for (String filtro : List.of("unidadeId", "vacinaId")) {
+            var ausente = consultarDisponibilidade("?" + filtro + "=" + UUID.randomUUID(), token).corpo();
+            assertThat(ausente.get("conteudo").isEmpty()).isTrue(); assertThat(ausente.get("totalElementos").asLong()).isZero();
+        }
+    }
+    @ParameterizedTest @ValueSource(strings={"unidadeId=invalido", "vacinaId=invalido", "sort=id,asc", "sort=atualizadoEm,desc", "sort=unidadeNome%3BDELETE,asc"})
+    void consultaDisponibilidadeRejeitaFiltrosEOrdenacaoInvalidos(String query) throws Exception {
+        status(req("GET", CONSULTA_DISPONIBILIDADE + "?" + query, null, token(cidadao)), 400);
+        assertThat(auditoria.count()).isZero(); assertThat(lotes.count()).isEqualTo(2);
     }
     @Test void corsPermiteApenasOrigemExplicitaEAuthorization() throws Exception {
         for(String origem: List.of("http://localhost:5173","https://nao-autorizada.invalid")) {

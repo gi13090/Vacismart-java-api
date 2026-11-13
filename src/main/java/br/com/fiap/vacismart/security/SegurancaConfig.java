@@ -71,6 +71,7 @@ public class SegurancaConfig {
                 .authorizeHttpRequests(a -> a
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/cadastro", "/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/me").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/disponibilidade").hasAnyRole("CIDADAO", "FUNCIONARIO", "GESTOR")
                     .anyRequest().hasAnyRole("FUNCIONARIO", "GESTOR"))
                 .exceptionHandling(e -> e
                     .authenticationEntryPoint((req, res, ex) -> ErrosSeguranca.escrever(res, 401))

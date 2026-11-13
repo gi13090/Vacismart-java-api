@@ -229,3 +229,22 @@ AcessoService.lote aplica perfil e unidade, preservando D-038 (funcionário alhe
 ### D-056 — Permissão do gestor e limites
 
 RN11/RN22 descrevem FUNCIONARIO da unidade, enquanto o endpoint da própria especificação inclui FUNCIONARIO e GESTOR; RN07 e a segurança vigente dão escopo global ao gestor no MVP. O pedido J5-C confirma explicitamente ambos: funcionário ativo da unidade responsável ou gestor ativo global. Preservar essa interpretação sem editar a especificação, criar vínculo de unidade para gestor ou confiar em claims/clientes. Retirar disponibilidade não é descarte/revisão da decisão técnica, não autoriza aplicação real nem oferece reserva ou quantidade garantida. D-002 Mobile e D-053 OpenAPI continuam pendentes em seus escopos próprios.
+
+
+## Decisões da J5-D — 13/11/2026
+
+J5-C aprovada e commitada localmente em 87f462b839ce35a92838c683a02a2915136f4a67. Seus 234 testes aprovados são históricos. Planejamento J5-D aprovado para implementação exclusiva da consulta cidadã; J5-E/J6/DevOps/J7 permanecem fora desta entrega.
+
+### D-057 — Catálogos públicos e ausência de informação
+
+CONFIRMADO pelo pedido: universo unidade × vacina, com ids/nomes públicos e filtros/paginação SQL, sem derivar a presença de linhas de lotes ou transportes internos. Inspeção das entidades, especificação e dados fictícios de exemplo confirmou a projeção adequada: UUID/nome de UnidadeSaude e Vacina; parâmetros térmicos e dados operacionais ficam excluídos. O modelo não possui marca de sigilo/oferta no catálogo; esses nomes são destinados à identificação pública no protótipo, não a anotações internas ou dados pessoais. A linha não afirma oferta, estoque, transporte ou recebimento. Alternativa de pares baseados em lotes revelaria associações não publicadas; apenas histórico publicado omitiria pares sem informação e não atende ao universo aprovado. Alterar esse universo exigirá revisar contrato/contagem, sem introduzir catálogo de oferta agora.
+
+### D-058 — Situação e horário independentes
+
+Enum não persistido SituacaoDisponibilidade: CONFIRMADA se existe LIBERADO/CONFIRMADA/RECEBIDO; CONFIRMACAO_RETIRADA somente sem confirmação válida e com retirada explícita, sem flag CONFIRMADA residual inconsistente; demais casos SEM_INFORMACAO. Nenhuma situação negativa afirma falta real de estoque. Horário usa MAX de eventos entidade Lote e ações DISPONIBILIDADE_CONFIRMADA/RETIRADA, sobre todos os lotes do par. Inclui lote já retirado e ignora auditoria genérica, autor e justificativa. Sem evento pertinente retorna null, não data sintética. Última ação do grupo não determina estado: retirar um lote mantém a confirmação de outro. Alternativa de usar somente o último evento falharia nesse caso; ordenar UUID para desempatar horários também inventaria causalidade. Dados legados incoerentes não são reparados por GET; confirmação inelegível não é positiva e não prova retirada. Sem nova coluna/migration.
+
+### D-059 — Consulta pública autenticada, agregação e paginação
+
+Três perfis ativos acessam a mesma visão pública global, sem unidade operacional obrigatória; AcessoService.atual também no serviço. Matcher exclusivo HttpMethod.GET na rota exata, antes da regra operacional; demais rotas permanecem protegidas. DTO específico com referência pública aninhada evita expor VacinaSaidaDto técnico ou entidades. Serviço somente leitura; repository customizado via EntityManager/Hibernate já existentes, com CTE paginando pares antes de agregar estados e auditoria separadamente. Filtros UUID vinculados e whitelist constante de sort unidadeNome/vacinaNome; desempate unit/vac UUID ascendente. Helper Paginacao antigo preservado porque seu desempate id não se aplica ao agregado. Validação HTTP de sort fica antes do proxy @Repository: sua tradução de IllegalArgumentException produziria 500; serviço garante 400, mantendo whitelist defensiva no SQL. Sem alterações globais no Advice.
+
+Contagem deriva do mesmo catálogo/filtros, sem contar lotes/eventos. Conteúdo/horário na mesma instrução SQL; contagem separada pode acompanhar alterações concorrentes normais de catálogo. Não introduzir locks de transporte ou isolamento especial. Produto dos catálogos tem custo crescente; não há teste de carga nem plano de execução PostgreSQL comprovado. Começar com índices existentes, sem migration preventiva. Compatibilidade operacional PostgreSQL e três regressões independentes para J5-E, sem alegá-las a partir de H2. Contrato Mobile atualizado para o endpoint implementado, sem presumir validação bilateral D-002 ou criar catálogos públicos adicionais.

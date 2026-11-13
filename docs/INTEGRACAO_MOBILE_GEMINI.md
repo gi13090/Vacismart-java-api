@@ -1,6 +1,6 @@
 # VaciSmart — Contrato de integração Mobile/Gemini da J4
 
-Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. O corpo original descreve esse marco J4; os adendos J5-A/J5-B/J5-C abaixo registram recebimento, decisão técnica e alteração de disponibilidade internos. Demais funcionalidades J5/J6/J7 e DevOps permanecem planejadas.
+Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. O corpo original descreve esse marco J4; os adendos J5-A/J5-B/J5-C abaixo registram recebimento, decisão técnica e alteração de disponibilidade internos; o adendo J5-D de 13/11/2026 acrescenta a consulta cidadã implementada, em revisão. Referência de entrada J5-D: master/87f462b839ce35a92838c683a02a2915136f4a67; alterações J5-D ainda sem commit. Demais funcionalidades J5/J6/J7 e DevOps permanecem planejadas.
 
 O arquivo externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md` foi informado pelo responsável, mas não localizado no workspace. Não foi indicado outro diretório acessível para esse arquivo e não foram pesquisados diretórios privados indiscriminadamente. Esta versão foi reconstruída a partir de seis controllers, DTOs, serviços, segurança e documentação presentes no repositório. Nenhuma equivalência com o contrato original da equipe `02_MODELO_E_CONTRATOS.md` foi comprovada; esse arquivo continua ausente e **D-002 permanece aberta**. O uso real com o aplicativo ainda exige revisão e validação bilateral.
 
@@ -300,19 +300,19 @@ Perda de telemetria: método interno verifica mais de três minutos desde o últ
 
 Centralize base URL por ambiente e a montagem de cabeçalhos numa camada HTTP do cliente. Gere modelos Dart com os nomes JSON portugueses exatos; use String para UUID, num/decimal com cuidado para temperaturas e DateTime.parse para ISO-8601, preservando o instante ao exibir no fuso escolhido. Não arredondar medidas para passar na validação. Campos null dos DTOs devem ser tolerados. Não enviar propriedade futura de tela no payload REST.
 
-Separe autenticação, conta e operação por perfil. Para CIDADAO, apenas cadastro/login/conta são reais nesta J4. Telas futuras de caderneta ou disponibilidade podem usar mocks **explicitamente identificados**, em fonte de dados distinta, sem chamar endpoints inventados e sem misturar dados operacionais restritos. Não criar telas de localização de transporte, lote ou telemetria para cidadão. A aplicação não conecta ao banco e não manipula chave privada JWT.
+Separe autenticação, conta e operação por perfil. Para CIDADAO, cadastro/login/conta são reais na J4 e a consulta GET de disponibilidade passa a existir na J5-D conforme adendo ao final. Telas futuras de caderneta podem usar mocks **explicitamente identificados**, em fonte de dados distinta, sem chamar endpoints inventados e sem misturar dados operacionais restritos. Não criar telas de localização de transporte, lote ou telemetria para cidadão. A aplicação não conecta ao banco e não manipula chave privada JWT.
 
 Trate a resposta conforme status antes de decodificar: 204 não tem JSON; 400 pode trazer campos; 401 exige autenticar novamente; 403 é permissão/CORS; 409 exige revisar o estado. Trate página vazia e campos nulos. Não presumir idempotência de POST de leitura: cada envio aceito persiste uma nova leitura. Não reenvie automaticamente mutações após erro de rede sem consultar estado e decidir com o usuário/contrato. Logout é local; não inventar /auth/refresh ou /auth/logout.
 
 Texto de orientação para o colega usar com o Gemini:
 
-> Use esta versão do contrato e os DTOs exatos da J4 como limites do backend existente. Implemente somente a camada Flutter solicitada pelo responsável Mobile. Preserve nomes JSON, /api/v1, UUIDs, datas com offset, paginação e a matriz de permissões. Configure a base URL por ambiente, envie Bearer e trate 204/ProblemDetail/CORS. Não crie endpoints ou campos novos nem altere o backend para adaptar uma tela. Cidadão só tem cadastro/login/própria conta; caderneta e disponibilidade são futuras e só podem usar mocks identificados. Nunca exponha recursos operacionais ao cidadão. Não use credenciais reais ou tokens completos em exemplos/logs. Cache, HATEOAS e Actuator estão definitivamente excluídos do backend. Registre incompatibilidades e leve-as à validação conjunta, sem presumir que D-002 foi encerrada.
+> Use esta versão do contrato, os DTOs exatos da J4 e os adendos J5 implementados como limites do backend existente. Implemente somente a camada Flutter solicitada pelo responsável Mobile. Preserve nomes JSON, /api/v1, UUIDs, datas com offset, paginação e a matriz de permissões. Configure a base URL por ambiente, envie Bearer e trate 204/ProblemDetail/CORS. Não crie endpoints ou campos novos nem altere o backend para adaptar uma tela. Cidadão tem cadastro/login/própria conta e GET /api/v1/disponibilidade conforme adendo J5-D; caderneta continua futura e só pode usar mocks identificados. Nunca exponha recursos operacionais ao cidadão. Não use credenciais reais ou tokens completos em exemplos/logs. Cache, HATEOAS e Actuator estão definitivamente excluídos do backend. Registre incompatibilidades e leve-as à validação conjunta, sem presumir que D-002 foi encerrada.
 
 Roteiro de integração conjunta ainda a executar: conferir versão/base URL e conectividade; cadastro cidadão → login → me; confirmar negações operacionais; usar contas operacionais fornecidas privadamente pelo responsável para listar apenas a unidade; validar DTO/página/erros e o fluxo térmico permitido; comparar este documento com o contrato original da equipe e registrar diferenças antes de qualquer alteração. Não executar esse roteiro com dados reais ou transformar esses passos propostos em evidência de teste já concluído.
 
 ## 12. Limites, funcionalidades futuras e validações anteriores
 
-Ainda não implementados: finalização posterior, consulta informativa ao cidadão, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /disponibilidade ou /aplicacoes como rotas existentes por aparecerem na especificação futura; a decisão técnica J5-B e o POST interno de disponibilidade J5-C estão nos adendos abaixo; GET /api/v1/disponibilidade continua futuro.
+Ainda não implementados: finalização posterior, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /aplicacoes como rota existente por aparecer na especificação futura; a decisão técnica J5-B e o POST interno de disponibilidade J5-C estão nos adendos abaixo; GET /api/v1/disponibilidade foi implementado na J5-D, conforme adendo ao final.
 
 Fora do MVP: GPS/rastreamento, localização/rotas de transporte, agendamento/reserva, SUS/RNDS, notificações externas, QR Code, IA e dados clínicos reais. Os três recursos Spring excluídos na seção 1 não são requisitos futuros.
 
@@ -358,3 +358,40 @@ FUNCIONARIO ativo só opera na unidade responsável pelo lote; GESTOR ativo mant
 Sucesso 204 sem corpo. Repetição válida do valor atual também 204, sem evento ou novo horário. Mudança efetiva gera auditoria DISPONIBILIDADE_CONFIRMADA ou DISPONIBILIDADE_RETIRADA com UUID e Clock do backend. Comandos concorrentes são serializados; idempotência não é deduplicação global depois de uma mudança oposta interveniente.
 
 Erros: 400 entrada/UUID/enum inválido, nulo/ausente ou campo extra; 401 autenticação ausente/inválida/inativa; 403 cidadão ou unidade alheia (também recurso inexistente para funcionário); 404 lote inexistente para gestor; 409 transporte/estado técnico incompatível. Preservados ProblemDetail e GETs operacionais existentes para consultar o resultado. Não foi criado GET cidadão /disponibilidade, quantidade garantida, reserva, agendamento ou finalização. Sem coluna atualizadoEm: seu uso futuro em J5-D depende dos eventos e da definição do caso sem evento, sem horário inventado. Demais contratos anteriores preservados; D-002 segue aberta e J5 inteira não está concluída.
+
+
+## Adendo J5-D — consulta informativa ao cidadão — 13/11/2026
+
+Novo par método/rota (33º): `GET /api/v1/disponibilidade`. Requer Bearer JWT válido e usuário ativo persistido. CIDADAO, FUNCIONARIO e GESTOR recebem a mesma visão pública global, sem exigir vínculo com a unidade consultada. Esta é a única autorização acrescentada ao cidadão; GETs de unidades/vacinas operacionais, lotes, transportes, leituras, ocorrências e históricos continuam restritos conforme J4. Os adendos J5-A/B/C são registros históricos e seus comandos internos continuam preservados.
+
+| Parâmetro opcional | Regra |
+|---|---|
+| unidadeId | UUID público; filtro exato de unidade |
+| vacinaId | UUID público; filtro exato de vacina, cumulativo com unidade |
+| page | Página iniciada em 0; padrão 0 |
+| size | Padrão 20; máximo 100 |
+| sort | unidadeNome ou vacinaNome, asc/desc; pode repetir sort para compor critérios |
+
+Sem sort, ordenar unidadeNome asc e vacinaNome asc. Sempre há desempate por UUID de unidade e vacina ascendentes; não enviar `sort=id`, `situacao` ou `atualizadoEm`. Exemplos: `/api/v1/disponibilidade?unidadeId=<UUID>&size=20&sort=vacinaNome,asc` e `/api/v1/disponibilidade?sort=vacinaNome,desc&sort=unidadeNome,asc`.
+
+200 com `PaginaDto<DisponibilidadeSaidaDto>`. Exemplo fictício para catálogo com uma unidade e uma vacina:
+
+```json
+{"conteudo":[{"vacina":{"id":"11111111-1111-4111-8111-111111111111","nome":"Vacina Demo A"},"unidade":{"id":"22222222-2222-4222-8222-222222222222","nome":"Unidade Demonstrativa 01"},"situacao":"SEM_INFORMACAO","atualizadoEm":null,"mensagem":"Disponibilidade informada pela unidade. Consulte as condições de atendimento; não há reserva ou garantia de dose."}],"pagina":0,"tamanho":20,"totalElementos":1,"totalPaginas":1}
+```
+
+Cada item tem SOMENTE vacina/unidade (id/nome públicos), situacao, atualizadoEm e mensagem fixa. Não há lote/transporte/dispositivo/funcionário, temperaturas, ocorrências, histórico, justificativa ou quantidade. Não buscar dados operacionais para enriquecer a tela cidadã.
+
+Universo: todas as combinações dos catálogos públicos unidade × vacina, com filtros e paginação no banco. Uma linha não significa que a unidade oferece a vacina, tem estoque, recebeu uma remessa ou teve transporte. Par sem lote e par com logística não publicada são SEM_INFORMACAO; não transformar isso em “sem doses”. TotalElementos conta pares do catálogo, nunca lotes ou doses.
+
+Situações:
+
+- CONFIRMADA: ao menos um lote LIBERADO/CONFIRMADA e transporte RECEBIDO. Informação da unidade, sem garantia ou reserva.
+- CONFIRMACAO_RETIRADA: sem confirmação válida atual, com evento explícito de retirada e sem flag confirmada residual inconsistente. A confirmação foi retirada; não significa falta real de estoque.
+- SEM_INFORMACAO: evidência insuficiente, inclusive sem lotes/eventos, dados não publicados ou flags inelegíveis inconsistentes. Não equivale a indisponibilidade real.
+
+AtualizadoEm é nullable, ISO-8601 com offset quando presente: maior horário dos eventos de confirmação/retirada de todos os lotes do par, incluindo os já retirados. Ignora decisão técnica e demais eventos. Sem evento pertinente é null, inclusive para flag elegível legada sem auditoria. Não preencher com relógio do dispositivo/consulta. A última retirada pode atualizar horário mantendo CONFIRMADA se outro lote continuar confirmado. Só retirar a última confirmação muda para CONFIRMACAO_RETIRADA; reconfirmar volta a CONFIRMADA. Repetição idempotente não renova horário. Sempre exibir a mensagem fixa, mesmo sem informação.
+
+Erros: 400 UUID/sort inválido, no padrão ProblemDetail existente; 401 autenticação ausente/inválida/expirada ou usuário inativo. UUID válido inexistente e página além do total retornam 200 com conteúdo vazio e total coerente com filtros. Nenhuma mutação, reserva, oferta quantitativa, agendamento ou finalização integra esta consulta.
+
+Backend validado em testes H2 conforme relatório privado; validação operacional PostgreSQL reservada à J5-E. Integração efetiva Flutter não executada; D-002 continua aberta. Contratos anteriores preservados, sem dependências/migrations novas. J5-D em revisão; J5 inteira permanece incompleta.
