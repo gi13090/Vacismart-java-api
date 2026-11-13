@@ -92,10 +92,15 @@ public class MonitoramentoService {
 
     public boolean verificarPerdaTelemetria(UUID transporteId) {
         Transporte transporte = buscarComBloqueio(transporteId);
+        return verificarPerdaTelemetria(transporte, OffsetDateTime.now(relogio));
+    }
+
+    // Uso interno pelos fluxos transacionais que já detêm o lock do transporte.
+    boolean verificarPerdaTelemetria(Transporte transporte, OffsetDateTime agora) {
         if (transporte.getEstado() != EstadoTransporte.EM_TRANSPORTE) return false;
+        UUID transporteId = transporte.getId();
         OffsetDateTime referencia = leituras.findFirstByTransporteIdOrderByRecebidaEmDesc(transporteId)
                 .map(LeituraTemperatura::getRecebidaEm).orElse(transporte.getInicioMonitoramentoEm());
-        OffsetDateTime agora = OffsetDateTime.now(relogio);
         if (Duration.between(referencia, agora).compareTo(limiteTelemetria) <= 0) return false;
         return abrirOcorrencia(transporte, TipoOcorrencia.PERDA_DE_TELEMETRIA, agora);
     }
@@ -107,7 +112,8 @@ public class MonitoramentoService {
         encerrarAberta(transporteId, tipo, OffsetDateTime.now(relogio), justificativa);
     }
 
-    private Transporte buscarComBloqueio(UUID id) {
+    // Compartilhado somente entre serviços transacionais do mesmo pacote.
+    Transporte buscarComBloqueio(UUID id) {
         Objects.requireNonNull(id, "Transporte obrigatório");
         acesso.transporte(id);
         // Serializa leitura, início e verificação por transporte, inclusive entre instâncias da API.

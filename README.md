@@ -1,6 +1,8 @@
 # VaciSmart — API Java
 
-Estado atual em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
+Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
+Em 13/11/2026, a J5-A acrescenta o recebimento operacional descrito ao final deste documento, em revisão. As menções anteriores a recebimento pendente registram os marcos J1–J4. A J5 inteira permanece incompleta.
+
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
 ## Problema, beneficiário e ODS
@@ -100,9 +102,9 @@ Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade 
 O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
 
 ## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão, recebimento e decisão continuam pendentes; cadastro/login e própria conta estão na seção J4.
+A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão e decisão continuam pendentes; recebimento foi acrescentado na J5-A; cadastro/login e própria conta estão na seção J4.
 
-Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
+Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e o adendo de recebimento J5-A, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
 
 ## Justificativas: consultas, cascade e fetch
 Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
@@ -132,6 +134,7 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
 | CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
 | Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
+| Recebimento de transporte (J5-A) | Implementado; em revisão |
 | OpenAPI (J5) | Pendente |
 | Compose final / Azure | Pendente — DevOps |
 
@@ -519,3 +522,14 @@ O cadastro público de cidadão já havia sido validado na etapa anterior de 12/
 O fluxo térmico completo **do escopo J4** percorreu normal → atenção → fora da faixa → normal, com quatro leituras persistidas, ocorrência térmica aberta, bloqueio preventivo, auditoria/histórico e nenhuma liberação ou descarte automático. Consultas JPQL de ocorrências com estado ausente, ABERTA e ENCERRADA, contagem e paginação foram aprovadas para funcionário autorizado e gestor. Os três registros preexistentes (dois usuários e uma unidade) permaneceram integralmente preservados. O bootstrap foi desabilitado no reinício dos testes e as duas instâncias temporárias da API foram encerradas.
 
 Esses resultados são registros das validações anteriores, não testes executados nesta atualização documental. H2 não comprova PostgreSQL; validação local não comprova produção, carga/concorrência PostgreSQL, hardware ou integração Mobile. Recebimento, decisão técnica, liberação, disponibilidade informativa e caderneta digital continuam sem implementação; OpenAPI/Swagger permanece previsto. O documento externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md`, informado pelo responsável, não foi localizado no workspace. A versão [interna para Mobile/Gemini](docs/INTEGRACAO_MOBILE_GEMINI.md) foi reconstruída a partir do código atual; não comprova equivalência ao `02_MODELO_E_CONTRATOS.md` ausente nem encerra o alinhamento bilateral. Nenhum contrato HTTP foi modificado.
+
+
+## Recebimento operacional — J5-A — 13/11/2026
+
+`POST /api/v1/transportes/{id}/recebimento`, sem corpo JSON, exige Bearer JWT válido. FUNCIONARIO atua somente na unidade de destino; GESTOR tem o escopo global do MVP. CIDADAO e funcionário de outra unidade recebem 403. Sucesso: 204 sem corpo. Transporte inexistente segue J4: 403 para funcionário e 404 para gestor; estado diferente de EM_TRANSPORTE, inclusive repetição, retorna 409. Ausência de autenticação ou JWT inválido retorna 401.
+
+O transporte passa a RECEBIDO; somente lotes EM_MONITORAMENTO passam a AGUARDANDO_CONFERENCIA. BLOQUEADO_PREVENTIVAMENTE e demais estados são preservados. Não há liberação, descarte, confirmação de disponibilidade, encerramento automático de ocorrência ou finalização. Eventos imutáveis RECEBIDO (Transporte) e AGUARDANDO_CONFERENCIA (cada Lote efetivamente alterado) registram UUID do autor autenticado e o mesmo instante do Clock do backend. Não há campos de entrada para identidade, perfil, unidade ou horário.
+
+FluxoOperacionalService coordena uma transação única. Reutiliza o lock pessimista, refresh e revalidação da unidade de MonitoramentoService; a regra de telemetria foi compartilhada minimamente no mesmo pacote. Antes da transição, verifica silêncio maior que o limite configurado desde a última recepção/início. Se necessário, abre PERDA_DE_TELEMETRIA uma única vez com auditoria SISTEMA, sem bloquear ou liberar lotes. Ocorrências existentes permanecem abertas. Nenhuma tabela, coluna, migration, dependência ou configuração de segurança foi alterada.
+
+Testes novos reaproveitam fixtures HTTP/JWT e integração transacional existentes. Os resultados atuais estão no relatório privado A–L e são distintos das evidências históricas acima. H2 não comprova comportamento de locks/índices no PostgreSQL. J5-B/J5-C/J5-D, J6 e DevOps não foram executados. Codex foi usado na implementação, testes e documentação da J5-A; a entrega aguarda revisão externa.

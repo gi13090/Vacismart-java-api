@@ -49,6 +49,7 @@ class SegurancaIntegrationTest {
     @Autowired JwtEncoder jwtEncoder;
     @Autowired JwtDecoder jwtDecoder;
     @Autowired CadastroService cadastro;
+    @Autowired br.com.fiap.vacismart.service.FluxoOperacionalService fluxo;
     @Autowired Clock clock;
     @Autowired PlatformTransactionManager txManager;
     static final String SENHA = "FicticiaSomenteTeste!123";
@@ -280,6 +281,130 @@ class SegurancaIntegrationTest {
             })).isInstanceOf(AccessDeniedException.class);
         }
         assertThat(transportes.findById(ta.getId()).orElseThrow().getCodigo()).isEqualTo("TRANSFERIDO");
+    }
+    @ParameterizedTest @ValueSource(booleans={false,true})
+    void recebimentoPorFuncionarioOuGestorAuditaSemDisponibilizar(boolean peloGestor) throws Exception {
+        Usuario autor = peloGestor ? gestor : funcionario;
+        String token = token(autor);
+        status(req("POST","/api/v1/transportes/"+ta.getId()+"/monitoramento",null,token),204);
+        Instant antes = clock.instant();
+        var res = req("POST","/api/v1/transportes/"+ta.getId()+"/recebimento",null,token);
+        status(res,204);
+        assertThat(res.corpo().isNull()).isTrue();
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.RECEBIDO);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.AGUARDANDO_CONFERENCIA);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+        var eventos = auditoria.findByReferenciaIdOrderByDataHoraAsc(ta.getId()).stream()
+                .filter(e -> e.getAcao().equals("RECEBIDO")).toList();
+        assertThat(eventos).singleElement().satisfies(e -> {
+            assertThat(e.getAutor()).isEqualTo(autor.getId().toString());
+            assertThat(e.getDataHora().toInstant()).isBetween(antes,clock.instant());
+        });
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId())).singleElement().satisfies(e -> {
+            assertThat(e.getAcao()).isEqualTo("AGUARDANDO_CONFERENCIA");
+            assertThat(e.getAutor()).isEqualTo(autor.getId().toString());
+            assertThat(e.getDataHora()).isEqualTo(eventos.getFirst().getDataHora());
+        });
+        long eventosAntes = auditoria.count();
+        status(req("POST","/api/v1/transportes/"+ta.getId()+"/recebimento",null,token),409);
+        status(req("POST","/api/v1/transportes/"+ta.getId()+"/leituras",Map.of("transporteId",ta.getId(),
+                "dispositivoId","DEMO","temperaturaC",9.3,"medidaEm",clock.instant().toString()),token),409);
+        assertThat(auditoria.count()).isEqualTo(eventosAntes);
+        assertThat(leituras.count()).isZero();
+    }
+    @Test void recebimentoRespeitaAutenticacaoEscopoEEstado() throws Exception {
+        String rota="/api/v1/transportes/"+ta.getId()+"/recebimento";
+        status(req("POST",rota,null,null),401);
+        status(req("POST",rota,null,"invalido"),401);
+        status(req("POST",rota,null,token(cidadao)),403);
+        status(req("POST",rota,null,token(outro)),403);
+        status(req("POST",rota,null,token(funcionario)),409);
+        String ausente="/api/v1/transportes/"+UUID.randomUUID()+"/recebimento";
+        status(req("POST",ausente,null,token(funcionario)),403);
+        status(req("POST",ausente,null,token(gestor)),404);
+        assertThat(auditoria.count()).isZero();
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.CADASTRADO);
+    }
+    @Test void recebimentoPreservaBloqueioEOcorrenciaTermica() throws Exception {
+        String token=token(funcionario);
+        String base="/api/v1/transportes/"+ta.getId();
+        status(req("POST",base+"/monitoramento",null,token),204);
+        status(req("POST",base+"/leituras",Map.of("transporteId",ta.getId(),"dispositivoId","DEMO",
+                "temperaturaC",9.3,"medidaEm",clock.instant().toString()),token),201);
+        status(req("POST",base+"/recebimento",null,token),204);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.BLOQUEADO_PREVENTIVAMENTE);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId())).singleElement()
+                .extracting(EventoAuditoria::getAcao).isEqualTo("BLOQUEADO_PREVENTIVAMENTE");
+        assertThat(ocorrencias.findByTransporteIdAndTipoAndEstado(ta.getId(),TipoOcorrencia.FORA_DA_FAIXA,
+                EstadoOcorrencia.ABERTA)).isPresent();
+    }
+    @Test void recebimentosConcorrentesPersistemSomenteUmaTransicao() throws Exception {
+        String token=token(funcionario);
+        String base="/api/v1/transportes/"+ta.getId();
+        status(req("POST",base+"/monitoramento",null,token),204);
+        var largada=new java.util.concurrent.CountDownLatch(1);
+        try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Integer> tarefa=() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",base+"/recebimento",null,token).status();
+            };
+            var um=executor.submit(tarefa); var dois=executor.submit(tarefa); largada.countDown();
+            assertThat(List.of(um.get(15,java.util.concurrent.TimeUnit.SECONDS),dois.get(15,java.util.concurrent.TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(204,409);
+        }
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(ta.getId())).extracting(EventoAuditoria::getAcao)
+                .containsExactlyInAnyOrder("EM_TRANSPORTE","RECEBIDO");
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId())).hasSize(1);
+    }
+    @Test void leituraConcorrenteAoRecebimentoPreservaOrdemDosEstados() throws Exception {
+        String token=token(funcionario);
+        String base="/api/v1/transportes/"+ta.getId();
+        status(req("POST",base+"/monitoramento",null,token),204);
+        var largada=new java.util.concurrent.CountDownLatch(1);
+        int statusLeitura;
+        try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var recebimento=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",base+"/recebimento",null,token).status();
+            });
+            var leitura=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",base+"/leituras",Map.of("transporteId",ta.getId(),"dispositivoId","DEMO",
+                        "temperaturaC",9.3,"medidaEm",clock.instant().toString()),token).status();
+            });
+            largada.countDown();
+            assertThat(recebimento.get(15,java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(204);
+            statusLeitura=leitura.get(15,java.util.concurrent.TimeUnit.SECONDS);
+        }
+        assertThat(statusLeitura).isIn(201,409);
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.RECEBIDO);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(statusLeitura==201
+                ? EstadoLote.BLOQUEADO_PREVENTIVAMENTE : EstadoLote.AGUARDANDO_CONFERENCIA);
+        assertThat(leituras.count()).isEqualTo(statusLeitura==201 ? 1 : 0);
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId())).hasSize(1);
+    }
+    @Test void recebimentoRevalidaUnidadeAposTransferenciaComContextoAntigo() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(funcionario.getId().toString(),null,List.of()));
+        try(var executor=java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            assertThatThrownBy(() -> new TransactionTemplate(txManager).executeWithoutResult(tx -> {
+                assertThat(transportes.findById(ta.getId()).orElseThrow().getUnidadeSaude().getId()).isEqualTo(a.getId());
+                var transferencia=executor.submit(() -> {
+                    SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(gestor.getId().toString(),null,List.of()));
+                    try {
+                        cadastro.atualizarTransporte(ta.getId(),new br.com.fiap.vacismart.web.dto.TransporteEntradaDto("TRANSFERIDO",b.getId()));
+                        // O destino mudou e o monitoramento começou enquanto o primeiro contexto guardava A.
+                        new TransactionTemplate(txManager).executeWithoutResult(t -> transportes.findById(ta.getId()).orElseThrow()
+                                .iniciarMonitoramento(OffsetDateTime.now(clock)));
+                    } finally { SecurityContextHolder.clearContext(); }
+                });
+                try { transferencia.get(10,java.util.concurrent.TimeUnit.SECONDS); }
+                catch(Exception ex) { throw new IllegalStateException("Falha ao preparar transferência",ex); }
+                fluxo.receberTransporte(ta.getId());
+            })).isInstanceOf(AccessDeniedException.class);
+        }
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.EM_TRANSPORTE);
+        assertThat(auditoria.count()).isZero();
     }
     @Test void corsPermiteApenasOrigemExplicitaEAuthorization() throws Exception {
         for(String origem: List.of("http://localhost:5173","https://nao-autorizada.invalid")) {

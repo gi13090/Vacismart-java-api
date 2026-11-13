@@ -37,6 +37,7 @@ class MonitoramentoServiceIntegrationTest {
     @org.springframework.test.context.bean.override.mockito.MockitoBean
     br.com.fiap.vacismart.security.AcessoService acesso;
     @Autowired MonitoramentoService service;
+    @Autowired FluxoOperacionalService fluxo;
     @Autowired TransporteRepository transportes;
     @Autowired UnidadeSaudeRepository unidades;
     @Autowired VacinaRepository vacinas;
@@ -275,6 +276,81 @@ class MonitoramentoServiceIntegrationTest {
             executor.awaitTermination(5, TimeUnit.SECONDS);
             limparComprometidos(tx);
         }
+    }
+
+    private UUID autorRecebimento() {
+        Usuario usuario = org.mockito.Mockito.mock(Usuario.class);
+        UUID id = UUID.randomUUID();
+        org.mockito.Mockito.when(usuario.getId()).thenReturn(id);
+        org.mockito.Mockito.when(acesso.atual()).thenReturn(usuario);
+        return id;
+    }
+
+    @ParameterizedTest
+    @CsvSource({"180,false", "181,true"})
+    void recebimentoVerificaSilencioSemPrimeiraLeitura(long segundos, boolean perda) {
+        UUID autor = autorRecebimento();
+        Cenario c = cenario(false);
+        service.iniciarMonitoramento(c.transporteId());
+        relogio.definir(INSTANTE.plusSeconds(segundos));
+        fluxo.receberTransporte(c.transporteId());
+        em.flush(); em.clear();
+        assertThat(ocorrencias.findByTransporteIdAndTipoAndEstado(c.transporteId(), PERDA_DE_TELEMETRIA, ABERTA).isPresent()).isEqualTo(perda);
+        assertThat(lotes.findById(c.loteId()).orElseThrow().getEstado()).isEqualTo(AGUARDANDO_CONFERENCIA);
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(c.loteId())).singleElement().satisfies(e -> {
+            assertThat(e.getAutor()).isEqualTo(autor.toString());
+            assertThat(e.getDataHora().toInstant()).isEqualTo(INSTANTE.plusSeconds(segundos));
+        });
+    }
+
+    @Test
+    void recebimentoUsaUltimaRecepcaoEPreservaTelemetriaAbertaSemDuplicar() {
+        autorRecebimento();
+        Cenario c = cenario(true);
+        registrar(c,"5.2");
+        relogio.definir(INSTANTE.plusSeconds(181));
+        assertThat(service.verificarPerdaTelemetria(c.transporteId())).isTrue();
+        fluxo.receberTransporte(c.transporteId());
+        em.flush(); em.clear();
+        assertThat(ocorrencias.count()).isEqualTo(1);
+        Ocorrencia aberta = ocorrencias.findByTransporteIdAndTipoAndEstado(c.transporteId(), PERDA_DE_TELEMETRIA, ABERTA).orElseThrow();
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(aberta.getId())).singleElement()
+                .extracting(EventoAuditoria::getAcao).isEqualTo("ABERTA");
+        assertThat(lotes.findById(c.loteId()).orElseThrow().getEstado()).isEqualTo(AGUARDANDO_CONFERENCIA);
+    }
+
+    @Test
+    void recebimentoNaoConfundeMedicaoAtrasadaComSilencioNaRecepcao() {
+        autorRecebimento();
+        Cenario c = cenario(false);
+        service.iniciarMonitoramento(c.transporteId());
+        relogio.definir(INSTANTE.plusSeconds(170));
+        service.registrarLeitura(c.transporteId(),"DEMO",new BigDecimal("5.2"),OffsetDateTime.ofInstant(INSTANTE, relogio.getZone()));
+        relogio.definir(INSTANTE.plusSeconds(181));
+        fluxo.receberTransporte(c.transporteId());
+        em.flush(); em.clear();
+        assertThat(ocorrencias.count()).isZero();
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void rollbackDoRecebimentoDesfazTransporteLotesTelemetriaEAuditoria() {
+        autorRecebimento();
+        TransactionTemplate tx = new TransactionTemplate(transactionManager);
+        Cenario c = tx.execute(status -> cenario(true));
+        relogio.definir(INSTANTE.plusSeconds(181));
+        try {
+            long eventosAntes = auditoria.count();
+            assertThatIllegalStateException().isThrownBy(() -> tx.executeWithoutResult(status -> {
+                fluxo.receberTransporte(c.transporteId());
+                em.flush();
+                throw new IllegalStateException("Falha simulada após persistência do recebimento");
+            }));
+            assertThat(transportes.findById(c.transporteId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.EM_TRANSPORTE);
+            assertThat(lotes.findById(c.loteId()).orElseThrow().getEstado()).isEqualTo(EM_MONITORAMENTO);
+            assertThat(ocorrencias.count()).isZero();
+            assertThat(auditoria.count()).isEqualTo(eventosAntes);
+        } finally { limparComprometidos(tx); }
     }
 
     private void limparComprometidos(TransactionTemplate tx) {

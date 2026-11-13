@@ -1,6 +1,6 @@
 # VaciSmart — Contrato de integração Mobile/Gemini da J4
 
-Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. Este documento descreve exclusivamente o que existe no código desse marco; não implementa nem anuncia J5/J6/J7 ou DevOps.
+Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. O corpo original descreve esse marco J4; o adendo J5-A abaixo registra exclusivamente o novo recebimento interno. Demais funcionalidades J5/J6/J7 e DevOps permanecem planejadas.
 
 O arquivo externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md` foi informado pelo responsável, mas não localizado no workspace. Não foi indicado outro diretório acessível para esse arquivo e não foram pesquisados diretórios privados indiscriminadamente. Esta versão foi reconstruída a partir de seis controllers, DTOs, serviços, segurança e documentação presentes no repositório. Nenhuma equivalência com o contrato original da equipe `02_MODELO_E_CONTRATOS.md` foi comprovada; esse arquivo continua ausente e **D-002 permanece aberta**. O uso real com o aplicativo ainda exige revisão e validação bilateral.
 
@@ -138,7 +138,7 @@ OffsetDateTime: ISO-8601 com offset explícito, por exemplo `2026-11-12T12:00:00
 | TipoOcorrencia | FORA_DA_FAIXA, PERDA_DE_TELEMETRIA |
 | EstadoOcorrencia | ABERTA, ENCERRADA |
 
-Enum modelado não implica transição implementada. Na J4, transporte inicia CADASTRADO e pode ir a EM_TRANSPORTE; lote inicia EM_MONITORAMENTO/NAO_DISPONIVEL e pode ser bloqueado preventivamente. Não existe comando REST para receber/finalizar/liberar/descartar/confirmar disponibilidade. Tratar valor inesperado em resposta como dado desconhecido da versão, sem inventar transição no cliente.
+Enum modelado não implica transição implementada. Na J4, transporte inicia CADASTRADO e pode ir a EM_TRANSPORTE; lote inicia EM_MONITORAMENTO/NAO_DISPONIVEL e pode ser bloqueado preventivamente. A J5-A acrescenta somente o comando de recebimento descrito no adendo abaixo. Não existe comando REST para finalizar/liberar/descartar/confirmar disponibilidade. Tratar valor inesperado em resposta como dado desconhecido da versão, sem inventar transição no cliente.
 
 ## 7. Exemplos JSON fictícios
 
@@ -312,7 +312,7 @@ Roteiro de integração conjunta ainda a executar: conferir versão/base URL e c
 
 ## 12. Limites, funcionalidades futuras e validações anteriores
 
-Ainda não implementados: recebimento, finalização posterior, decisão técnica, liberação/descarte, confirmação/consulta pública de disponibilidade, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /disponibilidade, /aplicacoes, /recebimento ou /decisao-tecnica como rotas existentes por aparecerem na especificação futura.
+Ainda não implementados: finalização posterior, decisão técnica, liberação/descarte, confirmação/consulta pública de disponibilidade, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /disponibilidade, /aplicacoes ou /decisao-tecnica como rotas existentes por aparecerem na especificação futura.
 
 Fora do MVP: GPS/rastreamento, localização/rotas de transporte, agendamento/reserva, SUS/RNDS, notificações externas, QR Code, IA e dados clínicos reais. Os três recursos Spring excluídos na seção 1 não são requisitos futuros.
 
@@ -329,3 +329,12 @@ Evidências **históricas**, anteriores à elaboração deste documento, em 12/1
 | Preservação | Três registros preexistentes preservados; bootstrap desabilitado no reinício; instâncias temporárias encerradas |
 
 Esses resultados fundamentam o fechamento aprovado da J4. Não são testes executados pelo Mobile/Gemini nem por exemplos deste documento. H2 não substitui PostgreSQL e demonstração local não comprova produção, carga/concorrência PostgreSQL, aplicação inédita de V2, todos os checks/locks adversos, hardware ou integração real do aplicativo. A consolidação atual registra suas próprias verificações no relatório local A–L; não reabre a J4 nem encerra automaticamente o alinhamento bilateral.
+
+
+## Adendo J5-A — recebimento interno — 13/11/2026
+
+O inventário J4 acima mantém suas 29 rotas; esta entrega acrescenta o 30º par: `POST /api/v1/transportes/{id}/recebimento`. Sem corpo JSON e sem DTO novo. Exige Bearer de FUNCIONARIO da unidade de destino ou GESTOR (todas as unidades no MVP). CIDADAO não tem acesso nem recebe dados operacionais.
+
+Sucesso 204 sem corpo: EM_TRANSPORTE → RECEBIDO; lotes EM_MONITORAMENTO → AGUARDANDO_CONFERENCIA; lotes bloqueados permanecem. Não libera/descarta, confirma disponibilidade, finaliza transporte nem encerra ocorrências. Autor e horário vêm exclusivamente do backend. Antes da transição, o backend verifica o limite configurado de silêncio e pode abrir PERDA_DE_TELEMETRIA, sem bloquear lotes.
+
+Erros seguem J4: 401 sem autenticação/JWT inválido, 403 cidadão/outra unidade (também UUID inexistente para funcionário), 404 transporte inexistente para gestor, 409 estado diferente de EM_TRANSPORTE, inclusive repetição. Enviar somente o UUID na rota e Authorization; nenhum campo de autor, perfil, unidade ou horário é necessário. As respostas dos GETs existentes permitem consultar o estado posterior e os históricos autorizados. Integração conjunta Mobile permanece pendente (D-002); J5 inteira não está concluída.

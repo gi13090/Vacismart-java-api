@@ -15,7 +15,10 @@ import java.net.URI;
 public class TransporteController {
     private final CadastroService service;
     private final MonitoramentoService monitoramento;
-    public TransporteController(CadastroService service, MonitoramentoService monitoramento) { this.service = service; this.monitoramento = monitoramento; }
+    private final FluxoOperacionalService fluxo;
+    public TransporteController(CadastroService service, MonitoramentoService monitoramento, FluxoOperacionalService fluxo) {
+        this.service = service; this.monitoramento = monitoramento; this.fluxo = fluxo;
+    }
     @PostMapping
     public ResponseEntity<TransporteSaidaDto> criar(@Valid @RequestBody TransporteEntradaDto dto) {
         var resposta = service.criarTransporte(dto);
@@ -30,6 +33,11 @@ public class TransporteController {
     public TransporteSaidaDto atualizar(@PathVariable UUID id, @Valid @RequestBody TransporteEntradaDto dto) { return service.atualizarTransporte(id, dto); }
     @PostMapping("/{id}/monitoramento")
     public ResponseEntity<Void> iniciar(@PathVariable UUID id) { monitoramento.iniciarMonitoramento(id); return ResponseEntity.noContent().build(); }
+    @PostMapping("/{id}/recebimento")
+    public ResponseEntity<Void> receber(@PathVariable UUID id) {
+        fluxo.receberTransporte(id);
+        return ResponseEntity.noContent().build();
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID id) { service.excluirTransporte(id); return ResponseEntity.noContent().build(); }
 }

@@ -173,3 +173,20 @@ Consolidação autorizada sem implementação nova: AGENTS alinhado à D-046; co
 Wrapper 3.3.4 only-script, Maven **3.9.11**, URL original preservada: [ZIP exato no Maven Central](https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip). O ZIP foi baixado por HTTPS e seu SHA-512 comparado integralmente ao [checksum oficial do mesmo artefato](https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.11/apache-maven-3.9.11-bin.zip.sha512), com correspondência. Só então foi calculado localmente o SHA-256 desse ZIP validado e adicionado como distributionSha256Sum: `0d7125e8c91097b36edb990ea5934e6c68b4440eef4ea96510a0f6815e7eeadb`. Trata-se de SHA-256 derivado do arquivo autenticado pelo SHA-512 oficial, não de um valor de outra versão ou de tar.gz. O Wrapper confere esse checksum ao baixar a distribuição; instalações já em cache podem seguir diretamente para execução. Nenhuma dependência/versão/URL foi atualizada.
 
 A origem oficial, os algoritmos e o método acima permitem reproduzir a verificação de integridade da distribuição. O limite do bind só passa a valer para containers criados/reconfigurados com o Compose atualizado; esta atividade não altera o serviço em execução.
+
+
+## Decisões da J5-A — 13/11/2026
+
+### D-048 — Recebimento humano e atomicidade
+
+Implementado somente recebimento (RN09/RN10/RN16/RN21): FluxoOperacionalService transacional reutiliza o método de lock de MonitoramentoService, agora interno ao pacote, com refresh pessimista e nova validação de unidade da J4. Mantém estado, lotes e eventos na mesma transação. Alternativa: duplicar o lock ou criar uma nova camada compartilhada; descartadas nesta etapa por aumentarem código sem necessidade. Reversão futura deve preservar serialização e teste de contexto antigo após transferência. GESTOR mantém acesso a todas as unidades do MVP (RN07); não se inventou vínculo de unidade para esse perfil.
+
+### D-049 — Telemetria na fronteira do recebimento
+
+O recebimento verifica a RN05 antes de mudar o transporte para RECEBIDO, sob o mesmo lock e usando o mesmo instante de Clock dos eventos humanos. Extraída uma sobrecarga interna da regra existente, sem duplicar duração, consulta de última recepção ou abertura de ocorrência. Mais que o limite configurado abre perda com autor SISTEMA; igualdade não abre. Ocorrências abertas não são duplicadas nem encerradas. Alternativa de não verificar perderia o silêncio vencido, pois a verificação posterior ignora transportes recebidos. Sem agendador, liberação ou bloqueio por telemetria.
+
+### D-050 — Autoria e contrato de recebimento
+
+POST sem DTO/corpo, com UUID da rota; identidade humana vem de AcessoService.atual e horário de Clock, sem novas colunas. Cada transição efetiva recebe um evento imutável; lote já bloqueado não recebe evento redundante de conferência. Abertura automática de ocorrência preserva SISTEMA. Alternativa de novas colunas autor/recebidoEm exigiria migration e duplicaria informação já auditada. Especificação e contratos J4 preservados; apenas nova rota interna, vedada ao cidadão. O adendo Mobile não encerra D-002.
+
+Workspace localizado em /home/gio/Documentos/Global Solution/VaciSmart, remoto oficial, master/16d0bab0e7e11462a52d780402a1ce5c1b1a97fa e árvore inicial limpa, com autorização explícita para essa cópia. Sem commits/push. J5-A em revisão; nenhuma outra parte de J5 ou etapa posterior foi implementada. Testes atuais e limitações constam no relatório privado; registros J1–J4 acima são históricos.

@@ -45,6 +45,13 @@ public class Transporte extends Entidade {
         estado = EstadoTransporte.EM_TRANSPORTE;
     }
 
+    public void receber() {
+        if (estado != EstadoTransporte.EM_TRANSPORTE) {
+            throw new IllegalStateException("Recebimento exige transporte EM_TRANSPORTE");
+        }
+        estado = EstadoTransporte.RECEBIDO;
+    }
+
     public void atualizar(String codigo, UnidadeSaude unidadeSaude) {
         if (estado != EstadoTransporte.CADASTRADO) {
             throw new IllegalStateException("Somente transporte CADASTRADO pode ser atualizado");
