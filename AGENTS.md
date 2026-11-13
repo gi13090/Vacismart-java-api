@@ -17,7 +17,7 @@ Perfis dev (PostgreSQL, Flyway, validate) e test (H2, sem Flyway, create-drop). 
 ## Segurança e qualidade
 Segurança é responsabilidade do backend: nunca confiar no front. Não colocar segredos, senhas reais ou tokens no Git nem nos logs. Credenciais de .env.example são exemplos locais, nunca de produção.
 Toda regra de negócio exige teste automatizado. Atualizar a documentação antes de concluir tarefas.
-Spring Cache, Spring HATEOAS e Spring Actuator são exigências oficiais previstas para próximas etapas; não implementar na J1. A orientação anterior de dispensa foi corrigida pelo solicitante em 06/11/2026 (D-007).
+Por decisão definitiva do responsável em 12/11/2026 (D-046), Spring Cache, Spring HATEOAS e Spring Boot Actuator estão excluídos do planejamento. Não recomendar sua implementação nos próximos prompts, não implementar em J5/J6/J7 nem usá-los como critérios internos de aceite. A orientação histórica D-007 foi superada. OpenAPI/Swagger permanece planejado. Não ampliar o escopo sem autorização explícita do responsável.
 NÃO implementar no projeto: GPS, rota ou coordenadas; agendamento ou reserva; push, e-mail ou SMS; integração SUS/RNDS; QR Code; mapa de surtos; IA.
 
 ## Comandos
@@ -27,7 +27,7 @@ Com JAVA_HOME apontando para JDK 21 e seu bin no PATH:
 - `docker compose -f compose.dev.yml up -d` (após copiar .env.example para .env)
 
 ## Workspace e procedimento antes de cada etapa
-O diretório exclusivo do projeto é `/home/gio/Documentos/Global Solution/VaciSmart`. O caminho antigo não deve ser utilizado.
+Trabalhar exclusivamente na raiz da cópia do VaciSmart confirmada para a atividade. Identificar a raiz com `git rev-parse --show-toplevel` e conferir README, `artifactId=vacismart-java-api` no pom.xml, branch, HEAD e alterações locais esperados antes de editar. Não presumir que qualquer repositório Git seja a cópia correta; não alternar para clones antigos ou diretórios alternativos sem confirmação do responsável. Se houver divergência ou dúvida sobre a cópia, interromper antes de escrever.
 Antes de cada etapa: executar `git status -sb`, `git log --oneline -5`, verificar `git diff` e `git diff --cached` e ler os quatro documentos obrigatórios. Preservar alterações preexistentes e conferir o estado real antes de qualquer operação.
 
 ## Git e definição de pronto

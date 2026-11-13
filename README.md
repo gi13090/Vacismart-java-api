@@ -1,18 +1,21 @@
 # VaciSmart — API Java
 
-Estado atual: J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente.
+Estado atual em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
 ## Problema, beneficiário e ODS
-O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana, oferecendo ao cidadão informação de disponibilidade sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
+O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A informação de disponibilidade ao cidadão é objetivo do projeto, ainda não implementado na J4, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
 
 ## Equipe
+Nome da equipe: pendente de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni; RM, turma e relação completa de integrantes ainda pendentes de confirmação.
+
 | Nome | RM | Turma |
 |---|---|---|
 | A preencher | A preencher | A preencher |
 
 ## Pitch
 Link: a preencher.
+Demais links de entrega: pendentes de confirmação; nenhum endereço foi anunciado sem validação.
 
 ## Como executar
 Pré-requisitos: JDK 21, Docker Engine e Docker Compose, porta 5432 disponível e acesso ao Maven Central no primeiro uso. O Maven Wrapper fixa Maven 3.9.11. Spring Boot 4.1.2 ([versão estável](https://spring.io/projects/spring-boot/), [compatibilidade Java](https://docs.spring.io/spring-boot/system-requirements.html)); decisões em DUVIDAS.md.
@@ -23,7 +26,9 @@ export JAVA_HOME=/caminho/do/jdk-21
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
-Na raiz:
+Antes de iniciar a API, disponibilize o par RSA externo e exporte `JWT_CHAVE_PUBLICA` e `JWT_CHAVE_PRIVADA` na mesma sessão, conforme [Chaves e ambiente local](#chaves-e-ambiente-local). Sem as chaves, o startup falha. Os testes no perfil test geram seu próprio par efêmero.
+
+Na raiz (copie o exemplo somente se ainda não houver .env local; preserve os valores existentes):
 ```bash
 cp .env.example .env
 # Revise .env: os valores fornecidos são exemplos exclusivos do desenvolvimento local.
@@ -34,11 +39,14 @@ docker compose -f compose.dev.yml ps
 set -a
 . ./.env
 set +a
+# As chaves JWT externas já devem estar disponíveis no ambiente desta sessão.
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 O arquivo .env deve conter somente atribuições de variáveis confiáveis; o comando acima o executa no shell. A API também aceita DB_URL, DB_USER e DB_PASSWORD já exportadas. Defaults de exemplo existem somente no perfil dev. Não há perfil padrão nem credenciais de produção. API operacional em http://127.0.0.1:8080/api/v1; A raiz não possui endpoint; sem token, a proteção padrão responde401. O servidor continua vinculado a 127.0.0.1 para demonstração local. Configure as chaves RSA externas antes do startup, conforme Segurança — J4. Endpoints operacionais exigem JWT.
 
-O perfil dev usa PostgreSQL, Flyway e `ddl-auto=validate`. `V0__baseline.sql` contém somente comentário e foi preservada. `V1__modela_nucleo_termico.sql` cria as sete tabelas do núcleo, chaves estrangeiras, checks e índices; não há seed automático na J2. O perfil test usa H2 em memória (modo PostgreSQL), sem Flyway e `create-drop`. Fuso America/Sao_Paulo e JSON com datas ISO-8601. Nunca usar as credenciais de exemplo fora do ambiente local.
+O perfil dev usa PostgreSQL, Flyway e `ddl-auto=validate`. `V0__baseline.sql` contém somente comentário e foi preservada. `V1__modela_nucleo_termico.sql` cria as sete tabelas do núcleo, chaves estrangeiras, checks e índices; não há seed automático na J2. `V2__modela_usuarios.sql` acrescenta os usuários da J4; V0, V1 e V2 foram validadas no PostgreSQL 17.6 conforme o fechamento de 12/11/2026. O perfil test usa H2 em memória (modo PostgreSQL), sem Flyway e `create-drop`. Fuso America/Sao_Paulo e JSON com datas ISO-8601. Nunca usar as credenciais de exemplo fora do ambiente local.
+
+O Compose de desenvolvimento publica o PostgreSQL somente em `127.0.0.1:5432`, mantendo a porta interna 5432 e a comunicação pela rede dos containers. A restrição vale ao criar/reconfigurar o serviço com o arquivo atualizado; containers existentes não foram recriados nesta consolidação. O Maven Wrapper mantém Maven 3.9.11 e sua URL original, agora com `distributionSha256Sum` conferido contra o ZIP validado pelo SHA-512 oficial do Maven Central; fonte e método registrados em DUVIDAS.md (D-047).
 
 Para parar sem apagar o volume:
 ```bash
@@ -75,13 +83,13 @@ Os vínculos são unidirecionais do lado N para 1. Auditoria identifica o objeto
 
 ### Regras implementadas na J2
 
-- `MonitoramentoService.iniciarMonitoramento`: CADASTRADO → EM_TRANSPORTE, exige pelo menos um lote e registra auditoria SISTEMA. Ação de simulação, exposta localmente por POST /api/v1/transportes/{id}/monitoramento na J3, ainda sem autenticação.
+- `MonitoramentoService.iniciarMonitoramento`: CADASTRADO → EM_TRANSPORTE, exige pelo menos um lote e registra auditoria SISTEMA. Ação de simulação, exposta localmente por POST /api/v1/transportes/{id}/monitoramento na J3, então sem autenticação; desde a J4 exige JWT e autorização por perfil/unidade.
 - `registrarLeitura`: aceita somente EM_TRANSPORTE; valida dispositivo, decimal e medição entre o início do monitoramento e o recebimento. Persiste a leitura e classifica cada vacina usando BigDecimal.compareTo. Aceita medições atrasadas dentro desse intervalo; telemetria considera recebimento.
 - Demo A: NORMAL de 3 a 7 inclusive, ATENCAO de 2 a menos de 3 ou acima de 7 até 8, FORA_DA_FAIXA abaixo de 2 ou acima de 8. A atenção fica registrada na classificação e não bloqueia.
 - Faixas por vacina: min < max, margem >= 0 e 2 × margem <= max − min. Valores numeric(10,3), até sete dígitos inteiros e três decimais, são validados antes de persistir para impedir arredondamento que altere a classificação. Não se fixam faixas universais.
 - Transporte misto: uma leitura do sensor representa o ambiente compartilhado. Cada lote é avaliado com os parâmetros da sua vacina. A classificação persistida da leitura é a mais grave encontrada; somente lotes cuja vacina estiver FORA_DA_FAIXA e cujo estado for EM_MONITORAMENTO são bloqueados. Auditoria identifica cada lote afetado. A classificação agregada não deve ser usada futuramente para decidir todos os lotes. Não se deduz a temperatura individual de cada embalagem.
 - Desvio abre no máximo uma ocorrência ABERTA por tipo/transporte. Normalização não encerra a ocorrência térmica nem libera lotes; novos desvios não repetem o evento de bloqueio de lote já bloqueado. Nunca há descarte automático ou conclusão clínica.
-- `encerrarOcorrencia`: encerra uma aberta com justificativa e auditoria SISTEMA, sem mudar lote ou disponibilidade. É operação interna, sem decisão técnica nem autenticação nesta etapa.
+- `encerrarOcorrencia`: encerra uma aberta com justificativa e auditoria SISTEMA, sem mudar lote ou disponibilidade. É operação interna, sem decisão técnica nem autenticação no marco J2; na J4 o serviço verifica acesso ao transporte. Não há endpoint de encerramento.
 - `verificarPerdaTelemetria`: método explícito, sem agendador. Mais de três minutos desde o último recebimento (ou início sem leituras) abre PERDA_DE_TELEMETRIA. Exatamente três minutos não abre. Parâmetro `vacismart.telemetria.limite` aceita duração ISO-8601 positiva, padrão `PT3M`. O retorno booleano informa se uma ocorrência nova foi criada. Telemetria sozinha não bloqueia lotes. Retomada de leitura válida encerra somente essa ocorrência e audita; não libera lote nem confirma disponibilidade.
 - Todas as operações do serviço são transacionais. Lock pessimista na linha de Transporte serializa início, leituras, encerramento e verificação. Índice único parcial no PostgreSQL reforça a unicidade de ocorrências abertas. Testes H2 verificam também concorrência e rollback.
 
@@ -94,6 +102,8 @@ O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e
 ## Endpoints
 A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão, recebimento e decisão continuam pendentes; cadastro/login e própria conta estão na seção J4.
 
+Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
+
 ## Justificativas: consultas, cascade e fetch
 Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
 
@@ -102,27 +112,26 @@ Sete interfaces estendem JpaRepository. As consultas derivadas do núcleo J2 ate
 ## Testes
 Execute `./mvnw -B test` com JDK 21 completo. A suíte contém teste de contexto, testes isolados do classificador e integração do serviço/repositories com `@SpringBootTest`, perfil test e H2. Os testes controlam `Clock`, sem Thread.sleep, e cobrem limites, parâmetros inválidos, transporte misto, persistência, auditoria, bloqueio seletivo, ausência de liberação/descarte automático, duplicidade sequencial/concorrente, rollback e perda de telemetria.
 
-T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 dependiam de etapas posteriores; T06/T10 têm cobertura HTTP de segurança na J4. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. Evidências históricas da J1/J2 e resultados atuais da J3 aparecem separados abaixo.
+T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 dependiam de etapas posteriores; T06/T10 têm cobertura HTTP de segurança na J4. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. As evidências históricas de J1–J4 e a validação PostgreSQL de 12/11/2026 aparecem separadas abaixo.
 
 ## Limitações e escopo
 J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI continua para J5. Compose final API + banco e implantação Azure ficam com DevOps.
-Spring Cache, Spring HATEOAS e Spring Actuator são requisitos oficiais previstos para próximas etapas, sem implementação ou dependências nesta J2. A orientação inicial de dispensa foi corrigida pelo solicitante (D-007). Não implementar GPS, rota/coordenadas, agendamento/reserva, push/e-mail/SMS, integração SUS/RNDS, QR Code, mapa de surtos ou IA. A especificação da API prevalece sobre os materiais de referência.
+Por decisão definitiva do responsável em 12/11/2026, **Spring Cache, Spring HATEOAS e Spring Boot Actuator não serão implementados** e não integram J5/J6/J7; o planejamento histórico D-007 foi superado por D-046. OpenAPI/Swagger permanece previsto. Continuam fora do MVP: GPS/rastreamento de veículos, rotas/localização de transporte, agendamento/reserva, notificações externas (push/e-mail/SMS), integração SUS/RNDS, QR Code, mapa de surtos, IA e funcionalidades clínicas reais. A especificação da API prevalece sobre os materiais de referência; caderneta digital e disponibilidade informativa ao cidadão não estão implementadas.
 
 ## Declaração de uso de IA
-Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Na J4 foi usado para implementar autenticação/autorização, testes, documentação e relatório local; revisão humana permanece pendente. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nesta execução. A equipe deve complementar apenas com seu uso real e registrar a revisão humana realizada; não há declaração de revisão humana já concluída.
+Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Na J4 foi usado para implementar autenticação/autorização, testes, documentação e relatório local. Em 12/11/2026, após a validação operacional final e a revisão externa dos relatórios pelo ChatGPT, o responsável aprovou oficialmente a conclusão da J4. A atualização documental pré-push também utilizou Codex, sem implementação nova. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nas execuções relatadas. A equipe deve complementar apenas com seu uso real, sem atribuir revisões ou atividades não comprovadas.
 
 ## Status por funcionalidade
 | Funcionalidade | Status |
 |---|---|
 | Bootstrap Maven/Java 21, perfis e pacotes | Criado |
-| PostgreSQL local / Flyway baseline | Configurado; validação abaixo |
+| PostgreSQL 17.6 / Flyway V0, V1 e V2 | Validação operacional local aprovada em 12/11/2026; limites na seção J4 |
 | Governança e especificação | Criadas |
 | Contexto no perfil test | Validação abaixo |
 | Entidades, repositories, regras térmicas e auditoria (J2) | Implementados; evidências abaixo |
 | Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
 | CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
-| Spring Cache, HATEOAS e Actuator | Previstos para próximas etapas, fora da J2 |
-| Segurança (J4) | Implementada; validações e limites na seção J4 |
+| Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
 | OpenAPI (J5) | Pendente |
 | Compose final / Azure | Pendente — DevOps |
 
@@ -130,9 +139,9 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 Em 06/11/2026:
 - Maven Wrapper gerado pelo plugin oficial 3.3.4, tipo only-script, fixando Maven 3.9.11.
 - A instalação `/usr/lib/jvm/java-21-openjdk-amd64` continha runtime 21, mas não javac; primeira tentativa de teste falhou com `release version 21 not supported` ao recorrer ao compilador 17.
-- Usado Eclipse Temurin 21.0.13+9 temporariamente em `/tmp/vacismart-jdk21`, baixado pela API oficial Adoptium, com SHA-256 verificado. Nenhum Java instalado, JAVA_HOME global ou configuração de sistema foi alterado. Esse caminho é temporário e não é pré-requisito permanente.
+- Usado Eclipse Temurin 21.0.13+9 em instalação temporária, baixado pela API oficial Adoptium, com SHA-256 verificado. JAVA_HOME/PATH foram selecionados apenas para a execução; nenhum Java instalado, JAVA_HOME global ou configuração de sistema foi alterado. A instalação temporária não é pré-requisito permanente.
 - Antes dos testes: `java -version` = Temurin 21.0.13; `javac -version` = 21.0.13; `./mvnw -version` = Maven 3.9.11 com runtime Temurin 21.0.13.
-- `JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B test`: **BUILD SUCCESS**, 1 teste, 0 falhas, 0 erros e 0 ignorados; contexto no perfil test com H2. Houve avisos não fatais de processamento de anotações e de autoanexação do agente Mockito/Byte Buddy no Java 21.
+- `./mvnw -B test`, com JAVA_HOME/PATH do JDK acima selecionados para a execução: **BUILD SUCCESS**, 1 teste, 0 falhas, 0 erros e 0 ignorados; contexto no perfil test com H2. Houve avisos não fatais de processamento de anotações e de autoanexação do agente Mockito/Byte Buddy no Java 21.
 - `docker compose -f compose.dev.yml config --quiet`: passou.
 - `docker compose -f compose.dev.yml up -d --wait`: falhou; daemon Docker indisponível (`/var/run/docker.sock` ausente no ambiente com execução autorizada). CLI Docker 29.9.0 e Compose v5.5.1 estão presentes. PostgreSQL e migration V0 **não validados em execução**.
 - `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`: não executado por falta do PostgreSQL. Após disponibilizar o daemon, repetir os passos de execução acima.
@@ -142,16 +151,16 @@ Relatório Surefire local: `target/surefire-reports/`. Os logs temporários de v
 
 ## Referência didática da J2
 
-Consultado [blogBackend](https://github.com/opatriarcha/2026_fiap_2tdspa_java_advanced/tree/2f3f5aaba185267023f4aace702fd2a4c6be81cf/blogBackend), commit `2f3f5aaba185267023f4aace702fd2a4c6be81cf`, em cópia temporária fora deste Git. Exemplos lidos: Post, Comment, Order, CommentRepository, CommentService, AbstractCrudService, CommentServiceTest, CustomRepositoriesIntegrationTest e pom.xml. Foram aproveitados os conceitos de UUID, mapeamentos, Bean Validation, JpaRepository, injeção por construtor, transações em serviços e separação de testes isolados/integração. As classes foram criadas para o domínio VaciSmart.
+Consultado [blogBackend](https://github.com/opatriarcha/2026_fiap_2tdspa_java_advanced/tree/2f3f5aaba185267023f4aace702fd2a4c6be81cf/blogBackend), commit `2f3f5aaba185267023f4aace702fd2a4c6be81cf`, como referência didática. Exemplos lidos: Post, Comment, Order, CommentRepository, CommentService, AbstractCrudService, CommentServiceTest, CustomRepositoriesIntegrationTest e pom.xml. Foram aproveitados os conceitos de UUID, mapeamentos, Bean Validation, JpaRepository, injeção por construtor, transações em serviços e separação de testes isolados/integração. As classes foram criadas para o domínio VaciSmart.
 
 Diferenças: mantemos Boot 4.1.2 e a estrutura de pacotes existente; o exemplo usa 4.1.0 e CRUD genérico. Aqui o serviço coordena regras específicas, usa BigDecimal para temperaturas, referências LAZY sem cascade e auditoria por evento. Post usa ManyToOne sem fetch explícito; Comment explicita LAZY e usa remoção por cascade no banco, que não se aplica ao nosso histórico. Order demonstra CascadeType.ALL, não adotado. QueryDSL, JWT e JaCoCo do exemplo não foram adicionados.
 
 ## Evidências históricas da J2 — 08/11/2026
 
-JDK temporário `/tmp/vacismart-jdk21` (Temurin 21.0.13), Maven Wrapper 3.9.11, Boot 4.1.2, perfil test/H2. Nenhuma versão ou perfil alterado. Comando de cada rodada independente:
+JDK temporário Temurin 21.0.13, Maven Wrapper 3.9.11, Boot 4.1.2, perfil test/H2. Nenhuma versão ou perfil alterado. Com JAVA_HOME/PATH desse JDK selecionados para a execução, cada rodada independente usou:
 
 ```bash
-JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B test
+./mvnw -B test
 ```
 
 | Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
@@ -160,7 +169,7 @@ JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B tes
 | 2 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.321 s | 2026-11-08T00:59:35-03:00 |
 | 3 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.353 s | 2026-11-08T00:59:47-03:00 |
 
-Execução preliminar anterior ao ajuste de normalização decimal: BUILD SUCCESS, 43 testes, zero falhas/erros/ignorados. As três rodadas acima incluem o código final e os casos adicionais de `5.2000`. Logs locais em `/tmp/vacismart-j2-inicial.log` e `/tmp/vacismart-j2-regressao-{1,2,3}.log`; Surefire em `target/surefire-reports/`. Avisos não fatais: processamento de anotações e agente Mockito/Byte Buddy no Java 21.
+Execução preliminar anterior ao ajuste de normalização decimal: BUILD SUCCESS, 43 testes, zero falhas/erros/ignorados. As três rodadas acima incluem o código final e os casos adicionais de `5.2000`. Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais: processamento de anotações e agente Mockito/Byte Buddy no Java 21.
 
 `git diff --check` passou. Especificação, pom, application.yml e V0 comparados com 7e60863: sem alterações. PostgreSQL, aplicação das migrations V0+V1, checks/índice parcial e startup dev continuam não testados operacionalmente; não foi alterado banco real, Azure ou produção. A J2 está pronta para revisão do domínio com essa pendência explícita.
 
@@ -201,7 +210,7 @@ Todas as rotas abaixo recebem o prefixo `/api/v1`. Todos os IDs são UUID. GET n
 | GET | /transportes/{id}/ocorrencias | estado, page, size, sort | Página de ocorrências; JPQL |
 | GET | /transportes/{id}/historico | page, size, sort | Auditoria somente da entidade Transporte; eventos dos lotes são consultados nos respectivos lotes |
 
-Sem DELETE de lotes, CRUD de auditoria ou escrita em ocorrências. Sem endpoints de login, cidadão, recebimento, decisão técnica, disponibilidade, aplicação de doses, liberação ou descarte. Verificação de perda de telemetria e encerramento de ocorrências continuam métodos internos da J2, sem endpoint/agendador nesta J3.
+No marco histórico J3, não havia endpoints de login/cidadão; cadastro público de cidadão, login e própria conta foram acrescentados na J4, conforme a seção de segurança. Permanecem ausentes DELETE de lotes, CRUD de auditoria, escrita pública em ocorrências, recebimento, decisão técnica, disponibilidade, aplicação de doses, liberação ou descarte. Verificação de perda de telemetria e encerramento de ocorrências continuam métodos internos, sem endpoint/agendador.
 
 ### Validações e preservação do histórico
 
@@ -226,7 +235,7 @@ Todas as listagens usam `Pageable` e paginação no banco; nenhuma carrega tudo 
 | ocorrências | id, abertaEm, encerradaEm, tipo, estado |
 | histórico | id, dataHora, acao |
 
-Exemplo: `GET /api/v1/lotes?transporteId={uuid}&vacinaId={uuid}&estado=EM_MONITORAMENTO&page=0&size=10&sort=codigo,asc`. Filtros opcionais combinam com AND; ausência de resultados retorna página vazia. UUID de filtro sem correspondência também retorna página vazia. Já consultar um recurso ou seus filhos por uma rota cujo ID não existe retorna 404.
+Exemplo: `GET /api/v1/lotes?transporteId={uuid}&vacinaId={uuid}&estado=EM_MONITORAMENTO&page=0&size=10&sort=codigo,asc`. Filtros opcionais combinam com AND; ausência de resultados autorizados retorna página vazia. Na J4, transporteId em filtros de lotes também verifica acesso ao transporte: funcionário recebe 403 para pai alheio/inexistente e gestor recebe 404 para inexistente; filtros de unidade alheia são negados. Não garantir página vazia para todo UUID sem correspondência. Consulta de recurso ou filho inexistente sob pai autorizado retorna 404, respeitada a proteção por perfil/unidade descrita na J4.
 
 Formato próprio, estável, sem metadados internos do PageImpl:
 ```json
@@ -295,7 +304,7 @@ Os offsets de saída podem ser normalizados pelo serializador para o mesmo insta
 
 ### Respostas de erro
 
-`ErroApiAdvice` estende ResponseEntityExceptionHandler e usa `application/problem+json` (`ProblemDetail`). 400: Bean Validation, JSON/campo desconhecido, UUID/enum/data inválidos, faixa/precisão inválida ou transporteId divergente da rota. 404: recurso/referência inexistente. 409: estado incompatível, duplicidade, dependências ou concorrência. 405: método HTTP não permitido. 500: resposta genérica segura, sem stack trace ou detalhes de persistência. Erros MVC como 415 preservam seu código adequado. Não há 401/403 funcional nesta J3 sem autenticação.
+`ErroApiAdvice` estende ResponseEntityExceptionHandler e usa `application/problem+json` (`ProblemDetail`). 400: Bean Validation, JSON/campo desconhecido, UUID/enum/data inválidos, faixa/precisão inválida ou transporteId divergente da rota. 404: recurso/referência inexistente. 409: estado incompatível, duplicidade, dependências ou concorrência. 405: método HTTP não permitido. 500: resposta genérica segura, sem stack trace ou detalhes de persistência. Erros MVC como 415 preservam seu código adequado. No marco J3 não havia 401/403 funcional; a J4 acrescentou esses códigos e o escopo por unidade, detalhados na matriz e nos erros de segurança vigentes.
 
 ```json
 {"type":"about:blank","title":"Conflict","status":409,"detail":"Lote já possui monitoramento","instance":"/api/v1/lotes/55555555-5555-5555-5555-555555555555"}
@@ -312,9 +321,9 @@ PostgreSQL real, Flyway V0/V1, checks/índice parcial e startup dev continuam pe
 
 ### Regressões finais independentes da J3 — 08/11/2026
 
-Cada rodada iniciou novo processo Maven/JVM com o código final:
+Cada rodada iniciou novo processo Maven/JVM com o código final, com JAVA_HOME/PATH do JDK 21 selecionados para a execução:
 ```bash
-JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B test
+./mvnw -B test
 ```
 
 | Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
@@ -323,7 +332,7 @@ JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B tes
 | 2 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.076 s | 2026-11-08T22:48:15-03:00 |
 | 3 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.016 s | 2026-11-08T22:48:33-03:00 |
 
-Compilação e empacotamento: `./mvnw -B -DskipTests package`, com o mesmo JDK 21, BUILD SUCCESS; testes omitidos somente nesse comando após as três regressões completas. Artefato local: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Logs em `/tmp/vacismart-j3-regressao-{1,2,3}.log` e `/tmp/vacismart-j3-package.log`; Surefire em target/surefire-reports. Avisos não fatais de annotation processing e Mockito/Byte Buddy persistem.
+Compilação e empacotamento: `./mvnw -B -DskipTests package`, com o mesmo JDK 21, BUILD SUCCESS; testes omitidos somente nesse comando após as três regressões completas. Artefato local: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais de annotation processing e Mockito/Byte Buddy persistem.
 
 ## Correção de mapeamento JPA/PostgreSQL — 09/11/2026
 
@@ -342,11 +351,11 @@ Por que H2 não detectou antes: o perfil test usa create-drop; o Hibernate criav
 
 Validação operacional atual: container existente postgres:17.6 saudável; consulta PostgreSQL confirmou versão17.6 e V0/V1 com success=true. Inicialização real com perfil dev e porta local livre (41293): Flyway `Successfully validated 2 migrations`, schema public na versão1 e `No migration necessary`; Hibernate `Initialized JPA EntityManagerFactory`; aplicação `Started VaciSmartApplication in 5.558 seconds` às 2026-11-09T00:03:16-03:00. O processo temporário foi encerrado após o startup. Banco/volume/container foram preservados; nenhuma migration foi reaplicada. Isto valida o startup/esquema existente, não todos os fluxos funcionais ou concorrência em PostgreSQL. As pendências anteriores de startup/validação de esquema acima são evidências históricas, superadas por esta execução; testes funcionais PostgreSQL, checks/índice parcial sob carga e segurança continuam fora desta correção.
 
-Logs locais: `/tmp/vacismart-mapeamento-antes.log`, `/tmp/vacismart-mapeamento-depois.log` e `/tmp/vacismart-mapeamento-dev.log`. O primeiro registra a falha esperada de regressão antes da correção. Não confundir com falha no código final.
+A falha de regressão anterior à correção, descrita acima, era esperada e não representa falha no código final.
 
-Para repetir no Ubuntu com o PostgreSQL existente, use JDK21 completo no JAVA_HOME/PATH e o .env local já configurado (não o sobrescreva):
+Para repetir no Ubuntu com o PostgreSQL existente, use JDK21 completo no JAVA_HOME/PATH, o .env local já configurado (não o sobrescreva) e as chaves JWT externas exportadas antes do startup, conforme [Chaves e ambiente local](#chaves-e-ambiente-local). A partir de um diretório do clone VaciSmart confirmado, identifique sua raiz pelo Git:
 ```bash
-cd "/home/gio/Documentos/Global Solution/VaciSmart"
+cd "$(git rev-parse --show-toplevel)"
 java -version
 javac -version
 ./mvnw -B test
@@ -432,7 +441,7 @@ export VACISMART_DEMO_CONFIRMACAO=DADOS_FICTICIOS_LOCAIS
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Configure também banco/JDK/chaves antes desse comando. O bootstrap cria duas unidades fictícias A/B e quatro usuários numa transação, codifica senhas e não registra credenciais. Exige e-mails novos e válidos; se alguma conta já existir, falha sem sobrescrevê-la. Depois da primeira execução, retire `VACISMART_DEMO_HABILITADO`, a confirmação e as variáveis de credenciais do ambiente (ou abra uma sessão limpa e reconfigure apenas banco/JWT). Não repetir o bootstrap para alterar usuários. Os testes automatizados comprovam as condições do runner; execução real desse provisionamento no PostgreSQL permanece não testada nesta sessão.
+Configure também banco/JDK/chaves antes desse comando. O bootstrap cria duas unidades fictícias A/B e quatro usuários numa transação, codifica senhas e não registra credenciais. Exige e-mails novos e válidos; se alguma conta já existir, falha sem sobrescrevê-la. Depois da primeira execução, retire `VACISMART_DEMO_HABILITADO`, a confirmação e as variáveis de credenciais do ambiente (ou abra uma sessão limpa e reconfigure apenas banco/JWT). Não repetir o bootstrap para alterar usuários. Os testes automatizados comprovam as condições do runner. A execução real, pendente em 10/11, foi validada no PostgreSQL 17.6 em 12/11/2026: quatro usuários e duas unidades novos, com bootstrap desabilitado no reinício utilizado para os testes e dados preexistentes preservados.
 
 ### Cadastro, login e uso do Bearer
 
@@ -470,17 +479,17 @@ O segundo exemplo é negado ao cidadão. Não incluir tokens reais em arquivos v
 
 Execute com JDK21 completo: `./mvnw -B test`; para empacotar após as regressões: `./mvnw -B -DskipTests package`. Os testes existentes foram preservados: HTTP J3 agora autentica um gestor fictício; os testes de regras térmicas isolam somente a autorização com Mockito, mantendo regras, persistência, concorrência, locks, rollback e auditoria reais. Novos testes HTTP de segurança exercitam o Resource Server, login e serviços/repositories reais com cidadão, gestor e funcionários A/B; verificam revogação por estado/vínculo, JWTs inválidos, paginação/contagem, filtros, IDs e fluxo térmico autorizado. MapeamentoSchemaTest também compara a entidade Usuario com V2, sem substituir PostgreSQL real.
 
-PostgreSQL não esteve acessível nesta execução: sockets dos contextos default e desktop-linux ausentes. Não foram executados V2/Flyway em PostgreSQL, startup dev atual, checks/FKs reais ou provisionamento dev real. A validação PostgreSQL anterior de09/11/2026 refere-se somente a V0/V1. Quando o ambiente voltar, repetir startup dev com as chaves externas, conferir V2 e `ddl-auto=validate`, e executar a demonstração autorizada. O fluxo térmico completo manual no PostgreSQL continua pendente. Não há alegação de validação de produção, hardware ou implantação.
+Registro histórico de 10/11/2026: PostgreSQL não esteve acessível por ausência dos sockets default/desktop-linux; naquela execução não foram testados V2/startup dev, checks/FKs ou provisionamento real, e a evidência de 09/11 cobria apenas V0/V1. As pendências de acesso, validação de V0–V2 no esquema existente, startup, provisionamento e fluxo térmico do escopo J4 foram resolvidas na validação operacional de 12/11 descrita abaixo. Isso não comprova aplicação inédita de V2, todos os checks/FKs sob cenários adversos, carga/concorrência PostgreSQL, produção, hardware ou implantação.
 
-Não foram adicionados Swagger/OpenAPI, Cache, HATEOAS, Actuator, integração Arduino, Flutter, Azure, recebimento, decisão técnica, disponibilidade, doses, agendamento, reserva, GPS ou notificações. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
+Não foram adicionados Swagger/OpenAPI, integração Arduino, Flutter, Azure, recebimento, decisão técnica, disponibilidade ou doses; J5/J6/J7 e DevOps não estão concluídos. Os recursos excluídos definitivamente constam em Limitações e escopo. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
 
 
 ### Regressões finais independentes da J4 — 10/11/2026
 
-Temurin21.0.13+9 (JDK temporário com SHA-256 oficial conferido), Maven Wrapper3.9.11, Boot4.1.2/Security7.1.2 e H2. Cada rodada executou um processo Maven/JVM independente com o código final, recompilando a partir de `clean`:
+Temurin21.0.13+9 (JDK temporário com SHA-256 oficial conferido), Maven Wrapper3.9.11, Boot4.1.2/Security7.1.2 e H2. Cada rodada executou um processo Maven/JVM independente com o código final, recompilando a partir de `clean`, com JAVA_HOME/PATH desse JDK selecionados para a execução:
 
 ```bash
-JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B clean test
+./mvnw -B clean test
 ```
 
 | Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
@@ -491,6 +500,22 @@ JAVA_HOME=/tmp/vacismart-jdk21 PATH=/tmp/vacismart-jdk21/bin:$PATH ./mvnw -B cle
 
 Total180 =96 casos anteriores preservados +1 novo caso de mapeamento Usuario/V2 +74 casos de integração de segurança (HTTP e serviços) +9 casos de entidade/provisionamento. Empacotamento posterior com Java21: `./mvnw -B -DskipTests package`, BUILD SUCCESS, 2.549 s, concluído 2026-11-10T13:18:24-03:00. Artefato: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Nenhuma alteração de código entre as três regressões e o empacotamento.
 
-Logs locais: `/tmp/vacismart-j4-regressao-{1,2,3}.log`, `/tmp/vacismart-j4-resultados.json`, `/tmp/vacismart-j4-package.log`; relatórios Surefire em `target/surefire-reports/`. Avisos não fatais de annotation processing e autoanexação Mockito/Byte Buddy permanecem. Desenvolvimento preliminar: compilação inicialmente corrigiu import ambíguo de RSAKey; primeira suíte163/0/1/0 corrigiu asserção que tentava converter o emissor textual em URL; suíte ajustada175/0/0/0. Antes da revisão final também passaram três rodadas com179 testes (logs /tmp/vacismart-j4-antes-refresh-*). O reforço com refresh sob lock e o teste de transferência concorrente foram adicionados depois; essas rodadas anteriores não validam essa última correção. Teste concorrente isolado:1/0/0/0, BUILD SUCCESS (15.526s; /tmp/vacismart-j4-concorrencia.log). Somente as três rodadas com180 testes acima representam o código final.
+Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais de annotation processing e autoanexação Mockito/Byte Buddy permanecem. Desenvolvimento preliminar: compilação inicialmente corrigiu import ambíguo de RSAKey; primeira suíte163/0/1/0 corrigiu asserção que tentava converter o emissor textual em URL; suíte ajustada175/0/0/0. Antes da revisão final também passaram três rodadas com179 testes. O reforço com refresh sob lock e o teste de transferência concorrente foram adicionados depois; essas rodadas anteriores não validam essa última correção. Teste concorrente isolado:1/0/0/0, BUILD SUCCESS (15.526s). Somente as três rodadas com180 testes acima representam o código final.
 
-MigrationV2 no PostgreSQL, startup dev e bootstrap real: NÃO TESTADOS pelos sockets Docker indisponíveis. Relatório A–L exclusivamente local em `RELATORIO_REVISAO_CHATGPT.md`, ignorado e fora do Git. Aguardar revisão antes da próxima etapa. Nenhum push.
+Em 10/11/2026, migration V2 no PostgreSQL, startup dev e bootstrap real permaneceram NÃO TESTADOS por indisponibilidade dos sockets Docker. Essa limitação histórica foi superada no escopo operacional registrado a seguir. O relatório A–L permanece exclusivamente local em `RELATORIO_REVISAO_CHATGPT.md`, ignorado e fora do Git. O aceite da J4 não autoriza publicação nem avanço automático de etapa.
+
+### Encerramento e validação operacional da J4 — 12/11/2026
+
+**J4 oficialmente concluída e aprovada pelo responsável.** Ambiente validado: Java 21, Spring Boot 4.1.2 e PostgreSQL 17.6, com Flyway V0/V1/V2 já aplicadas e bem-sucedidas. Os dois startups da validação final conferiram as três migrations, sem necessidade de nova aplicação, e o Hibernate validou o esquema com `ddl-auto=validate`.
+
+| Evidência anterior a esta edição documental | Resultado e limite |
+|---|---|
+| Suíte automatizada em 12/11, às 00:03:56 | **180 testes aprovados, 0 falhas, 0 erros, 0 ignorados; BUILD SUCCESS**, 57.854 s; perfil test/H2. As três regressões de 10/11 permanecem registradas acima. |
+| Repetição na auditoria preventiva de 12/11 | **180/0/0/0; BUILD SUCCESS**, 56.235 s; execução isolada do mesmo código, JDK 21/Maven 3.9.11 offline e H2. |
+| Validação operacional final no PostgreSQL 17.6 | **109 verificações aprovadas, 0 falhas no escopo solicitado**; verificações HTTP, claims/assinatura, estado, persistência e integridade, não 109 testes JUnit. |
+
+O cadastro público de cidadão já havia sido validado na etapa anterior de 12/11 e não foi repetido no bloco das 109 verificações. Na validação final, o provisionamento opt-in criou quatro contas demonstrativas — cidadão, funcionários A/B e gestor — representando os três perfis CIDADAO, FUNCIONARIO e GESTOR. Login, JWT RS256 e própria conta foram validados nas quatro contas; senhas com BCrypt, endpoints operacionais protegidos e isolamento entre unidades nos dois sentidos foram conferidos.
+
+O fluxo térmico completo **do escopo J4** percorreu normal → atenção → fora da faixa → normal, com quatro leituras persistidas, ocorrência térmica aberta, bloqueio preventivo, auditoria/histórico e nenhuma liberação ou descarte automático. Consultas JPQL de ocorrências com estado ausente, ABERTA e ENCERRADA, contagem e paginação foram aprovadas para funcionário autorizado e gestor. Os três registros preexistentes (dois usuários e uma unidade) permaneceram integralmente preservados. O bootstrap foi desabilitado no reinício dos testes e as duas instâncias temporárias da API foram encerradas.
+
+Esses resultados são registros das validações anteriores, não testes executados nesta atualização documental. H2 não comprova PostgreSQL; validação local não comprova produção, carga/concorrência PostgreSQL, hardware ou integração Mobile. Recebimento, decisão técnica, liberação, disponibilidade informativa e caderneta digital continuam sem implementação; OpenAPI/Swagger permanece previsto. O documento externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md`, informado pelo responsável, não foi localizado no workspace. A versão [interna para Mobile/Gemini](docs/INTEGRACAO_MOBILE_GEMINI.md) foi reconstruída a partir do código atual; não comprova equivalência ao `02_MODELO_E_CONTRATOS.md` ausente nem encerra o alinhamento bilateral. Nenhum contrato HTTP foi modificado.
