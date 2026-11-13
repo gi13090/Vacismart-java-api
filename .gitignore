@@ -23,3 +23,25 @@ Thumbs.db
 *.key
 *.p12
 *.jks
+*.pfx
+# Nomes convencionais de chaves SSH privadas; chaves públicas .pub não são ignoradas.
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+id_ecdsa_sk
+id_ed25519_sk
+
+# Dumps/backups locais; migrations Flyway .sql continuam versionáveis.
+*.dump
+*.backup
+*.sql.gz
+/backups/
+/dumps/
+/*.bak
+
+# Diretórios e arquivos explicitamente privados da execução local.
+/.private/
+/secrets.local/
+/credentials.local.*
+/credenciais.local.*
