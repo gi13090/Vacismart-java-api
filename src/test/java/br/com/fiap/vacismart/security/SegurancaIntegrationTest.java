@@ -533,6 +533,145 @@ class SegurancaIntegrationTest {
         assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId()).stream()
                 .filter(e -> e.getAcao().equals(destino.name())).toList()).hasSize(1);
     }
+    String rotaDisponibilidade(UUID id) { return "/api/v1/lotes/"+id+"/disponibilidade"; }
+    void liberarParaDisponibilidade(String token) throws Exception {
+        prepararDecisao(token,true);
+        status(req("POST",rotaDecisao(la.getId()),Map.of("decisao","LIBERAR","justificativa","Conferência humana"),token),204);
+    }
+    @ParameterizedTest @ValueSource(booleans={false,true})
+    void disponibilidadeConfirmaRetiraERepeteSemAlterarEstadoTecnico(boolean peloGestor) throws Exception {
+        Lote vizinho=lotes.save(new Lote("LA-VIZINHO",vacina,ta));
+        liberarParaDisponibilidade(token(gestor));
+        assertThat(lotes.findById(la.getId()).orElseThrow().getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+        var historicoAnterior=auditoria.findAll();
+        long leiturasAntes=leituras.count(), ocorrenciasAntes=ocorrencias.count();
+        Usuario autor=peloGestor ? gestor : funcionario;
+        String token=token(autor);
+        long eventos=auditoria.count();
+        Instant antes=clock.instant();
+        for(DisponibilidadeLote destino:List.of(DisponibilidadeLote.CONFIRMADA,DisponibilidadeLote.NAO_DISPONIVEL,DisponibilidadeLote.CONFIRMADA)) {
+            var resposta=req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade",destino),token);
+            status(resposta,204); assertThat(resposta.corpo().isNull()).isTrue();
+            assertThat(auditoria.count()).isEqualTo(++eventos);
+            var eventosLote=auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId());
+            status(req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade",destino),token),204);
+            assertThat(auditoria.count()).isEqualTo(eventos);
+            assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId()))
+                    .extracting(EventoAuditoria::getId,EventoAuditoria::getDataHora,EventoAuditoria::getAcao)
+                    .containsExactlyElementsOf(eventosLote.stream().map(e -> tuple(e.getId(),e.getDataHora(),e.getAcao())).toList());
+            var consulta=req("GET","/api/v1/lotes/"+la.getId(),null,token); status(consulta,200);
+            assertThat(consulta.corpo().get("disponibilidade").asString()).isEqualTo(destino.name());
+            assertThat(consulta.corpo().get("estado").asString()).isEqualTo("LIBERADO");
+        }
+        var disponibilidade=auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId()).stream()
+                .filter(e -> e.getAcao().startsWith("DISPONIBILIDADE_")).toList();
+        assertThat(disponibilidade).extracting(EventoAuditoria::getAcao)
+                .containsExactly("DISPONIBILIDADE_CONFIRMADA","DISPONIBILIDADE_RETIRADA","DISPONIBILIDADE_CONFIRMADA");
+        assertThat(disponibilidade).allSatisfy(e -> {
+            assertThat(e.getEntidade()).isEqualTo("Lote");
+            assertThat(e.getAutor()).isEqualTo(autor.getId().toString());
+            assertThat(e.getDataHora().toInstant()).isBetween(antes,clock.instant());
+            assertThat(e.getJustificativa()).isEqualTo(e.getAcao().equals("DISPONIBILIDADE_CONFIRMADA")
+                    ? "Confirmação de disponibilidade informativa pela unidade" : "Retirada da disponibilidade informativa pela unidade");
+        });
+        assertThat(lotes.findById(vizinho.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.BLOQUEADO_PREVENTIVAMENTE);
+        assertThat(lotes.findById(vizinho.getId()).orElseThrow().getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.RECEBIDO);
+        assertThat(leituras.count()).isEqualTo(leiturasAntes);
+        assertThat(ocorrencias.count()).isEqualTo(ocorrenciasAntes);
+        assertThat(ocorrencias.findAll()).allSatisfy(o -> assertThat(o.getEstado()).isEqualTo(EstadoOcorrencia.ABERTA));
+        assertThat(auditoria.findAll()).extracting(EventoAuditoria::getId).containsAll(historicoAnterior.stream().map(EventoAuditoria::getId).toList());
+    }
+    @Test void disponibilidadeProtegeIdentidadeUnidadeERecursosInexistentes() throws Exception {
+        var dados=Map.of("disponibilidade","NAO_DISPONIVEL");
+        status(req("POST",rotaDisponibilidade(la.getId()),dados,null),401);
+        status(req("POST",rotaDisponibilidade(la.getId()),dados,"invalido"),401);
+        for(Usuario usuario:List.of(cidadao,outro)) {
+            String token=token(usuario);
+            status(req("POST",rotaDisponibilidade(la.getId()),dados,token),403);
+            status(req("POST",rotaDisponibilidade(UUID.randomUUID()),dados,token),403);
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(usuario.getId().toString(),null,List.of()));
+            assertThatThrownBy(() -> fluxo.alterarDisponibilidade(la.getId(),DisponibilidadeLote.NAO_DISPONIVEL))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+        status(req("POST",rotaDisponibilidade(UUID.randomUUID()),dados,token(funcionario)),403);
+        status(req("POST",rotaDisponibilidade(UUID.randomUUID()),dados,token(gestor)),404);
+        String token=token(funcionario);
+        new TransactionTemplate(txManager).executeWithoutResult(tx -> usuarios.findById(funcionario.getId()).orElseThrow().desativar());
+        status(req("POST",rotaDisponibilidade(la.getId()),dados,token),401);
+        assertThat(auditoria.count()).isZero();
+    }
+    @ParameterizedTest @ValueSource(strings={"corpo-ausente","campo-ausente","nulo","invalido","extras","uuid"})
+    void disponibilidadeRejeitaEntradaInvalida(String caso) throws Exception {
+        Map<String,Object> dados=new HashMap<>(Map.of("disponibilidade","CONFIRMADA"));
+        switch(caso) {
+            case "corpo-ausente" -> dados=null;
+            case "campo-ausente" -> dados.clear();
+            case "nulo" -> dados.put("disponibilidade",null);
+            case "invalido" -> dados.put("disponibilidade","LIBERADO");
+            case "extras" -> dados.putAll(Map.of("autor",gestor.getId(),"perfil","GESTOR","unidadeSaudeId",a.getId(),
+                    "dataHora",clock.instant().toString(),"estado","LIBERADO"));
+        }
+        status(req("POST",caso.equals("uuid") ? "/api/v1/lotes/invalido/disponibilidade" : rotaDisponibilidade(la.getId()),dados,token(gestor)),400);
+        assertThat(auditoria.count()).isZero();
+    }
+    @ParameterizedTest @ValueSource(strings={"EM_MONITORAMENTO","AGUARDANDO_CONFERENCIA","BLOQUEADO_PREVENTIVAMENTE","DESCARTADO",
+            "CADASTRADO","EM_TRANSPORTE","FINALIZADO"})
+    void disponibilidadeValidaPreCondicoesAntesDaIdempotencia(String estado) throws Exception {
+        String token=token(gestor);
+        liberarParaDisponibilidade(token);
+        boolean alterarTransporte=Set.of("CADASTRADO","EM_TRANSPORTE","FINALIZADO").contains(estado);
+        // Escolhe a entidade antes de carregá-la: evita refletir campos em proxy de associação.
+        new TransactionTemplate(txManager).executeWithoutResult(tx -> {
+            if(alterarTransporte) org.springframework.test.util.ReflectionTestUtils.setField(
+                    transportes.findById(ta.getId()).orElseThrow(),"estado",EstadoTransporte.valueOf(estado));
+            else org.springframework.test.util.ReflectionTestUtils.setField(
+                    lotes.findById(la.getId()).orElseThrow(),"estado",EstadoLote.valueOf(estado));
+        });
+        if(alterarTransporte) assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado().name()).isEqualTo(estado);
+        else assertThat(lotes.findById(la.getId()).orElseThrow().getEstado().name()).isEqualTo(estado);
+        long eventos=auditoria.count();
+        for(String destino:List.of("CONFIRMADA","NAO_DISPONIVEL"))
+            status(req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade",destino),token),409);
+        assertThat(auditoria.count()).isEqualTo(eventos);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+    }
+    @Test void disponibilidadeConcorrenteIgualAuditaUmaVezEOpostaRespeitaOrdemSerial() throws Exception {
+        String token=token(gestor);
+        liberarParaDisponibilidade(token);
+        for(DisponibilidadeLote destino:List.of(DisponibilidadeLote.CONFIRMADA,DisponibilidadeLote.NAO_DISPONIVEL)) {
+            long eventos=auditoria.count();
+            var largada=new java.util.concurrent.CountDownLatch(1);
+            try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+                java.util.concurrent.Callable<Integer> tarefa=() -> {
+                    if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                    return req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade",destino),token).status();
+                };
+                var um=executor.submit(tarefa);var dois=executor.submit(tarefa);largada.countDown();
+                assertThat(List.of(um.get(15,java.util.concurrent.TimeUnit.SECONDS),dois.get(15,java.util.concurrent.TimeUnit.SECONDS)))
+                        .containsExactly(204,204);
+            }
+            assertThat(auditoria.count()).isEqualTo(eventos+1);
+            assertThat(lotes.findById(la.getId()).orElseThrow().getDisponibilidade()).isEqualTo(destino);
+        }
+        long eventosAntes=auditoria.count();
+        var largada=new java.util.concurrent.CountDownLatch(1);
+        try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var confirmar=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade","CONFIRMADA"),token).status();
+            });
+            var retirar=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",rotaDisponibilidade(la.getId()),Map.of("disponibilidade","NAO_DISPONIVEL"),token).status();
+            });largada.countDown();
+            assertThat(List.of(confirmar.get(15,java.util.concurrent.TimeUnit.SECONDS),retirar.get(15,java.util.concurrent.TimeUnit.SECONDS)))
+                    .containsExactly(204,204);
+        }
+        DisponibilidadeLote fim=lotes.findById(la.getId()).orElseThrow().getDisponibilidade();
+        assertThat(auditoria.count()).isEqualTo(eventosAntes+(fim==DisponibilidadeLote.CONFIRMADA ? 1 : 2));
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.LIBERADO);
+    }
     @Test void corsPermiteApenasOrigemExplicitaEAuthorization() throws Exception {
         for(String origem: List.of("http://localhost:5173","https://nao-autorizada.invalid")) {
             var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+porta+"/api/v1/transportes"))

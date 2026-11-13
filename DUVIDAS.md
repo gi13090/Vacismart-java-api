@@ -212,3 +212,20 @@ AGENTS/README mantêm a associação histórica de OpenAPI à J5; o recorte atua
 
 
 Compatibilidade dos testes históricos: a primeira regressão J5-B encontrou em ApiIntegrationTest uma asserção do marco J3 que exigia 404 para /decisao-tecnica. Com a rota autorizada implementada, o corpo vazio desse teste passou corretamente a 400. Removida somente essa asserção de inexistência; preservados o teste de 500 seguro e as rotas realmente futuras. O contrato novo tem testes próprios de 400/404. Resultados reais de ambas as regressões registrados no relatório privado; não alterar a API para manter uma expectativa histórica superada.
+
+
+## Decisões da J5-C — 13/11/2026
+
+J5-B aprovada e commitada localmente em 5a054cab87898e27e90206164a03513082687186; 214 testes aprovados são evidência histórica. Planejamento J5-C aprovado pelo responsável e implementação restrita à disponibilidade interna. J5-D/J5-E/J6/DevOps não autorizados nesta entrega; três regressões independentes e PostgreSQL continuam para J5-E.
+
+### D-054 — Disponibilidade reversível e idempotência validada
+
+CONFIRMADA pelo pedido: POST /api/v1/lotes/{id}/disponibilidade, record DisponibilidadeEntradaDto com @NotNull DisponibilidadeLote, reutilizando CONFIRMADA/NAO_DISPONIVEL. 204 sem corpo para alteração ou repetição válida. Lote.alterarDisponibilidade valida destino, transporte RECEBIDO e estado LIBERADO ANTES de comparar o valor atual. Retorna false no no-op, sem evento/novo horário; true só altera disponibilidade. Campo JSON extra continua 400. Não exigir justificativa humana. Alternativa 409 para repetição foi avaliada no planejamento e descartada na aprovação desta operação de estado desejado; J5-B mantém terminalidade/409 de suas decisões. Um reenvio após alteração oposta interveniente constitui nova mudança efetiva, não deduplicação global de comandos.
+
+### D-055 — Autorização, transação e auditoria de disponibilidade
+
+AcessoService.lote aplica perfil e unidade, preservando D-038 (funcionário alheio/inexistente 403; gestor inexistente 404). Serviço reutiliza buscarComBloqueio, que recarrega transporte sob PESSIMISTIC_WRITE e revalida unidade; refresh explícito do lote só depois do lock. Domínio e evento na mesma transação, sem lock paralelo. Somente mudanças geram DISPONIBILIDADE_CONFIRMADA/DISPONIBILIDADE_RETIRADA com entidade Lote, UUID autenticado, Clock e descrição técnica fixa. Sem alterar estado LIBERADO, ocorrências, histórico ou outros lotes. Eventos poderão fundamentar atualizadoEm em J5-D; sem coluna/data inventada agora. Tabelas/enums/constraints já comportam os valores; não há necessidade de migration, repository novo ou dependência. Testes de rollback e concorrência/refresh verificam as invariantes em H2; PostgreSQL permanece reservado à J5-E.
+
+### D-056 — Permissão do gestor e limites
+
+RN11/RN22 descrevem FUNCIONARIO da unidade, enquanto o endpoint da própria especificação inclui FUNCIONARIO e GESTOR; RN07 e a segurança vigente dão escopo global ao gestor no MVP. O pedido J5-C confirma explicitamente ambos: funcionário ativo da unidade responsável ou gestor ativo global. Preservar essa interpretação sem editar a especificação, criar vínculo de unidade para gestor ou confiar em claims/clientes. Retirar disponibilidade não é descarte/revisão da decisão técnica, não autoriza aplicação real nem oferece reserva ou quantidade garantida. D-002 Mobile e D-053 OpenAPI continuam pendentes em seus escopos próprios.

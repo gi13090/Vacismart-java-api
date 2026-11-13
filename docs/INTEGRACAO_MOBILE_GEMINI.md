@@ -1,6 +1,6 @@
 # VaciSmart — Contrato de integração Mobile/Gemini da J4
 
-Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. O corpo original descreve esse marco J4; os adendos J5-A/J5-B abaixo registram recebimento e decisão técnica internos. Demais funcionalidades J5/J6/J7 e DevOps permanecem planejadas.
+Versão documental: 12/11/2026. Backend de referência: branch master, HEAD `324b87484e5f2d8f23de59a024c8165dfc93c814`. J4 concluída e aprovada pelo responsável. O corpo original descreve esse marco J4; os adendos J5-A/J5-B/J5-C abaixo registram recebimento, decisão técnica e alteração de disponibilidade internos. Demais funcionalidades J5/J6/J7 e DevOps permanecem planejadas.
 
 O arquivo externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md` foi informado pelo responsável, mas não localizado no workspace. Não foi indicado outro diretório acessível para esse arquivo e não foram pesquisados diretórios privados indiscriminadamente. Esta versão foi reconstruída a partir de seis controllers, DTOs, serviços, segurança e documentação presentes no repositório. Nenhuma equivalência com o contrato original da equipe `02_MODELO_E_CONTRATOS.md` foi comprovada; esse arquivo continua ausente e **D-002 permanece aberta**. O uso real com o aplicativo ainda exige revisão e validação bilateral.
 
@@ -138,7 +138,7 @@ OffsetDateTime: ISO-8601 com offset explícito, por exemplo `2026-11-12T12:00:00
 | TipoOcorrencia | FORA_DA_FAIXA, PERDA_DE_TELEMETRIA |
 | EstadoOcorrencia | ABERTA, ENCERRADA |
 
-Enum modelado não implica transição implementada. Na J4, transporte inicia CADASTRADO e pode ir a EM_TRANSPORTE; lote inicia EM_MONITORAMENTO/NAO_DISPONIVEL e pode ser bloqueado preventivamente. A J5-A acrescenta somente o comando de recebimento descrito no adendo abaixo. A J5-B acrescenta a decisão humana LIBERAR/DESCARTAR no adendo ao final. Não existe comando REST para finalizar transporte ou confirmar disponibilidade. Tratar valor inesperado em resposta como dado desconhecido da versão, sem inventar transição no cliente.
+Enum modelado não implica transição implementada. Na J4, transporte inicia CADASTRADO e pode ir a EM_TRANSPORTE; lote inicia EM_MONITORAMENTO/NAO_DISPONIVEL e pode ser bloqueado preventivamente. A J5-A acrescenta somente o comando de recebimento descrito no adendo abaixo. A J5-B acrescenta a decisão humana LIBERAR/DESCARTAR no adendo ao final. A J5-C acrescenta confirmação/retirada de disponibilidade interna no adendo ao final. Não existe comando REST para finalizar transporte. Tratar valor inesperado em resposta como dado desconhecido da versão, sem inventar transição no cliente.
 
 ## 7. Exemplos JSON fictícios
 
@@ -312,7 +312,7 @@ Roteiro de integração conjunta ainda a executar: conferir versão/base URL e c
 
 ## 12. Limites, funcionalidades futuras e validações anteriores
 
-Ainda não implementados: finalização posterior, confirmação/consulta pública de disponibilidade, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /disponibilidade ou /aplicacoes como rotas existentes por aparecerem na especificação futura; a decisão técnica acrescentada na J5-B está no adendo abaixo.
+Ainda não implementados: finalização posterior, consulta informativa ao cidadão, aplicações de doses, caderneta digital, autenticação própria de dispositivos, integração efetiva Arduino/Flutter, Swagger/OpenAPI e implantação DevOps/Azure. Não há refresh ou CRUD público de usuários. Não inventar /disponibilidade ou /aplicacoes como rotas existentes por aparecerem na especificação futura; a decisão técnica J5-B e o POST interno de disponibilidade J5-C estão nos adendos abaixo; GET /api/v1/disponibilidade continua futuro.
 
 Fora do MVP: GPS/rastreamento, localização/rotas de transporte, agendamento/reserva, SUS/RNDS, notificações externas, QR Code, IA e dados clínicos reais. Os três recursos Spring excluídos na seção 1 não são requisitos futuros.
 
@@ -347,3 +347,14 @@ Novo par método/rota: `POST /api/v1/lotes/{id}/decisao-tecnica` (31º, contando
 Transporte precisa estar RECEBIDO. Apenas AGUARDANDO_CONFERENCIA ou BLOQUEADO_PREVENTIVAMENTE podem ir a LIBERADO/DESCARTADO; esses destinos são terminais nesta entrega. Disponibilidade continua NAO_DISPONIVEL. Não altera outros lotes, temperaturas, recebimento ou ocorrências; ocorrência aberta não impede sozinha decisão humana justificada e não é encerrada automaticamente. Registro operacional acadêmico, sem declaração de segurança clínica.
 
 Erros preservados: 400 entrada inválida/campo desconhecido; 401 JWT ausente/inválido/usuário inativo; 403 funcionário/cidadão com comando válido; 404 lote inexistente para gestor; 409 lote/transporte incompatível ou decisão repetida. Cliente deve tratar ProblemDetail e não repetir decisões como se fossem idempotentes. Nenhum endpoint de disponibilidade, consulta cidadã ou finalização foi acrescentado. Demais DTOs/rotas J4/J5-A preservados; D-002 segue aberta e J5 inteira não está concluída.
+
+
+## Adendo J5-C — disponibilidade interna — 13/11/2026
+
+Novo par método/rota (32º): `POST /api/v1/lotes/{id}/disponibilidade`, Bearer JWT obrigatório. Corpo exclusivamente `{"disponibilidade":"CONFIRMADA"}` para confirmar ou `{"disponibilidade":"NAO_DISPONIVEL"}` para retirar. Campo obrigatório, enum existente; autor, perfil, unidade, horário, estado técnico e outros campos extras são rejeitados. Sem justificativa humana adicional.
+
+FUNCIONARIO ativo só opera na unidade responsável pelo lote; GESTOR ativo mantém o escopo global do MVP, conforme endpoint/RN07 da especificação e aprovação explícita J5-C, sem contrariar o vínculo do funcionário previsto em RN11/RN22. CIDADAO negado. Transporte RECEBIDO e lote LIBERADO são obrigatórios nos dois sentidos e nas repetições, antes da idempotência. Estado técnico, outros lotes, ocorrências e histórico são preservados. Retirada não é descarte nem revogação da decisão técnica.
+
+Sucesso 204 sem corpo. Repetição válida do valor atual também 204, sem evento ou novo horário. Mudança efetiva gera auditoria DISPONIBILIDADE_CONFIRMADA ou DISPONIBILIDADE_RETIRADA com UUID e Clock do backend. Comandos concorrentes são serializados; idempotência não é deduplicação global depois de uma mudança oposta interveniente.
+
+Erros: 400 entrada/UUID/enum inválido, nulo/ausente ou campo extra; 401 autenticação ausente/inválida/inativa; 403 cidadão ou unidade alheia (também recurso inexistente para funcionário); 404 lote inexistente para gestor; 409 transporte/estado técnico incompatível. Preservados ProblemDetail e GETs operacionais existentes para consultar o resultado. Não foi criado GET cidadão /disponibilidade, quantidade garantida, reserva, agendamento ou finalização. Sem coluna atualizadoEm: seu uso futuro em J5-D depende dos eventos e da definição do caso sem evento, sem horário inventado. Demais contratos anteriores preservados; D-002 segue aberta e J5 inteira não está concluída.

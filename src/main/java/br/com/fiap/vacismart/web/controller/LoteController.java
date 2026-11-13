@@ -36,6 +36,11 @@ public class LoteController {
         fluxo.decidirLote(id, dto.decisao(), dto.justificativa());
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/{id}/disponibilidade")
+    public ResponseEntity<Void> alterarDisponibilidade(@PathVariable UUID id, @Valid @RequestBody DisponibilidadeEntradaDto dto) {
+        fluxo.alterarDisponibilidade(id, dto.disponibilidade());
+        return ResponseEntity.noContent().build();
+    }
     @GetMapping("/{id}/historico")
     public PaginaDto<EventoSaidaDto> historico(@PathVariable UUID id, Pageable pageable) { return consultas.historicoLote(id, pageable); }
 }

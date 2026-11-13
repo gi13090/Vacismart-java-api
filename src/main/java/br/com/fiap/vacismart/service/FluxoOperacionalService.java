@@ -2,6 +2,7 @@ package br.com.fiap.vacismart.service;
 
 import br.com.fiap.vacismart.domain.entity.EventoAuditoria;
 import br.com.fiap.vacismart.domain.enums.DecisaoTecnica;
+import br.com.fiap.vacismart.domain.enums.DisponibilidadeLote;
 import br.com.fiap.vacismart.repository.EventoAuditoriaRepository;
 import br.com.fiap.vacismart.repository.LoteRepository;
 import br.com.fiap.vacismart.security.AcessoService;
@@ -30,6 +31,22 @@ public class FluxoOperacionalService {
         this.lotes = lotes;
         this.auditoria = auditoria;
         this.relogio = relogio;
+    }
+
+    public void alterarDisponibilidade(UUID id, DisponibilidadeLote destino) {
+        acesso.lote(id);
+        var lote = lotes.findById(id).orElseThrow(() -> new NoSuchElementException("Lote não encontrado"));
+        // O mecanismo existente revalida a unidade após adquirir o lock e recarregar o transporte.
+        monitoramento.buscarComBloqueio(lote.getTransporte().getId());
+        entityManager.refresh(lote);
+        if (lote.alterarDisponibilidade(destino)) {
+            boolean confirmada = destino == DisponibilidadeLote.CONFIRMADA;
+            auditoria.save(new EventoAuditoria("Lote", id,
+                    confirmada ? "DISPONIBILIDADE_CONFIRMADA" : "DISPONIBILIDADE_RETIRADA",
+                    acesso.atual().getId().toString(), OffsetDateTime.now(relogio),
+                    confirmada ? "Confirmação de disponibilidade informativa pela unidade"
+                            : "Retirada da disponibilidade informativa pela unidade"));
+        }
     }
 
     public void decidirLote(UUID id, DecisaoTecnica decisao, String justificativa) {

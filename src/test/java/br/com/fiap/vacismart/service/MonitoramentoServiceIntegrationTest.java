@@ -431,6 +431,80 @@ class MonitoramentoServiceIntegrationTest {
         } finally { limparComprometidos(tx); }
     }
 
+    private Cenario cenarioLiberado() {
+        Cenario c=cenario(true);
+        fluxo.receberTransporte(c.transporteId());
+        fluxo.decidirLote(c.loteId(),DecisaoTecnica.LIBERAR,"Conferência humana");
+        return c;
+    }
+
+    @Test
+    void disponibilidadeDominioRejeitaNuloERepeticaoNaoRenovaHorario() {
+        UUID autor=autorRecebimento();
+        Cenario c=cenarioLiberado();
+        Lote lote=lotes.findById(c.loteId()).orElseThrow();
+        assertThatIllegalArgumentException().isThrownBy(() -> lote.alterarDisponibilidade(null));
+        long eventosAntes=auditoria.count();
+        fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.NAO_DISPONIVEL);
+        assertThat(auditoria.count()).isEqualTo(eventosAntes);
+        fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.CONFIRMADA);
+        em.flush();
+        var confirmacao=auditoria.findByReferenciaIdOrderByDataHoraAsc(c.loteId()).stream()
+                .filter(e -> e.getAcao().equals("DISPONIBILIDADE_CONFIRMADA")).findFirst().orElseThrow();
+        assertThat(confirmacao.getDataHora().toInstant()).isEqualTo(INSTANTE);
+        assertThat(confirmacao.getAutor()).isEqualTo(autor.toString());
+        relogio.definir(INSTANTE.plusSeconds(60));
+        fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.CONFIRMADA);
+        em.flush();em.clear();
+        assertThat(auditoria.count()).isEqualTo(eventosAntes+1);
+        assertThat(auditoria.findById(confirmacao.getId()).orElseThrow().getDataHora().toInstant()).isEqualTo(INSTANTE);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void disponibilidadeRollbackReverteCampoEAuditoriaJuntos() {
+        autorRecebimento();
+        TransactionTemplate tx=new TransactionTemplate(transactionManager);
+        Cenario c=tx.execute(status -> cenarioLiberado());
+        try {
+            long eventos=auditoria.count();
+            assertThatIllegalStateException().isThrownBy(() -> tx.executeWithoutResult(status -> {
+                fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.CONFIRMADA);
+                em.flush();
+                assertThat(auditoria.count()).isEqualTo(eventos+1);
+                throw new IllegalStateException("Falha simulada após flush de disponibilidade e evento");
+            }));
+            Lote salvo=lotes.findById(c.loteId()).orElseThrow();
+            assertThat(salvo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+            assertThat(salvo.getEstado()).isEqualTo(LIBERADO);
+            assertThat(auditoria.count()).isEqualTo(eventos);
+        } finally { limparComprometidos(tx); }
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void disponibilidadeRefreshAposLockEvitaEventoDuplicadoComContextoAntigo() {
+        autorRecebimento();
+        TransactionTemplate tx=new TransactionTemplate(transactionManager);
+        Cenario c=tx.execute(status -> cenarioLiberado());
+        try(var executor=Executors.newSingleThreadExecutor()) {
+            long eventos=auditoria.count();
+            tx.executeWithoutResult(status -> {
+                Lote antigo=lotes.findById(c.loteId()).orElseThrow();
+                assertThat(antigo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+                var concorrente=executor.submit(() -> fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.CONFIRMADA));
+                try { concorrente.get(10,TimeUnit.SECONDS); }
+                catch(Exception ex) { throw new IllegalStateException("Falha ao preparar confirmação concorrente",ex); }
+                assertThat(antigo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+                fluxo.alterarDisponibilidade(c.loteId(),DisponibilidadeLote.CONFIRMADA);
+                assertThat(antigo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.CONFIRMADA);
+            });
+            assertThat(auditoria.count()).isEqualTo(eventos+1);
+            assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(c.loteId()).stream()
+                    .filter(e -> e.getAcao().equals("DISPONIBILIDADE_CONFIRMADA")).toList()).hasSize(1);
+        } finally { limparComprometidos(tx); }
+    }
+
     private void limparComprometidos(TransactionTemplate tx) {
         tx.executeWithoutResult(status -> {
             auditoria.deleteAllInBatch(); ocorrencias.deleteAllInBatch(); leituras.deleteAllInBatch();

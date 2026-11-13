@@ -74,6 +74,19 @@ public class Lote extends Entidade {
         disponibilidade = DisponibilidadeLote.NAO_DISPONIVEL;
     }
 
+    public boolean alterarDisponibilidade(DisponibilidadeLote destino) {
+        if (destino == null) throw new IllegalArgumentException("Disponibilidade obrigatória");
+        if (transporte.getEstado() != EstadoTransporte.RECEBIDO) {
+            throw new IllegalStateException("Alteração de disponibilidade exige transporte RECEBIDO");
+        }
+        if (estado != EstadoLote.LIBERADO) {
+            throw new IllegalStateException("Alteração de disponibilidade exige lote LIBERADO");
+        }
+        if (disponibilidade == destino) return false;
+        disponibilidade = destino;
+        return true;
+    }
+
     public void atualizarCodigo(String codigo) {
         if (estado != EstadoLote.EM_MONITORAMENTO || transporte.getEstado() != EstadoTransporte.CADASTRADO) {
             throw new IllegalStateException("Lote somente pode ser atualizado antes do monitoramento");
