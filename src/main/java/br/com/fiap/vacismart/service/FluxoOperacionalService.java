@@ -1,6 +1,7 @@
 package br.com.fiap.vacismart.service;
 
 import br.com.fiap.vacismart.domain.entity.EventoAuditoria;
+import br.com.fiap.vacismart.domain.enums.DecisaoTecnica;
 import br.com.fiap.vacismart.repository.EventoAuditoriaRepository;
 import br.com.fiap.vacismart.repository.LoteRepository;
 import br.com.fiap.vacismart.security.AcessoService;
@@ -9,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import java.util.NoSuchElementException;
 
 @Service
 @Transactional
 public class FluxoOperacionalService {
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
     private final AcessoService acesso;
     private final MonitoramentoService monitoramento;
     private final LoteRepository lotes;
@@ -26,6 +30,17 @@ public class FluxoOperacionalService {
         this.lotes = lotes;
         this.auditoria = auditoria;
         this.relogio = relogio;
+    }
+
+    public void decidirLote(UUID id, DecisaoTecnica decisao, String justificativa) {
+        acesso.gestor();
+        var lote = lotes.findById(id).orElseThrow(() -> new NoSuchElementException("Lote não encontrado"));
+        monitoramento.buscarComBloqueio(lote.getTransporte().getId());
+        // findById pode reaproveitar o estado carregado antes de outra decisão obter o lock.
+        entityManager.refresh(lote);
+        lote.decidirTecnicamente(decisao, justificativa);
+        auditoria.save(new EventoAuditoria("Lote", id, lote.getEstado().name(),
+                acesso.atual().getId().toString(), OffsetDateTime.now(relogio), justificativa));
     }
 
     public void receberTransporte(UUID id) {

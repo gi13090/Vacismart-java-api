@@ -353,6 +353,84 @@ class MonitoramentoServiceIntegrationTest {
         } finally { limparComprometidos(tx); }
     }
 
+    @Test
+    void decisaoTecnicaValidaComandoEJustificativaTambemNoDominio() {
+        Cenario c=cenario(true);
+        Transporte transporte=transportes.findById(c.transporteId()).orElseThrow();
+        transporte.receber();
+        Lote lote=lotes.findById(c.loteId()).orElseThrow();
+        lote.encaminharParaConferencia();
+        assertThatIllegalArgumentException().isThrownBy(() -> lote.decidirTecnicamente(null,"Conferência"));
+        for(String invalida:Arrays.asList(null,"","   ","J".repeat(1001))) {
+            assertThatIllegalArgumentException().isThrownBy(() -> lote.decidirTecnicamente(DecisaoTecnica.LIBERAR,invalida));
+        }
+        assertThat(lote.getEstado()).isEqualTo(AGUARDANDO_CONFERENCIA);
+        assertThat(lote.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void decisaoTecnicaRollbackPreservaLoteHistoricoEOcorrencias() {
+        UUID autor=autorRecebimento();
+        TransactionTemplate tx=new TransactionTemplate(transactionManager);
+        Cenario c=tx.execute(status -> {
+            Cenario criado=cenario(true);
+            registrar(criado,"9.3");
+            relogio.definir(INSTANTE.plusSeconds(181));
+            fluxo.receberTransporte(criado.transporteId());
+            return criado;
+        });
+        try {
+            long eventosAntes=auditoria.count(), leiturasAntes=leituras.count();
+            assertThatIllegalStateException().isThrownBy(() -> tx.executeWithoutResult(status -> {
+                fluxo.decidirLote(c.loteId(),DecisaoTecnica.LIBERAR,"Conferência humana");
+                em.flush();
+                assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(c.loteId()).stream().filter(e -> e.getAcao().equals("LIBERADO")).toList())
+                        .singleElement().satisfies(e -> {
+                            assertThat(e.getAutor()).isEqualTo(autor.toString());
+                            assertThat(e.getDataHora().toInstant()).isEqualTo(INSTANTE.plusSeconds(181));
+                            assertThat(e.getJustificativa()).isEqualTo("Conferência humana");
+                        });
+                throw new IllegalStateException("Falha simulada após flush de lote e decisão auditada");
+            }));
+            Lote salvo=lotes.findById(c.loteId()).orElseThrow();
+            assertThat(salvo.getEstado()).isEqualTo(BLOQUEADO_PREVENTIVAMENTE);
+            assertThat(salvo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+            assertThat(transportes.findById(c.transporteId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.RECEBIDO);
+            assertThat(auditoria.count()).isEqualTo(eventosAntes);
+            assertThat(leituras.count()).isEqualTo(leiturasAntes);
+            assertThat(ocorrencias.findAll()).hasSize(2).allSatisfy(o -> assertThat(o.getEstado()).isEqualTo(ABERTA));
+        } finally { limparComprometidos(tx); }
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void decisaoTecnicaRecarregaLoteAposLockMesmoComEstadoAntigoNoContextoJpa() throws Exception {
+        autorRecebimento();
+        TransactionTemplate tx=new TransactionTemplate(transactionManager);
+        Cenario c=tx.execute(status -> {
+            Cenario criado=cenario(true);
+            fluxo.receberTransporte(criado.transporteId());
+            return criado;
+        });
+        try(var executor=Executors.newSingleThreadExecutor()) {
+            long eventosAntes=auditoria.count();
+            assertThatIllegalStateException().isThrownBy(() -> tx.executeWithoutResult(status -> {
+                Lote antigo=lotes.findById(c.loteId()).orElseThrow();
+                assertThat(antigo.getEstado()).isEqualTo(AGUARDANDO_CONFERENCIA);
+                var concorrente=executor.submit(() -> fluxo.decidirLote(c.loteId(),DecisaoTecnica.DESCARTAR,"Decisão concorrente"));
+                try { concorrente.get(10,TimeUnit.SECONDS); }
+                catch(Exception ex) { throw new IllegalStateException("Falha ao preparar decisão concorrente",ex); }
+                assertThat(antigo.getEstado()).isEqualTo(AGUARDANDO_CONFERENCIA);
+                fluxo.decidirLote(c.loteId(),DecisaoTecnica.LIBERAR,"Não deve sobrescrever descarte");
+            }));
+            assertThat(lotes.findById(c.loteId()).orElseThrow().getEstado()).isEqualTo(DESCARTADO);
+            assertThat(auditoria.count()).isEqualTo(eventosAntes+1);
+            assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(c.loteId())).extracting(EventoAuditoria::getAcao)
+                    .containsExactlyInAnyOrder("AGUARDANDO_CONFERENCIA","DESCARTADO");
+        } finally { limparComprometidos(tx); }
+    }
+
     private void limparComprometidos(TransactionTemplate tx) {
         tx.executeWithoutResult(status -> {
             auditoria.deleteAllInBatch(); ocorrencias.deleteAllInBatch(); leituras.deleteAllInBatch();

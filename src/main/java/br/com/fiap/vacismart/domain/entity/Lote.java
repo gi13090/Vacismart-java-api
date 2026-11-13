@@ -58,6 +58,22 @@ public class Lote extends Entidade {
         return true;
     }
 
+    public void decidirTecnicamente(DecisaoTecnica decisao, String justificativa) {
+        if (decisao == null) throw new IllegalArgumentException("Decisão técnica obrigatória");
+        Validacoes.texto(justificativa, 1000, "Justificativa");
+        if (transporte.getEstado() != EstadoTransporte.RECEBIDO) {
+            throw new IllegalStateException("Decisão técnica exige transporte RECEBIDO");
+        }
+        if (estado != EstadoLote.AGUARDANDO_CONFERENCIA && estado != EstadoLote.BLOQUEADO_PREVENTIVAMENTE) {
+            throw new IllegalStateException("Decisão técnica exige lote AGUARDANDO_CONFERENCIA ou BLOQUEADO_PREVENTIVAMENTE");
+        }
+        estado = switch (decisao) {
+            case LIBERAR -> EstadoLote.LIBERADO;
+            case DESCARTAR -> EstadoLote.DESCARTADO;
+        };
+        disponibilidade = DisponibilidadeLote.NAO_DISPONIVEL;
+    }
+
     public void atualizarCodigo(String codigo) {
         if (estado != EstadoLote.EM_MONITORAMENTO || transporte.getEstado() != EstadoTransporte.CADASTRADO) {
             throw new IllegalStateException("Lote somente pode ser atualizado antes do monitoramento");

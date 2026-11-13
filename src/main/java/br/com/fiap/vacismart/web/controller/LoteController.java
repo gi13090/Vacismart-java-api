@@ -15,7 +15,10 @@ import java.net.URI;
 public class LoteController {
     private final CadastroService service;
     private final ConsultaOperacionalService consultas;
-    public LoteController(CadastroService service, ConsultaOperacionalService consultas) { this.service = service; this.consultas = consultas; }
+    private final FluxoOperacionalService fluxo;
+    public LoteController(CadastroService service, ConsultaOperacionalService consultas, FluxoOperacionalService fluxo) {
+        this.service = service; this.consultas = consultas; this.fluxo = fluxo;
+    }
     @PostMapping
     public ResponseEntity<LoteSaidaDto> criar(@Valid @RequestBody LoteEntradaDto dto) {
         var resposta = service.criarLote(dto);
@@ -28,6 +31,11 @@ public class LoteController {
             @RequestParam(required = false) UUID vacinaId, @RequestParam(required = false) EstadoLote estado, Pageable pageable) { return service.lotes(transporteId, vacinaId, estado, pageable); }
     @PutMapping("/{id}")
     public LoteSaidaDto atualizar(@PathVariable UUID id, @Valid @RequestBody LoteAtualizacaoDto dto) { return service.atualizarLote(id, dto); }
+    @PostMapping("/{id}/decisao-tecnica")
+    public ResponseEntity<Void> decidir(@PathVariable UUID id, @Valid @RequestBody DecisaoTecnicaEntradaDto dto) {
+        fluxo.decidirLote(id, dto.decisao(), dto.justificativa());
+        return ResponseEntity.noContent().build();
+    }
     @GetMapping("/{id}/historico")
     public PaginaDto<EventoSaidaDto> historico(@PathVariable UUID id, Pageable pageable) { return consultas.historicoLote(id, pageable); }
 }

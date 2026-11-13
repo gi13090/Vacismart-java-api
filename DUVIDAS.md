@@ -190,3 +190,25 @@ O recebimento verifica a RN05 antes de mudar o transporte para RECEBIDO, sob o m
 POST sem DTO/corpo, com UUID da rota; identidade humana vem de AcessoService.atual e horário de Clock, sem novas colunas. Cada transição efetiva recebe um evento imutável; lote já bloqueado não recebe evento redundante de conferência. Abertura automática de ocorrência preserva SISTEMA. Alternativa de novas colunas autor/recebidoEm exigiria migration e duplicaria informação já auditada. Especificação e contratos J4 preservados; apenas nova rota interna, vedada ao cidadão. O adendo Mobile não encerra D-002.
 
 Workspace localizado em /home/gio/Documentos/Global Solution/VaciSmart, remoto oficial, master/16d0bab0e7e11462a52d780402a1ce5c1b1a97fa e árvore inicial limpa, com autorização explícita para essa cópia. Sem commits/push. J5-A em revisão; nenhuma outra parte de J5 ou etapa posterior foi implementada. Testes atuais e limitações constam no relatório privado; registros J1–J4 acima são históricos.
+
+
+## Decisões da J5-B — 13/11/2026
+
+A J5-A foi aprovada pelo responsável após revisão no ChatGPT; commit local 08fdb7e5a2ec763fd539d9a3261a6dede96e5c9d, sem push. Seus 192 testes são evidência histórica. A revisão/aprovação do planejamento autorizou exclusivamente a implementação J5-B; PostgreSQL e três regressões independentes continuam reservados à consolidação J5-E. As referências anteriores a decisão técnica planejada são registros dos marcos J1–J5-A.
+
+### D-051 — Contrato e estados terminais da decisão humana
+
+CONFIRMADA pelo pedido: enum não persistido DecisaoTecnica com LIBERAR/DESCARTAR e record de entrada decisao/justificativa. POST /api/v1/lotes/{id}/decisao-tecnica retorna 204 sem corpo. Somente GESTOR ativo; autorização no serviço antes de consultar existência. Justificativa obrigatória/não branca/até 1000, reforçada no domínio. Apenas AGUARDANDO_CONFERENCIA/BLOQUEADO_PREVENTIVAMENTE em transporte RECEBIDO podem ir a LIBERADO/DESCARTADO; ambos destinos terminais nesta entrega e repetição 409. Alternativa de reutilizar EstadoLote como comando exporia destinos inelegíveis; enum próprio expressa os dois comandos aprovados. Revisão de um lote já LIBERADO exigiria novo escopo autorizado, não um setter genérico.
+
+### D-052 — Refresh, auditoria e preservação do histórico
+
+FluxoOperacionalService reutiliza buscarComBloqueio do monitoramento (lock pessimista/refresh do transporte/revalidação de unidade) e executa EntityManager.refresh(lote) depois desse lock. Uma segunda findById pode retornar estado antigo e sobrescrever uma decisão concorrente. Sem lock independente do lote, mantendo ordem e serialização pelo transporte. Estado e um evento imutável LIBERADO/DESCARTADO são persistidos na mesma transação, com UUID de AcessoService.atual, Clock e justificativa informada integralmente. Autor/data ficam no evento existente; nenhuma alteração de esquema necessária. Alternativas de lock adicional ou colunas de decisão duplicariam infraestrutura/informação sem necessidade nesta entrega.
+
+Ocorrência térmica ou perda de telemetria aberta não é veto absoluto: a conferência humana explicitamente justificada satisfaz o fluxo autorizado, sem declarar segurança clínica. Não encerrar ocorrências, liberar por normalização/tempo nem confirmar disponibilidade; manter NAO_DISPONIVEL e preservar outros lotes/histórico. Reverter/refatorar deve preservar testes de rollback, decisões concorrentes e cache JPA antigo. Segurança JWT, filtros, Advice, repositories e migrations da J4/J5-A não mudaram. Integração Mobile bilateral (D-002) permanece pendente; apenas adendo do endpoint interno.
+
+### D-053 — Referências de OpenAPI entre etapas
+
+AGENTS/README mantêm a associação histórica de OpenAPI à J5; o recorte atual J5-A–J5-E não autoriza sua implementação e menciona J6 como etapa fora de escopo. Registrar a distribuição J5/J6 como ponto de planejamento a reconciliar pelo responsável, sem inferir mudança de etapa, reescrever governança ou implementar Swagger agora. OpenAPI permanece pendente; Cache/HATEOAS/Actuator continuam definitivamente excluídos (D-046).
+
+
+Compatibilidade dos testes históricos: a primeira regressão J5-B encontrou em ApiIntegrationTest uma asserção do marco J3 que exigia 404 para /decisao-tecnica. Com a rota autorizada implementada, o corpo vazio desse teste passou corretamente a 400. Removida somente essa asserção de inexistência; preservados o teste de 500 seguro e as rotas realmente futuras. O contrato novo tem testes próprios de 400/404. Resultados reais de ambas as regressões registrados no relatório privado; não alterar a API para manter uma expectativa histórica superada.

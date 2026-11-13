@@ -1,7 +1,7 @@
 # VaciSmart — API Java
 
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
-Em 13/11/2026, a J5-A acrescenta o recebimento operacional descrito ao final deste documento, em revisão. As menções anteriores a recebimento pendente registram os marcos J1–J4. A J5 inteira permanece incompleta.
+Em 13/11/2026, a J5-A foi aprovada com validação PostgreSQL reservada à J5-E; a J5-B acrescenta a decisão técnica humana descrita ao final deste documento, em revisão. As menções anteriores a recebimento/decisão pendentes registram os marcos J1–J4. A J5 inteira permanece incompleta.
 
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
@@ -102,9 +102,9 @@ Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade 
 O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
 
 ## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão e decisão continuam pendentes; recebimento foi acrescentado na J5-A; cadastro/login e própria conta estão na seção J4.
+A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Disponibilidade ao cidadão continua pendente; recebimento foi acrescentado na J5-A e decisão técnica na J5-B; cadastro/login e própria conta estão na seção J4.
 
-Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e o adendo de recebimento J5-A, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
+Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e os adendos de recebimento J5-A e decisão técnica J5-B, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
 
 ## Justificativas: consultas, cascade e fetch
 Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
@@ -134,7 +134,8 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
 | CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
 | Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
-| Recebimento de transporte (J5-A) | Implementado; em revisão |
+| Recebimento de transporte (J5-A) | Concluído e aprovado; PostgreSQL reservado à J5-E |
+| Decisão técnica de lote (J5-B) | Implementada; em revisão |
 | OpenAPI (J5) | Pendente |
 | Compose final / Azure | Pendente — DevOps |
 
@@ -381,7 +382,7 @@ Spring Security Resource Server valida assinatura RS256, emissor, expiração e 
 
 A cada requisição, o usuário ativo e o perfil são consultados no banco. Os serviços também consultam a identidade persistida e aplicam o escopo da unidade; `perfil` no token é informativo. Desativação, mudança de perfil ou troca de vínculo valem na próxima requisição, inclusive com token anterior. Não se promete interromper uma operação que já estava em execução. Chaves privadas e senhas nunca são respostas HTTP; DTOs de autenticação omitem dados em `toString`.
 
-### Matriz de permissões vigente
+### Matriz de permissões do marco J4 (adendos J5-A/J5-B ao final)
 
 | Operação | CIDADAO | FUNCIONARIO | GESTOR |
 |---|---|---|---|
@@ -532,4 +533,20 @@ O transporte passa a RECEBIDO; somente lotes EM_MONITORAMENTO passam a AGUARDAND
 
 FluxoOperacionalService coordena uma transação única. Reutiliza o lock pessimista, refresh e revalidação da unidade de MonitoramentoService; a regra de telemetria foi compartilhada minimamente no mesmo pacote. Antes da transição, verifica silêncio maior que o limite configurado desde a última recepção/início. Se necessário, abre PERDA_DE_TELEMETRIA uma única vez com auditoria SISTEMA, sem bloquear ou liberar lotes. Ocorrências existentes permanecem abertas. Nenhuma tabela, coluna, migration, dependência ou configuração de segurança foi alterada.
 
-Testes novos reaproveitam fixtures HTTP/JWT e integração transacional existentes. Os resultados atuais estão no relatório privado A–L e são distintos das evidências históricas acima. H2 não comprova comportamento de locks/índices no PostgreSQL. J5-B/J5-C/J5-D, J6 e DevOps não foram executados. Codex foi usado na implementação, testes e documentação da J5-A; a entrega aguarda revisão externa.
+Testes novos reaproveitam fixtures HTTP/JWT e integração transacional existentes. Os resultados atuais estão no relatório privado A–L e são distintos das evidências históricas acima. H2 não comprova comportamento de locks/índices no PostgreSQL. No marco J5-A, J5-B/J5-C/J5-D, J6 e DevOps não foram executados. Codex foi usado na implementação, testes e documentação da J5-A; a revisão posterior aprovou essa entrega, com PostgreSQL reservado à J5-E.
+
+
+## Decisão técnica humana — J5-B — 13/11/2026
+
+`POST /api/v1/lotes/{id}/decisao-tecnica`, com JWT Bearer válido, é exclusivo de GESTOR ativo. Entrada: `{"decisao":"LIBERAR","justificativa":"Conferência humana realizada."}`; a outra decisão é `DESCARTAR`. O enum de comando DecisaoTecnica não é persistido. Justificativa obrigatória, não branca e até 1000 caracteres, validada também no domínio. Campos adicionais de autor/perfil/unidade/horário/estado/disponibilidade são rejeitados pela política JSON existente. Sucesso: 204 sem corpo; os GETs de lote/histórico existentes permitem consultar o resultado.
+
+| Estado inicial (transporte RECEBIDO) | LIBERAR | DESCARTAR |
+|---|---|---|
+| AGUARDANDO_CONFERENCIA | LIBERADO | DESCARTADO |
+| BLOQUEADO_PREVENTIVAMENTE | LIBERADO | DESCARTADO |
+
+LIBERADO e DESCARTADO são terminais nesta entrega. EM_MONITORAMENTO, transporte diferente de RECEBIDO e decisões repetidas retornam 409. Entrada inválida retorna 400; autenticação ausente/inválida/inativa, 401; funcionário/cidadão com comando válido, 403; lote inexistente para gestor, 404. AcessoService.gestor é chamado antes de consultar o lote; a proteção HTTP/JWT e o Advice da J4 permanecem. Nenhum dado operacional é exposto a perfis não autorizados.
+
+FluxoOperacionalService reutiliza o lock pessimista do transporte, com refresh/revalidação existentes, e recarrega explicitamente o lote após o lock para evitar estado antigo no contexto JPA. Domínio e evento são persistidos na mesma transação. Cada decisão efetiva insere exatamente um EventoAuditoria de Lote, ação LIBERADO/DESCARTADO, UUID do gestor autenticado, instante do Clock e justificativa integral. Não altera outros lotes, transporte, leituras, recebimento ou ocorrências. Ocorrência térmica/perda de telemetria aberta não impede por si só essa conferência humana nem é encerrada automaticamente. Disponibilidade permanece NAO_DISPONIVEL.
+
+A liberação é registro operacional acadêmico, sem declaração de segurança clínica. Nenhuma tabela, coluna, migration, dependência, autenticação ou infraestrutura foi alterada. Codex foi usado para implementar, testar e documentar a J5-B. Os resultados atuais e limitações estão no relatório privado A–L; as evidências J1–J5-A acima são históricas. PostgreSQL e três regressões independentes permanecem para J5-E. Não foram implementadas J5-C/J5-D/J5-E, J6 ou DevOps; sem confirmação de disponibilidade, consulta cidadã ou finalização. OpenAPI/Swagger segue pendente (distribuição de etapas registrada em DUVIDAS).

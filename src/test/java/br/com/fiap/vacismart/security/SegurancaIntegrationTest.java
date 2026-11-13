@@ -406,6 +406,133 @@ class SegurancaIntegrationTest {
         assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.EM_TRANSPORTE);
         assertThat(auditoria.count()).isZero();
     }
+    String rotaDecisao(UUID id) { return "/api/v1/lotes/"+id+"/decisao-tecnica"; }
+    void prepararDecisao(String token, boolean bloquear) throws Exception {
+        String base="/api/v1/transportes/"+ta.getId();
+        status(req("POST",base+"/monitoramento",null,token),204);
+        if (bloquear) status(req("POST",base+"/leituras",Map.of("transporteId",ta.getId(),"dispositivoId","DEMO",
+                "temperaturaC",9.3,"medidaEm",clock.instant().toString()),token),201);
+        status(req("POST",base+"/recebimento",null,token),204);
+    }
+    @ParameterizedTest @CsvSource({"false,LIBERAR,LIBERADO", "false,DESCARTAR,DESCARTADO",
+            "true,LIBERAR,LIBERADO", "true,DESCARTAR,DESCARTADO"})
+    void decisaoTecnicaAplicaSomenteAsQuatroTransicoesEAudita(boolean bloquear, DecisaoTecnica decisao, EstadoLote destino) throws Exception {
+        Lote vizinho=lotes.save(new Lote("LA-VIZINHO",vacina,ta));
+        String token=token(gestor);
+        prepararDecisao(token,bloquear);
+        EstadoLote estadoVizinho=lotes.findById(vizinho.getId()).orElseThrow().getEstado();
+        var eventosAntes=auditoria.findAll();
+        long leiturasAntes=leituras.count(), ocorrenciasAntes=ocorrencias.count();
+        String justificativa=!bloquear && decisao==DecisaoTecnica.LIBERAR ? "J".repeat(1000) : " Conferência humana justificada. ";
+        Instant antes=clock.instant();
+        var resposta=req("POST",rotaDecisao(la.getId()),Map.of("decisao",decisao,"justificativa",justificativa),token);
+        status(resposta,204); assertThat(resposta.corpo().isNull()).isTrue();
+        Lote salvo=lotes.findById(la.getId()).orElseThrow();
+        assertThat(salvo.getEstado()).isEqualTo(destino);
+        assertThat(salvo.getDisponibilidade()).isEqualTo(DisponibilidadeLote.NAO_DISPONIVEL);
+        assertThat(lotes.findById(vizinho.getId()).orElseThrow().getEstado()).isEqualTo(estadoVizinho);
+        assertThat(transportes.findById(ta.getId()).orElseThrow().getEstado()).isEqualTo(EstadoTransporte.RECEBIDO);
+        assertThat(leituras.count()).isEqualTo(leiturasAntes);
+        assertThat(ocorrencias.count()).isEqualTo(ocorrenciasAntes);
+        assertThat(ocorrencias.findAll()).allSatisfy(o -> assertThat(o.getEstado()).isEqualTo(EstadoOcorrencia.ABERTA));
+        assertThat(auditoria.count()).isEqualTo(eventosAntes.size()+1);
+        assertThat(auditoria.findAll()).extracting(EventoAuditoria::getId).containsAll(eventosAntes.stream().map(EventoAuditoria::getId).toList());
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId()).stream()
+                .filter(e -> e.getAcao().equals(destino.name())).toList()).singleElement().satisfies(e -> {
+            assertThat(e.getEntidade()).isEqualTo("Lote");
+            assertThat(e.getAutor()).isEqualTo(gestor.getId().toString());
+            assertThat(e.getJustificativa()).isEqualTo(justificativa);
+            assertThat(e.getDataHora().toInstant()).isBetween(antes,clock.instant());
+        });
+        long eventosDepois=auditoria.count();
+        // Os dois destinos são terminais, mesmo para decisão contrária à primeira.
+        status(req("POST",rotaDecisao(la.getId()),Map.of("decisao",decisao,"justificativa","Repetição"),token),409);
+        status(req("POST",rotaDecisao(la.getId()),Map.of("decisao",decisao==DecisaoTecnica.LIBERAR ? "DESCARTAR" : "LIBERAR",
+                "justificativa","Tentativa de revisão"),token),409);
+        assertThat(auditoria.count()).isEqualTo(eventosDepois);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(destino);
+        var consulta=req("GET","/api/v1/lotes/"+la.getId(),null,token); status(consulta,200);
+        assertThat(consulta.corpo().get("estado").asString()).isEqualTo(destino.name());
+    }
+    @Test void decisaoTecnicaExigeGestorAtivoAntesDeConsultarLote() throws Exception {
+        var dados=Map.of("decisao","LIBERAR","justificativa","Conferência humana");
+        status(req("POST",rotaDecisao(la.getId()),dados,null),401);
+        status(req("POST",rotaDecisao(la.getId()),dados,"invalido"),401);
+        for (Usuario usuario:List.of(cidadao,funcionario,outro)) {
+            String token=token(usuario);
+            status(req("POST",rotaDecisao(la.getId()),dados,token),403);
+            status(req("POST",rotaDecisao(UUID.randomUUID()),dados,token),403);
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(usuario.getId().toString(),null,List.of()));
+            assertThatThrownBy(() -> fluxo.decidirLote(UUID.randomUUID(),DecisaoTecnica.LIBERAR,"Conferência"))
+                    .isInstanceOf(AccessDeniedException.class);
+        }
+        status(req("POST",rotaDecisao(UUID.randomUUID()),dados,token(gestor)),404);
+        String token=token(gestor);
+        new TransactionTemplate(txManager).executeWithoutResult(tx -> usuarios.findById(gestor.getId()).orElseThrow().desativar());
+        status(req("POST",rotaDecisao(la.getId()),dados,token),401);
+        assertThat(auditoria.count()).isZero();
+    }
+    @ParameterizedTest @ValueSource(strings={"decisao-ausente","decisao-nula","decisao-invalida",
+            "justificativa-ausente","justificativa-nula","justificativa-branca","justificativa-excessiva","campos-extras","corpo-ausente"})
+    void decisaoTecnicaValidaDtoSemAceitarDadosConfiaveisDoCliente(String caso) throws Exception {
+        Map<String,Object> dados=new HashMap<>(Map.of("decisao","LIBERAR","justificativa","Conferência"));
+        switch(caso) {
+            case "decisao-ausente" -> dados.remove("decisao");
+            case "decisao-nula" -> dados.put("decisao",null);
+            case "decisao-invalida" -> dados.put("decisao","LIBERADO");
+            case "justificativa-ausente" -> dados.remove("justificativa");
+            case "justificativa-nula" -> dados.put("justificativa",null);
+            case "justificativa-branca" -> dados.put("justificativa","   ");
+            case "justificativa-excessiva" -> dados.put("justificativa","J".repeat(1001));
+            case "campos-extras" -> dados.putAll(Map.of("autor",gestor.getId(),"perfil","GESTOR","unidadeSaudeId",a.getId(),
+                    "dataHora",clock.instant().toString(),"disponibilidade","CONFIRMADA","estado","LIBERADO"));
+            case "corpo-ausente" -> dados=null;
+        }
+        status(req("POST",rotaDecisao(la.getId()),dados,token(gestor)),400);
+        assertThat(auditoria.count()).isZero();
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(EstadoLote.EM_MONITORAMENTO);
+    }
+    @ParameterizedTest @ValueSource(strings={"CADASTRADO","EM_TRANSPORTE","FINALIZADO","EM_MONITORAMENTO"})
+    void decisaoTecnicaRejeitaTransporteOuLoteIncompativel(String estado) throws Exception {
+        String token=token(gestor);
+        prepararDecisao(token,false);
+        // Estados incompatíveis são fixtures de teste; nenhuma transição artificial entra na API.
+        new TransactionTemplate(txManager).executeWithoutResult(tx -> {
+            if(estado.equals("EM_MONITORAMENTO")) org.springframework.test.util.ReflectionTestUtils.setField(
+                    lotes.findById(la.getId()).orElseThrow(),"estado",EstadoLote.EM_MONITORAMENTO);
+            else org.springframework.test.util.ReflectionTestUtils.setField(transportes.findById(ta.getId()).orElseThrow(),
+                    "estado",EstadoTransporte.valueOf(estado));
+        });
+        long eventosAntes=auditoria.count();
+        status(req("POST",rotaDecisao(la.getId()),Map.of("decisao","LIBERAR","justificativa","Conferência"),token),409);
+        assertThat(auditoria.count()).isEqualTo(eventosAntes);
+        assertThat(lotes.findById(la.getId()).orElseThrow().getEstado()).isEqualTo(estado.equals("EM_MONITORAMENTO")
+                ? EstadoLote.EM_MONITORAMENTO : EstadoLote.AGUARDANDO_CONFERENCIA);
+    }
+    @Test void decisoesTecnicasConcorrentesGeramUmaUnicaTransicao() throws Exception {
+        String token=token(gestor);
+        prepararDecisao(token,false);
+        long eventosAntes=auditoria.count();
+        var largada=new java.util.concurrent.CountDownLatch(1);
+        try(var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var liberar=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",rotaDecisao(la.getId()),Map.of("decisao","LIBERAR","justificativa","Liberar após conferência"),token).status();
+            });
+            var descartar=executor.submit(() -> {
+                if(!largada.await(5,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Timeout");
+                return req("POST",rotaDecisao(la.getId()),Map.of("decisao","DESCARTAR","justificativa","Descartar após conferência"),token).status();
+            });
+            largada.countDown();
+            assertThat(List.of(liberar.get(15,java.util.concurrent.TimeUnit.SECONDS),descartar.get(15,java.util.concurrent.TimeUnit.SECONDS)))
+                    .containsExactlyInAnyOrder(204,409);
+        }
+        assertThat(auditoria.count()).isEqualTo(eventosAntes+1);
+        EstadoLote destino=lotes.findById(la.getId()).orElseThrow().getEstado();
+        assertThat(destino).isIn(EstadoLote.LIBERADO,EstadoLote.DESCARTADO);
+        assertThat(auditoria.findByReferenciaIdOrderByDataHoraAsc(la.getId()).stream()
+                .filter(e -> e.getAcao().equals(destino.name())).toList()).hasSize(1);
+    }
     @Test void corsPermiteApenasOrigemExplicitaEAuthorization() throws Exception {
         for(String origem: List.of("http://localhost:5173","https://nao-autorizada.invalid")) {
             var request=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+porta+"/api/v1/transportes"))

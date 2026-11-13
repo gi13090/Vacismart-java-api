@@ -239,7 +239,6 @@ class ApiIntegrationTest {
     @Test
     void erro500SeguroERotasForaDoEscopoAusentes() throws Exception {
         erro(requisicao("GET","/__teste/falha",null),500);
-        erro(requisicao("POST","/api/v1/lotes/"+UUID.randomUUID()+"/decisao-tecnica",Map.of()),404);
         erro(requisicao("POST","/api/v1/aplicacoes",Map.of()),404);
         erro(requisicao("GET","/api/v1/unidades/"+UUID.randomUUID()+"/monitoramento",null),404);
     }
