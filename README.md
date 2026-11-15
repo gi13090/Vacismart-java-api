@@ -1,7 +1,7 @@
 # VaciSmart — API Java
 
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
-Em 13/11/2026, J5-A, J5-B e J5-C estão aprovadas; PostgreSQL permanece reservado à J5-E. A J5-D acrescenta consulta informativa autenticada ao cidadão, descrita ao final, em revisão. As referências anteriores a funcionalidades pendentes registram seus marcos históricos. A J5 inteira permanece incompleta.
+Estado consolidado em 15/11/2026: J5-A (recebimento), J5-B (decisão técnica), J5-C (controle de disponibilidade) e J5-D (consulta informativa ao cidadão) estão implementadas. A J5-E teve validação funcional executada e aprovada tecnicamente em 14/11/2026, aguardando encerramento documental. As referências anteriores a funcionalidades pendentes registram seus marcos históricos. **A J5 integral permanece incompleta e depende da resolução de D-053/OpenAPI.**
 
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
@@ -9,11 +9,15 @@ Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento
 O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A informação de disponibilidade ao cidadão é objetivo do projeto, ainda não implementado na J4, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
 
 ## Equipe
-Nome da equipe: pendente de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni; RM, turma e relação completa de integrantes ainda pendentes de confirmação.
+Nome da equipe e turma: pendentes de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni Sacristan — RM 567548. Não foram confirmadas responsabilidades dos demais integrantes.
 
-| Nome | RM | Turma |
-|---|---|---|
-| A preencher | A preencher | A preencher |
+| Nome | RM |
+|---|---|
+| Gabriel Deotti Zanatta | 567258 |
+| Murilo Massini | 567383 |
+| Giovanni Sacristan | 567548 |
+| Caike Roberto de Souza Hollo | 568104 |
+| Gianluca Kenis de Araujo | 566765 |
 
 ## Pitch
 Link: a preencher.
@@ -102,7 +106,7 @@ Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade 
 O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
 
 ## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Consulta de disponibilidade ao cidadão implementada na J5-D, em revisão; recebimento foi acrescentado na J5-A, decisão técnica na J5-B e alteração interna de disponibilidade na J5-C; cadastro/login e própria conta estão na seção J4.
+A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Consulta de disponibilidade ao cidadão implementada na J5-D e validada no PostgreSQL real na J5-E; recebimento foi acrescentado na J5-A, decisão técnica na J5-B e alteração interna de disponibilidade na J5-C; cadastro/login e própria conta estão na seção J4.
 
 Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4 e adendos J5](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e os adendos de recebimento J5-A, decisão técnica J5-B disponibilidade interna J5-C e consulta cidadã J5-D, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
 
@@ -134,12 +138,25 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
 | CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
 | Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
-| Recebimento de transporte (J5-A) | Concluído e aprovado; PostgreSQL reservado à J5-E |
-| Decisão técnica de lote (J5-B) | Concluída e aprovada; PostgreSQL reservado à J5-E |
-| Confirmação/retirada de disponibilidade (J5-C) | Concluída e aprovada; PostgreSQL reservado à J5-E |
-| Consulta informativa ao cidadão (J5-D) | Implementada; em revisão |
-| OpenAPI (J5) | Pendente |
+| Recebimento de transporte (J5-A) | Implementado; fluxo validado no PostgreSQL na J5-E |
+| Decisão técnica de lote (J5-B) | Implementada; liberação pelo gestor validada no PostgreSQL na J5-E |
+| Confirmação/retirada de disponibilidade (J5-C) | Implementada; confirmação/retirada validadas no PostgreSQL na J5-E |
+| Consulta informativa ao cidadão (J5-D) | Implementada; consulta autenticada validada no PostgreSQL real |
+| Validação funcional (J5-E) | Executada e aprovada tecnicamente; aguardando encerramento documental |
+| OpenAPI (J5) | Pendente; decisão de etapa/escopo aberta em D-053 |
 | Compose final / Azure | Pendente — DevOps |
+
+## Validação funcional J5-E — 14/11/2026
+
+Resultados já executados, consolidados documentalmente em 15/11/2026 no HEAD 8fea0bebd1dadf6c9197d12eddc64fb0bf2ef130:
+
+- Java 21, PostgreSQL 17.6 e Hibernate com ddl-auto=validate. Flyway validou V0/V1/V2 já aplicadas, sem divergência ou nova migration.
+- 57 verificações HTTP reais aprovadas: autenticação por perfil, criação de dados fictícios exclusivos, monitoramento, bloqueio preventivo, recebimento sem liberação automática, decisão do gestor e confirmação/retirada de disponibilidade. Essas verificações não são testes JUnit adicionais.
+- GET /api/v1/disponibilidade retornou 200 autenticado no PostgreSQL real: filtros por unidade/vacina, paginação, ordenação, UUIDs/datas e situações CONFIRMADA, CONFIRMACAO_RETIRADA e SEM_INFORMACAO. A retirada de um lote preservou a confirmação do outro; a última retirada mudou a situação. Restrições de privacidade e casos representativos 401/403/409 conferidos.
+- Uma única regressão completa com Java 21 e perfil test/H2 isolado: **256 testes, 0 falhas, 0 erros, 0 ignorados; BUILD SUCCESS**. O responsável substituiu o planejamento histórico de três regressões por essa execução única após a validação funcional.
+- Os 22 registros preexistentes permaneceram intactos; 29 registros fictícios novos e 13 eventos novos de auditoria (incluídos nesses 29) foram preservados para revisão. Backup, inventários e histórico Flyway preservados; PostgreSQL permaneceu idêntico durante a regressão H2. API temporária encerrada.
+
+Não houve validação de integração Flutter/Arduino, deploy, carga, concorrência PostgreSQL ou migrations em banco vazio. Essas evidências não encerram D-002 nem a J5 integral. OpenAPI/Swagger continua pendente conforme D-053; não foi implementado nem transferido automaticamente para outra etapa. Nesta consolidação documental não foram executados testes novamente.
 
 ## Evidências históricas de execução da J1
 Em 06/11/2026:
@@ -591,6 +608,6 @@ Mensagem fixa em todas as situações: "Disponibilidade informada pela unidade. 
 
 Repository específico usa projeção escalar, página de pares em CTE e agregações independentes de estado e eventos, evitando N+1 e multiplicação de pares por eventos. Conteúdo e contagem usam os mesmos filtros vinculados; ordenação passa por whitelist de fragmentos constantes. Serviço somente leitura valida identidade ativa, mapeia apenas a página e não executa mutações, auditoria ou locks operacionais. Sem novas entidades, dependências, migrations, índices ou alterações de configuração.
 
-Testes e resultados reais estão no relatório privado A–L; 234 testes J5-C são evidência histórica. Codex foi usado para implementar, testar e documentar a J5-D. H2 não comprova PostgreSQL nem desempenho em carga; validação PostgreSQL e três regressões independentes permanecem reservadas à J5-E. D-002 de integração Mobile segue aberta. Sem commit/push, finalização de transporte ou avanço J5-E/J6/DevOps/J7; a J5 inteira permanece incompleta.
+Registro do marco J5-D de 13/11/2026 (planejamento posterior atualizado na seção J5-E acima): Testes e resultados reais estão no relatório privado A–L; 234 testes J5-C são evidência histórica. Codex foi usado para implementar, testar e documentar a J5-D. H2 não comprova PostgreSQL nem desempenho em carga; validação PostgreSQL e três regressões independentes permanecem reservadas à J5-E. D-002 de integração Mobile segue aberta. Sem commit/push, finalização de transporte ou avanço J5-E/J6/DevOps/J7; a J5 inteira permanece incompleta.
 
 Validação J5-D em 13/11/2026 com Java 21.0.13: testes direcionados finais, 22 aprovados (27.566 s, conclusão 14:25:44-03:00); regressão completa `./mvnw -B test`, 256 aprovados, 0 falhas/erros/ignorados (01:24 min, conclusão 14:29:02-03:00). Primeira rodada direcionada teve três falhas de status de sort inválido (500 em vez de 400), corrigidas com validação no serviço antes do proxy de persistência. A regressão final inclui a fixture reforçada de múltiplos transportes da mesma unidade. Nenhuma mudança de código após essa execução; alterações finais apenas documentais.
