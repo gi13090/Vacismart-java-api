@@ -3,6 +3,7 @@ package br.com.fiap.vacismart.service;
 import br.com.fiap.vacismart.domain.entity.EventoAuditoria;
 import br.com.fiap.vacismart.domain.enums.DecisaoTecnica;
 import br.com.fiap.vacismart.domain.enums.DisponibilidadeLote;
+import br.com.fiap.vacismart.domain.enums.EstadoLote;
 import br.com.fiap.vacismart.repository.EventoAuditoriaRepository;
 import br.com.fiap.vacismart.repository.LoteRepository;
 import br.com.fiap.vacismart.security.AcessoService;
@@ -31,6 +32,20 @@ public class FluxoOperacionalService {
         this.lotes = lotes;
         this.auditoria = auditoria;
         this.relogio = relogio;
+    }
+
+    public boolean verificarAplicacao(UUID id) {
+        acesso.lote(id);
+        var lote = lotes.findById(id).orElseThrow(() -> new NoSuchElementException("Lote não encontrado"));
+        monitoramento.buscarComBloqueio(lote.getTransporte().getId());
+        entityManager.refresh(lote);
+        if (lote.getEstado() == EstadoLote.LIBERADO) return true;
+        auditoria.save(new EventoAuditoria("Lote", id, "APLICACAO_REJEITADA",
+                acesso.atual().getId().toString(), OffsetDateTime.now(relogio),
+                "Verificação demonstrativa rejeitada: lote em estado " + lote.getEstado().name()
+                        + "; exige LIBERADO"));
+        // Retorno normal permite commit; o controller produz o 409 fora desta transação.
+        return false;
     }
 
     public void alterarDisponibilidade(UUID id, DisponibilidadeLote destino) {

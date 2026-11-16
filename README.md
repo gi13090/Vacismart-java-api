@@ -3,6 +3,8 @@
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
 Estado atualizado em 15/11/2026: J5-A–D implementadas, J5-E funcionalmente validada e documentação consolidada. **OpenAPI/Swagger implementado como fechamento da D-053 na J5**, com 33 operações documentadas e UI validada; D-053 encerrada tecnicamente, aguardando revisão no ChatGPT. A seção Swagger/OpenAPI ao final registra as evidências atuais; os marcos anteriores permanecem históricos.
 
+Estado corrente em 16/11/2026: J5 concluída no escopo aprovado pelo responsável, incluindo Swagger/OpenAPI. J6 implementa `POST /api/v1/aplicacoes` para verificação demonstrativa, conforme seção ao final; aguarda revisão externa antes de staging/commit. As seções datadas anteriores são históricas.
+
 Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
 
 ## Problema, beneficiário e ODS
@@ -144,6 +146,7 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Consulta informativa ao cidadão (J5-D) | Implementada; consulta autenticada validada no PostgreSQL real |
 | Validação funcional (J5-E) | Executada e aprovada tecnicamente; documentação consolidada em 15/11/2026 |
 | OpenAPI (J5) | Implementado e validado em 15/11/2026; D-053 encerrada tecnicamente, aguardando revisão |
+| Verificação simulada de aplicação (J6) | Implementada; RN06/RN16/T04; resultados e limites na seção J6 ao final; aguarda revisão externa |
 | Compose final / Azure | Pendente — DevOps |
 
 ## Validação funcional J5-E — 14/11/2026
@@ -628,3 +631,17 @@ As **33 combinações método/rota** dos sete controllers estão documentadas e 
 Validação em 15/11/2026: **17 testes direcionados aprovados** e regressão final Java 21/test/H2 com **273 testes (256 anteriores + 17 novos), zero falhas/erros/ignorados, BUILD SUCCESS**. A revisão final completou a descrição de 404 para referências inexistentes no cadastro de transporte/lote e foi validada na regressão final. No Chrome headless, a UI exibiu 33 operações e executou cadastro 201, login 200, própria conta 200 e disponibilidade 200, enviando Bearer pela interface, com zero erros JavaScript. Essa demonstração usou API temporária em loopback, H2 exclusivo e chaves efêmeras; não acessou PostgreSQL nem executou migrations. Evidências e histórico das rodadas estão no relatório privado ignorado.
 
 Codex foi utilizado nesta etapa para implementar a documentação OpenAPI, os testes, conferir a UI no navegador e consolidar os resultados. A declaração acadêmica anterior de uso de IA foi preservada. D-053 encerrada tecnicamente para revisão no ChatGPT; nenhum commit/push ou início de J6/DevOps nesta atividade. D-002 e D-042 continuam nos seus escopos próprios.
+
+## Verificação simulada de aplicação — J6 — 16/11/2026
+
+`POST /api/v1/aplicacoes`, com Bearer JWT, aceita somente `{"loteId":"UUID_DO_LOTE"}`. FUNCIONARIO ativo verifica lotes da própria unidade; GESTOR ativo mantém escopo global. CIDADAO é negado. Autor, perfil e unidade vêm da identidade autenticada e dos vínculos persistidos, nunca do corpo.
+
+Lote LIBERADO retorna 200 com `{"resultado":"PERMITIDA","mensagem":"Verificação demonstrativa permitiu a aplicação. Não autoriza nem registra administração real de vacina."}`. Não exige disponibilidade CONFIRMADA, não altera a disponibilidade nem estoque e não cria paciente, dose ou registro clínico.
+
+Todo estado não LIBERADO retorna 409/ProblemDetail, com mensagem segura, preservando lote e histórico. Cada tentativa autorizada rejeitada gera um EventoAuditoria imutável: entidade Lote, referenciaId do lote, ação APLICACAO_REJEITADA, UUID autenticado do autor, instante do Clock e motivo incluindo o estado impeditivo. O serviço transacional retorna normalmente após inserir o evento; o controller gera o conflito somente depois do commit. Falha de persistência não é tratada como rejeição de negócio auditada. Repetições rejeitadas são novas tentativas e geram novos eventos.
+
+Reutilizados AcessoService, FluxoOperacionalService, repositories e lock pessimista do transporte, com revalidação da unidade e refresh explícito do lote. 400 para entrada inválida/campos extras; 401 para autenticação ausente/inválida/usuário inativo; 403 para cidadão ou funcionário com lote alheio/inexistente; 404 para lote inexistente ao gestor. Negações de acesso não geram auditoria de aplicação. Os 33 contratos anteriores permanecem preservados; Swagger/OpenAPI documenta agora 34 operações.
+
+Validações reais com JDK 21.0.13.0.3 e perfil test/H2: direcionados `./mvnw -B -Dtest=AplicacaoIntegrationTest,OpenApiIntegrationTest test`, **38 testes aprovados**, 24.022 s, concluídos às 00:04:33-03:00 de 16/11/2026. Após acrescentar cobertura de recarga de lote com decisão concorrente, uma regressão completa `./mvnw -B test`: **304 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 01:33 min, concluída às 00:07:28-03:00. São 273 anteriores + 30 casos J6 + 1 caso OpenAPI. As consultas em outra transação após respostas HTTP 409 confirmaram a persistência da auditoria nos quatro estados impeditivos e a preservação de eventos anteriores; testes também cobrem repetição, perfis, isolamento, usuário inativo, UUID/corpo e disponibilidade nos sucessos.
+
+As evidências anteriores foram preservadas; não houve clean nem acesso/alteração ao PostgreSQL, migrations, dependências ou DevOps. H2 não comprova concorrência PostgreSQL, implantação ou integração Flutter. Codex foi utilizado para implementar, testar e documentar a J6; a declaração acadêmica anterior permanece preservada. **J6 tecnicamente implementada e validada no recorte autorizado, aguardando revisão externa e autorização antes de staging/commit**. Diff e relatório privado estão preparados para revisão. DevOps é a prioridade seguinte informada pelo responsável, sem início nesta execução.

@@ -1,4 +1,6 @@
-# VaciSmart — Contrato de integração Mobile/Gemini da J4
+# VaciSmart — Contrato de integração Mobile/Gemini da J4 e adendos J5/J6
+
+Estado corrente em 16/11/2026: J5 aprovada no escopo informado pelo responsável, incluindo OpenAPI; J6 acrescenta o 34º par método/rota, `POST /api/v1/aplicacoes`, exclusivamente demonstrativo. Contrato detalhado no adendo J6 ao final. HEAD-base `75adc3e7ad61c79bdcf47c220575598655a0ea5e`, master, implementação J6 ainda sem commit. O texto datado abaixo preserva os marcos anteriores; integração Flutter/Arduino e D-002 continuam pendentes.
 
 Consolidação documental: 15/11/2026. Backend corrente: branch master, HEAD 8fea0bebd1dadf6c9197d12eddc64fb0bf2ef130, com J5-A/B/C/D implementadas. J5-D foi commitada nesse HEAD e sua consulta informativa foi validada no PostgreSQL real na J5-E em 14/11/2026. J5-E aprovada tecnicamente, aguardando encerramento documental; J5 integral incompleta, com D-053/OpenAPI aberta. O corpo original permanece como registro da J4 de 12/11/2026, aprovada pelo responsável, cuja referência era 324b87484e5f2d8f23de59a024c8165dfc93c814; os adendos datados preservam a evolução J5. Integração Flutter/Arduino, demais funcionalidades futuras e implantação DevOps continuam pendentes.
 
@@ -406,3 +408,35 @@ Rotas, DTOs, JWT, ProblemDetail, regras de disponibilidade e privacidade permane
 D-053 atendida na J5 e encerrada tecnicamente, aguardando revisão. Com o backend dev já iniciado, Swagger UI em `http://127.0.0.1:8080/swagger-ui.html`, JSON em `/v3/api-docs` e YAML em `/v3/api-docs.yaml` (ajustar a porta usada). Documentação habilitada somente em dev/test, com prod/production desabilitando mesmo em combinação; não há nova URL hospedada. Faça login pela UI e informe somente o token em Authorize; as operações protegidas continuam exigindo Bearer e as mesmas permissões por perfil/unidade.
 
 As 33 combinações método/rota, DTOs, paginação, erros e adendos funcionais anteriores permanecem intactos. Este acesso serve para consultar/experimentar a documentação local; não altera base URL do aplicativo nem comprova integração bilateral. D-002 permanece aberta. Não foram implementadas funcionalidades J6, dispositivos ou mudanças Mobile nesta atividade.
+
+## Adendo J6 — verificação simulada de aplicação — 16/11/2026
+
+Novo par método/rota (34º): `POST /api/v1/aplicacoes`. Requer JWT Bearer válido de FUNCIONARIO ativo da unidade do lote ou GESTOR ativo, com escopo global existente. CIDADAO não pode executar. Os 33 pares anteriores permanecem com os mesmos contratos; Swagger/OpenAPI inclui esta operação e os dois DTOs novos.
+
+Entrada `AplicacaoEntradaDto`, exclusivamente com UUID obrigatório:
+
+```json
+{"loteId":"11111111-1111-4111-8111-111111111111"}
+```
+
+Não enviar autor, perfil, unidade, horário, paciente, dose ou estado. Identidade vem do JWT validado; perfil, atividade e unidade são conferidos nos vínculos persistidos. Campos extras, corpo ausente/nulo, JSON inválido e loteId ausente/nulo/inválido retornam 400.
+
+Lote LIBERADO retorna 200, `AplicacaoSaidaDto`:
+
+```json
+{"resultado":"PERMITIDA","mensagem":"Verificação demonstrativa permitiu a aplicação. Não autoriza nem registra administração real de vacina."}
+```
+
+O sucesso independe de disponibilidade CONFIRMADA/NAO_DISPONIVEL e não a altera. Não consome estoque, registra paciente/dose/administração ou cria evento clínico. O aplicativo deve exibir o caráter demonstrativo, sem apresentar o resultado como autorização clínica.
+
+EM_MONITORAMENTO, AGUARDANDO_CONFERENCIA, BLOQUEADO_PREVENTIVAMENTE e DESCARTADO retornam 409 em `application/problem+json`:
+
+```json
+{"type":"about:blank","title":"Conflict","status":409,"detail":"Verificação demonstrativa rejeitada: lote não LIBERADO","instance":"/api/v1/aplicacoes"}
+```
+
+A rejeição de negócio grava APLICACAO_REJEITADA no histórico autorizado do lote, com UUID do autor autenticado, lote, instante do servidor e estado impeditivo. O evento é confirmado antes de gerar o 409; cada nova tentativa rejeitada gera outro evento. Estado, disponibilidade e registros anteriores são preservados. Um 409 de conflito de concorrência/infraestrutura não equivale a confirmação dessa auditoria de negócio. Não repetir automaticamente POSTs após falha de rede, pois podem registrar outra tentativa.
+
+401: JWT ausente/inválido/expirado ou usuário inativo. 403: cidadão ou funcionário fora da unidade; para funcionário, lote alheio e inexistente recebem a mesma negação, sem revelar existência. 404: lote inexistente para gestor. Essas negações de acesso não geram eventos de tentativa de aplicação. Demais erros seguem o contrato ProblemDetail vigente; a configuração CORS permanece inalterada.
+
+Backend J6 implementado e aguardando revisão externa. Este contrato não comprova implementação/integração Flutter nem encerra D-002. Caderneta, administração clínica, dispositivos, finalização e DevOps continuam fora desta execução.

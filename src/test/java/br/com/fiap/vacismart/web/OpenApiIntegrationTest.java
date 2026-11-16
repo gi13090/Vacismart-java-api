@@ -43,7 +43,7 @@ class OpenApiIntegrationTest {
     }
     JsonNode schema(JsonNode doc, String nome) { return doc.at("/components/schemas/" + nome); }
 
-    @Test void documentaExatamenteOs33ParesReaisSemRotasFuturasOuDeTeste() throws Exception {
+    @Test void documentaExatamenteOs34ParesReaisSemRotasFuturasOuDeTeste() throws Exception {
         var doc = documento();
         Set<String> reais = new TreeSet<>();
         mappings.getHandlerMethods().forEach((mapping, handler) -> {
@@ -58,12 +58,29 @@ class OpenApiIntegrationTest {
             assertThat(op.getValue().path("summary").asString()).isNotBlank();
             assertThat(op.getValue().path("description").asString()).isNotBlank();
         }));
-        assertThat(reais).hasSize(33);
+        assertThat(reais).hasSize(34);
         assertThat(documentadas).isEqualTo(reais);
-        assertThat(doc.get("paths").toString()).doesNotContain("/__teste", "/aplicacoes", "/finalizacao", "/caderneta");
+        assertThat(doc.get("paths").toString()).doesNotContain("/__teste", "/finalizacao", "/caderneta");
         assertThat(doc.path("openapi").asString()).startsWith("3.0.");
         assertThat(doc.at("/info/title").asString()).contains("VaciSmart");
         assertThat(doc.at("/info/version").asString()).isEqualTo("0.0.1-SNAPSHOT");
+    }
+
+    @Test void documentaAplicacaoSimuladaComEntradaResultadoEErros() throws Exception {
+        var doc = documento();
+        var op = doc.get("paths").get("/api/v1/aplicacoes").get("post");
+        assertThat(op.path("description").asString()).contains("demonstrativa", "FUNCIONARIO", "GESTOR", "commit");
+        assertThat(op.at("/requestBody/content/application~1json/schema/$ref").asString()).endsWith("AplicacaoEntradaDto");
+        var entrada = schema(doc, "AplicacaoEntradaDto");
+        assertThat(entrada.path("properties").propertyNames()).containsExactly("loteId");
+        assertThat(entrada.path("required").toString()).contains("loteId");
+        assertThat(entrada.at("/properties/loteId/format").asString()).isEqualTo("uuid");
+        assertThat(entrada.path("additionalProperties").asBoolean()).isFalse();
+        assertThat(op.at("/responses/200/content/application~1json/schema/$ref").asString()).endsWith("AplicacaoSaidaDto");
+        assertThat(schema(doc, "AplicacaoSaidaDto").path("properties").propertyNames()).containsExactlyInAnyOrder("resultado", "mensagem");
+        for (String codigo : List.of("400", "401", "403", "404", "409"))
+            assertThat(op.at("/responses/" + codigo + "/content/application~1problem+json/schema/$ref").asString()).isEqualTo("#/components/schemas/ProblemaApi");
+        assertThat(op.at("/responses/409/description").asString()).contains("auditoria persistida");
     }
 
     @Test void todasAsReferenciasDeSchemasSaoResolvidas() throws Exception {

@@ -64,13 +64,16 @@ public class OpenApiConfig {
                 naoAutenticado.addHeaderObject("WWW-Authenticate", new Header().schema(new StringSchema()).description("Bearer"));
                 respostas.addApiResponse("401", naoAutenticado);
                 if (!publico) respostas.addApiResponse("403", problema("Perfil ou unidade sem permissão. Funcionário recebe 403 também para lote/transporte inexistente, sem revelar existência"));
-                if (rota.contains("{id}") || (verbo.equals("POST") && List.of("/api/v1/lotes", "/api/v1/transportes").contains(rota))
+                if (rota.contains("{id}") || (verbo.equals("POST") && List.of("/api/v1/lotes", "/api/v1/transportes", "/api/v1/aplicacoes").contains(rota))
                         || (op.getParameters() != null && op.getParameters().stream()
                         .anyMatch(p -> "transporteId".equals(p.getName())))) {
                     respostas.addApiResponse("404", problema("Recurso ausente no escopo autorizado; gestor recebe 404 para lote/transporte inexistente"));
                 }
                 if (!verbo.equals("GET") && !rota.equals("/api/v1/auth/login")) {
                     respostas.addApiResponse("409", problema("Estado, duplicidade, vínculos ou concorrência impedem a operação"));
+                }
+                if (rota.equals("/api/v1/aplicacoes")) {
+                    respostas.addApiResponse("409", problema("Lote não LIBERADO: tentativa rejeitada com auditoria persistida. Conflitos de concorrência também podem retornar 409, sem confirmar a verificação"));
                 }
                 if (op.getRequestBody() != null) respostas.addApiResponse("415", problema("Tipo de mídia não suportado"));
                 respostas.addApiResponse("500", problema("Erro interno ao processar a requisição; sem detalhes internos"));
