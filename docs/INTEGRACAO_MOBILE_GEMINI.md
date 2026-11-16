@@ -399,3 +399,10 @@ Validação funcional J5-E executada em 14/11/2026, consolidada documentalmente 
 O cenário completo somou 57 verificações HTTP aprovadas, incluindo casos representativos 401/403/409; uma única regressão Java 21/test/H2 aprovou 256 testes sem falhas/erros/ignorados. Flyway validou V0/V1/V2 sem nova aplicação e Hibernate validou o schema. Registros preexistentes e backups preservados. São resultados anteriores; nenhum teste foi repetido nesta consolidação.
 
 Rotas, DTOs, JWT, ProblemDetail, regras de disponibilidade e privacidade permanecem os mesmos. Integração efetiva Flutter/Arduino não executada; **D-002 continua aberta**. J5-E aprovada tecnicamente e aguardando encerramento documental; J5 inteira incompleta, com **D-053/OpenAPI aberta**, sem implementação ou mudança de etapa autorizada nesta atividade.
+
+
+## Adendo de acesso Swagger/OpenAPI — 15/11/2026
+
+D-053 atendida na J5 e encerrada tecnicamente, aguardando revisão. Com o backend dev já iniciado, Swagger UI em `http://127.0.0.1:8080/swagger-ui.html`, JSON em `/v3/api-docs` e YAML em `/v3/api-docs.yaml` (ajustar a porta usada). Documentação habilitada somente em dev/test, com prod/production desabilitando mesmo em combinação; não há nova URL hospedada. Faça login pela UI e informe somente o token em Authorize; as operações protegidas continuam exigindo Bearer e as mesmas permissões por perfil/unidade.
+
+As 33 combinações método/rota, DTOs, paginação, erros e adendos funcionais anteriores permanecem intactos. Este acesso serve para consultar/experimentar a documentação local; não altera base URL do aplicativo nem comprova integração bilateral. D-002 permanece aberta. Não foram implementadas funcionalidades J6, dispositivos ou mudanças Mobile nesta atividade.

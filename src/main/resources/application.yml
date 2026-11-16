@@ -10,6 +10,18 @@ vacismart:
   cors:
     origens: ${CORS_ORIGENS:}
 
+# Documentação desligada por padrão; não habilitar automaticamente em produção.
+springdoc:
+  api-docs:
+    enabled: false
+    version: OPENAPI_3_0
+  swagger-ui:
+    enabled: false
+    persist-authorization: false
+  packages-to-scan: br.com.fiap.vacismart.web.controller
+  paths-to-match: /api/v1/**
+  override-with-generic-response: false
+
 spring:
   data:
     web:
@@ -60,3 +72,14 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "(dev | test) & !prod & !production"
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

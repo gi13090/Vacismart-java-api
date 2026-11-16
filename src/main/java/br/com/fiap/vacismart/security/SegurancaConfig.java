@@ -64,15 +64,25 @@ public class SegurancaConfig {
         var source = new UrlBasedCorsConfigurationSource(); source.registerCorsConfiguration("/**", cors); return source;
     }
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, UsuarioRepository usuarios,
-            CorsConfigurationSource cors) throws Exception {
+            CorsConfigurationSource cors, org.springframework.core.env.Environment ambiente) throws Exception {
         return http.csrf(c -> c.disable()).cors(c -> c.configurationSource(cors))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(c -> c.disable())
-                .authorizeHttpRequests(a -> a
+                .authorizeHttpRequests(a -> {
+                    // Só a documentação local é pública; os matchers de negócio abaixo são preservados.
+                    var documentacao = a.requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**",
+                            "/v3/api-docs", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config");
+                    if (ambiente.acceptsProfiles(org.springframework.core.env.Profiles.of("(dev | test) & !prod & !production"))) {
+                        documentacao.permitAll();
+                    } else {
+                        documentacao.denyAll();
+                    }
+                    a
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/cadastro", "/api/v1/auth/login").permitAll()
                     .requestMatchers("/api/v1/auth/me").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/v1/disponibilidade").hasAnyRole("CIDADAO", "FUNCIONARIO", "GESTOR")
-                    .anyRequest().hasAnyRole("FUNCIONARIO", "GESTOR"))
+                    .anyRequest().hasAnyRole("FUNCIONARIO", "GESTOR");
+                })
                 .exceptionHandling(e -> e
                     .authenticationEntryPoint((req, res, ex) -> ErrosSeguranca.escrever(res, 401))
                     .accessDeniedHandler((req, res, ex) -> ErrosSeguranca.escrever(res, 403)))
