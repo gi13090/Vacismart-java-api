@@ -1,0 +1,63 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: "8080"
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:?Defina DB_NAME}
+      DB_USER: ${DB_USER:?Defina DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
+      JWT_CHAVE_PUBLICA: file:/run/keys/publica.pem
+      JWT_CHAVE_PRIVADA: file:/run/keys/privada.pem
+      JWT_EMISSOR: ${JWT_EMISSOR:-vacismart}
+      JWT_VALIDADE: ${JWT_VALIDADE:-PT15M}
+      CORS_ORIGENS: ${CORS_ORIGENS:-}
+      TZ: America/Sao_Paulo
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    volumes:
+      - type: bind
+        source: ${DOCKER_JWT_PUBLIC_KEY:?Defina o caminho absoluto DOCKER_JWT_PUBLIC_KEY}
+        target: /run/keys/publica.pem
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOCKER_JWT_PRIVATE_KEY:?Defina o caminho absoluto DOCKER_JWT_PRIVATE_KEY}
+        target: /run/keys/privada.pem
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vacismart
+
+  postgres:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Defina DB_NAME}
+      POSTGRES_USER: ${DB_USER:?Defina DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
+      TZ: America/Sao_Paulo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - vacismart
+
+networks:
+  vacismart:
+    driver: bridge
+
+volumes:
+  postgres_data:

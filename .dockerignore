@@ -1,0 +1,37 @@
+# Contexto permitido: somente os insumos do build Maven.
+**
+!Dockerfile
+!.mvn/
+!.mvn/wrapper/
+!.mvn/wrapper/maven-wrapper.properties
+!mvnw
+!pom.xml
+!src/
+!src/main/
+!src/main/**
+
+# Exclusões também dentro das árvores permitidas.
+**/.git
+**/target
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.jks
+**/*.pfx
+**/*.pub
+**/id_rsa*
+**/id_dsa*
+**/id_ecdsa*
+**/id_ed25519*
+**/*.log
+**/*.dump
+**/*.backup
+**/*.sql.gz
+**/*.bak
+**/.private
+**/secrets.local
+**/credentials.local.*
+**/credenciais.local.*
+**/RELATORIO_REVISAO_CHATGPT.md
