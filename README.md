@@ -1,5 +1,7 @@
 # VaciSmart — API Java
 
+> **DevOps — Azure e apresentação:** consulte o [README_DEVOPS.md](README_DEVOPS.md) para o How To, o script Azure CLI e o roteiro presencial. O guia distingue a validação local concluída da implantação na VM ainda pendente.
+
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
 Estado atualizado em 15/11/2026: J5-A–D implementadas, J5-E funcionalmente validada e documentação consolidada. **OpenAPI/Swagger implementado como fechamento da D-053 na J5**, com 33 operações documentadas e UI validada; D-053 encerrada tecnicamente, aguardando revisão no ChatGPT. A seção Swagger/OpenAPI ao final registra as evidências atuais; os marcos anteriores permanecem históricos.
 
@@ -645,3 +647,131 @@ Reutilizados AcessoService, FluxoOperacionalService, repositories e lock pessimi
 Validações reais com JDK 21.0.13.0.3 e perfil test/H2: direcionados `./mvnw -B -Dtest=AplicacaoIntegrationTest,OpenApiIntegrationTest test`, **38 testes aprovados**, 24.022 s, concluídos às 00:04:33-03:00 de 16/11/2026. Após acrescentar cobertura de recarga de lote com decisão concorrente, uma regressão completa `./mvnw -B test`: **304 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 01:33 min, concluída às 00:07:28-03:00. São 273 anteriores + 30 casos J6 + 1 caso OpenAPI. As consultas em outra transação após respostas HTTP 409 confirmaram a persistência da auditoria nos quatro estados impeditivos e a preservação de eventos anteriores; testes também cobrem repetição, perfis, isolamento, usuário inativo, UUID/corpo e disponibilidade nos sucessos.
 
 As evidências anteriores foram preservadas; não houve clean nem acesso/alteração ao PostgreSQL, migrations, dependências ou DevOps. H2 não comprova concorrência PostgreSQL, implantação ou integração Flutter. Codex foi utilizado para implementar, testar e documentar a J6; a declaração acadêmica anterior permanece preservada. **J6 tecnicamente implementada e validada no recorte autorizado, aguardando revisão externa e autorização antes de staging/commit**. Diff e relatório privado estão preparados para revisão. DevOps é a prioridade seguinte informada pelo responsável, sem início nesta execução.
+
+## Docker — D1 DevOps — 16/11/2026
+
+Infraestrutura local da API existente, com Java 21, build multi-stage via Maven
+Wrapper 3.3.4, Maven 3.9.11 e runtime JRE 21. O build executa `package` com
+`-Dmaven.test.skip=true`, sem clean nem repetição dos 304 testes históricos da J6.
+O perfil `dev` mantém PostgreSQL/Flyway e Hibernate `validate`, incluindo Swagger
+local. Esta configuração não representa uma implantação de produção.
+`compose.dev.yml` continua disponível para a execução anterior, com Java no host.
+
+### Ambiente e chaves externas
+
+Use Docker Engine ativo e Compose com suporte a `bind.create_host_path`.
+Prepare um arquivo local `.env.docker` a partir de `.env.example` **somente se
+ainda não existir**; preserve `.env` e quaisquer configurações privadas existentes.
+Preencha DB_NAME, DB_USER e DB_PASSWORD e acrescente os caminhos absolutos
+DOCKER_JWT_PUBLIC_KEY e DOCKER_JWT_PRIVATE_KEY (caminhos do host, sem `file:`).
+API_PORT controla somente a porta do host (8080 por padrão); escolha outra livre
+se houver API em execução. `.env.docker` já é ignorado pelo Git.
+O DB_URL do exemplo atende ao Java no host; no novo Compose ele é definido como
+`jdbc:postgresql://postgres:5432/${DB_NAME}` para usar o DNS da rede Docker.
+JWT_EMISSOR, JWT_VALIDADE e CORS_ORIGENS são opcionais, conforme a J4.
+O provisionamento de usuários demo permanece desabilitado.
+
+As chaves devem formar um par RSA de pelo menos 2048 bits: pública PEM/X.509 e
+privada PEM/PKCS#8. Use arquivos externos já provisionados ou gere um novo par
+exclusivo da demonstração em um diretório externo privado, sem sobrescrever chaves.
+Não copie as chaves para o projeto. No Docker Linux convencional, o processo da
+API usa UID/GID **10001:10001** e precisa conseguir ler os dois arquivos montados.
+Por exemplo, para cópias dedicadas da demonstração em diretório externo com modo
+0700, conceda leitura por ACL ao UID do container:
+
+```bash
+# Substitua os caminhos pelos arquivos externos dedicados já existentes.
+chmod 600 /caminho/externo/publica.pem /caminho/externo/privada.pem
+setfacl -m u:10001:r-- /caminho/externo/publica.pem /caminho/externo/privada.pem
+```
+
+Isso concede leitura ao UID 10001 sem tornar a chave privada legível para todos.
+Em Docker rootless ou com user namespace, ajuste para o UID mapeado no host.
+Os mounts são somente leitura; arquivos ausentes provocam erro, sem criação
+automática de diretórios. Os caminhos internos são `/run/keys/publica.pem` e
+`/run/keys/privada.pem`; a configuração Spring usa URIs `file:` correspondentes.
+
+### Build e inicialização isolada
+
+Execute na raiz, usando sempre o mesmo arquivo e nome de projeto. Para um ensaio
+separado, escolha outro nome exclusivo (por exemplo `vacismart-d1-ensaio`) e outra
+API_PORT em um arquivo de ambiente dedicado. Não reutilize o projeto de um banco
+existente. Rede e volume recebem automaticamente o prefixo do projeto; não há
+`container_name`, nome global de volume nem porta do PostgreSQL publicada no host.
+
+```bash
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml config --quiet
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml build api
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml up -d
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml ps
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml logs --tail=100 api postgres
+```
+
+Para construir somente a imagem: `docker build -t vacismart-java-api:d1 .`.
+O build precisa acessar o registry e Maven Central. O contexto permite apenas
+Wrapper, pom e `src/main`, com exclusões adicionais de material sensível.
+Nenhum arquivo de ambiente, chave externa, target, histórico Git ou relatório é
+incorporado. A imagem não inclui o banco nem os dados do volume.
+
+A API aguarda o healthcheck do PostgreSQL antes de iniciar. `up -d` retorna antes
+de comprovar o startup da API: confira nos logs o perfil dev, Flyway V0/V1/V2,
+Hibernate validate e `Started VaciSmartApplication`. Em volume novo as migrations
+são aplicadas; em volume existente são validadas. A porta interna é 8080 e o bind
+interno é 0.0.0.0; a publicação no host fica limitada a 127.0.0.1.
+Acesse `http://127.0.0.1:8080/swagger-ui.html`, ajustando API_PORT quando necessário.
+Sem token, uma rota protegida deve retornar 401; isso não constitui falha de startup.
+Não use `config` sem `--quiet` em evidências, pois a saída pode revelar senhas.
+
+### Inspeção dos containers e persistência
+
+```bash
+# Usuário efetivo e leitura das chaves, sem revelar conteúdo.
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api id
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api sh -c 'test -r /run/keys/publica.pem && test -r /run/keys/privada.pem'
+# Shell da API (usuário não-root).
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api sh
+# Cliente PostgreSQL dentro da rede/serviço, sem publicar 5432.
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+No psql, consulte `SELECT version();` e
+`SELECT installed_rank, version, description, success FROM flyway_schema_history ORDER BY installed_rank;`.
+Use `\q` para sair. Nunca exiba variáveis completas, tokens ou chaves em capturas.
+Para conferir a comunicação HTTP, startup e JWT, valide cadastro/login e uma rota
+autenticada com dados fictícios, sem publicar o token nos logs ou evidências.
+
+```bash
+# Encerra e remove containers/rede, preservando o volume nomeado.
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml down
+# Retoma os mesmos dados usando o mesmo projeto e ambiente.
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml up -d
+```
+
+Para parar e iniciar os mesmos containers, preservando seus IDs e o volume:
+```bash
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml stop
+docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml start
+```
+Após `start`, aguarde PostgreSQL healthy e a API responder antes de repetir o SELECT
+dos registros usados como referência. Reutilize sempre o projeto e os arquivos de
+ambiente/Compose originais da execução; os exemplos acima usam `vacismart-d1`.
+
+Não use `down -v`, remoção de volumes ou prune. O nome do projeto identifica o
+volume persistente; mudar o nome cria outro banco. Alterar DB_USER/DB_PASSWORD/
+DB_NAME não reconfigura automaticamente um volume PostgreSQL já inicializado.
+Preserve o ambiente e as chaves junto da identificação do volume; volume não
+substitui backup. Backups e evidências devem ficar fora do contexto de build.
+
+Validação local D1/D2 concluída e aprovada pelo responsável após revisão no
+ChatGPT, conforme encerramento de 17/11/2026: build Java 21 com Maven Wrapper 3.3.4
+e Maven 3.9.11, PostgreSQL 17.6 healthy, JDBC, Flyway V0/V1/V2, UID/GID 10001:10001,
+JWT RS256, CRUD completo, SELECT e relacionamentos. A persistência foi comprovada
+após `stop`/`start` dos mesmos containers, com os mesmos registros, UUIDs e volume.
+O DELETE foi validado somente em uma vacina descartável criada para o teste, sem
+dependências; os registros anteriores permaneceram intactos. A correção de `unzip`
+fica restrita ao estágio de build e preserva a verificação SHA-256 do Wrapper.
+Essas evidências são das validações D1/D2 aprovadas; não representam novas
+execuções na revisão documental. Relatórios, credenciais e auxiliares permanecem
+externos ao Git. Codex foi utilizado na D1/D2 para infraestrutura, documentação e
+verificações relatadas, preservando a declaração acadêmica de uso de IA e a API J1–J6.
