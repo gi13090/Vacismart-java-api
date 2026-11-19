@@ -1,16 +1,24 @@
 # VaciSmart — API Java
 
-> **DevOps — Azure e apresentação:** consulte o [README_DEVOPS.md](README_DEVOPS.md) para o How To, o script Azure CLI e o roteiro presencial. O guia distingue a validação local concluída da implantação na VM ainda pendente.
+Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
+
+> **DevOps — Azure e apresentação:** comece por [Acessar e verificar o VaciSmart já implantado](README_DEVOPS.md#acessar-e-verificar-o-vacismart-já-implantado). O guia reúne a consulta rápida do estado Azure, o roteiro presencial, as perguntas técnicas e o procedimento separado para instalação nova; JOIN e persistência na nuvem continuam sem comprovação.
+
+**Estado corrente — 18/11/2026:** API Java 21 e PostgreSQL 17.6 implantados e funcionando na Azure Spain Central, `rg-vacismart`, VM `vm-vacismart` Standard_D2s_v4, Ubuntu 22.04. Docker Engine 29.10.0, Compose v5.8.0 e projeto `vacismart-azure`. Banco saudável e acessível pela rede Docker, Flyway V0/V1/V2 aplicadas, nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados. API publicada somente em `127.0.0.1:8080` da VM, acesso pelo notebook via túnel SSH e chaves JWT RSA externas ao repositório. CRUD Azure confirmado pelo responsável: POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404. **JOIN e persistência após reinício Azure, vídeo e PDF final permanecem pendentes.** Arquivo Draw.io não encontrado no repositório; será fornecido separadamente. Esta revisão foi documental, sem nova execução operacional.
+
+Os marcos datados abaixo preservam o histórico. Recebimento, decisão técnica, disponibilidade e aplicação simulada já estão implementados em J5/J6; pendências de implementação citadas nos marcos J2–J4 não descrevem o estado atual. Não se infere a validação Azure de todos esses fluxos a partir do CRUD confirmado.
+
+Na VM, o repositório fica em `~/vacismart`; o diretório privado é `~/.config/vacismart`, com o env-file `~/.config/vacismart/compose.env`. Esses caminhos foram informados pelo responsável. Use o projeto Compose `vacismart-azure` e siga os comandos do guia rápido na sessão SSH, sem exibir o conteúdo do env-file.
+
+## Marcos anteriores de implementação
 
 Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
 Estado atualizado em 15/11/2026: J5-A–D implementadas, J5-E funcionalmente validada e documentação consolidada. **OpenAPI/Swagger implementado como fechamento da D-053 na J5**, com 33 operações documentadas e UI validada; D-053 encerrada tecnicamente, aguardando revisão no ChatGPT. A seção Swagger/OpenAPI ao final registra as evidências atuais; os marcos anteriores permanecem históricos.
 
-Estado corrente em 16/11/2026: J5 concluída no escopo aprovado pelo responsável, incluindo Swagger/OpenAPI. J6 implementa `POST /api/v1/aplicacoes` para verificação demonstrativa, conforme seção ao final; aguarda revisão externa antes de staging/commit. As seções datadas anteriores são históricas.
-
-Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
+Registro de 16/11/2026 (histórico): J5 concluída no escopo aprovado pelo responsável, incluindo Swagger/OpenAPI. J6 implementa `POST /api/v1/aplicacoes` para verificação demonstrativa, conforme seção ao final; aguarda revisão externa antes de staging/commit. As seções datadas anteriores são históricas.
 
 ## Problema, beneficiário e ODS
-O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A informação de disponibilidade ao cidadão é objetivo do projeto, ainda não implementado na J4, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
+O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A consulta informativa de disponibilidade ao cidadão foi implementada na J5-D e validada no PostgreSQL na J5-E, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
 
 ## Equipe
 Nome da equipe e turma: pendentes de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni Sacristan — RM 567548. Não foram confirmadas responsabilidades dos demais integrantes.
@@ -103,7 +111,7 @@ Os vínculos são unidirecionais do lado N para 1. Auditoria identifica o objeto
 - `verificarPerdaTelemetria`: método explícito, sem agendador. Mais de três minutos desde o último recebimento (ou início sem leituras) abre PERDA_DE_TELEMETRIA. Exatamente três minutos não abre. Parâmetro `vacismart.telemetria.limite` aceita duração ISO-8601 positiva, padrão `PT3M`. O retorno booleano informa se uma ocorrência nova foi criada. Telemetria sozinha não bloqueia lotes. Retomada de leitura válida encerra somente essa ocorrência e audita; não libera lote nem confirma disponibilidade.
 - Todas as operações do serviço são transacionais. Lock pessimista na linha de Transporte serializa início, leituras, encerramento e verificação. Índice único parcial no PostgreSQL reforça a unicidade de ocorrências abertas. Testes H2 verificam também concorrência e rollback.
 
-Recebimento, decisões técnicas, aplicação, confirmação de disponibilidade e transições posteriores continuam pendentes. Enums desses estados estão modelados; não há métodos para executá-los nesta J2.
+**No marco J2**, recebimento, decisões técnicas, aplicação e disponibilidade ainda não tinham métodos. Esses fluxos foram acrescentados em J5/J6, descritos adiante; finalização de transporte e credencial própria de dispositivo continuam sem implementação.
 
 ## Usuários de teste por papel
 
@@ -125,7 +133,7 @@ Execute `./mvnw -B test` com JDK 21 completo. A suíte contém teste de contexto
 T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 dependiam de etapas posteriores; T06/T10 têm cobertura HTTP de segurança na J4. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. As evidências históricas de J1–J4 e a validação PostgreSQL de 12/11/2026 aparecem separadas abaixo.
 
 ## Limitações e escopo
-J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI foi entregue na J5, conforme seção Swagger/OpenAPI ao final. Compose final API + banco e implantação Azure ficam com DevOps.
+J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI foi entregue na J5, conforme seção Swagger/OpenAPI ao final. Compose final API + banco e implantação Azure foram concluídos em DevOps, conforme estado de 18/11/2026 e README_DEVOPS.md.
 Por decisão definitiva do responsável em 12/11/2026, **Spring Cache, Spring HATEOAS e Spring Boot Actuator não serão implementados** e não integram J5/J6/J7; o planejamento histórico D-007 foi superado por D-046. OpenAPI/Swagger está implementado na J5, conforme seção ao final. Continuam fora do MVP: GPS/rastreamento de veículos, rotas/localização de transporte, agendamento/reserva, notificações externas (push/e-mail/SMS), integração SUS/RNDS, QR Code, mapa de surtos, IA e funcionalidades clínicas reais. A especificação da API prevalece sobre os materiais de referência; caderneta digital continua pendente; disponibilidade informativa ao cidadão está descrita na seção J5-D ao final.
 
 ## Declaração de uso de IA
@@ -135,7 +143,7 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Funcionalidade | Status |
 |---|---|
 | Bootstrap Maven/Java 21, perfis e pacotes | Criado |
-| PostgreSQL 17.6 / Flyway V0, V1 e V2 | Validação operacional local aprovada em 12/11/2026; limites na seção J4 |
+| PostgreSQL 17.6 / Flyway V0, V1 e V2 | Validação local histórica; também aplicadas na Azure, conforme confirmação de 18/11/2026 |
 | Governança e especificação | Criadas |
 | Contexto no perfil test | Validação abaixo |
 | Entidades, repositories, regras térmicas e auditoria (J2) | Implementados; evidências abaixo |
@@ -147,9 +155,9 @@ Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, par
 | Confirmação/retirada de disponibilidade (J5-C) | Implementada; confirmação/retirada validadas no PostgreSQL na J5-E |
 | Consulta informativa ao cidadão (J5-D) | Implementada; consulta autenticada validada no PostgreSQL real |
 | Validação funcional (J5-E) | Executada e aprovada tecnicamente; documentação consolidada em 15/11/2026 |
-| OpenAPI (J5) | Implementado e validado em 15/11/2026; D-053 encerrada tecnicamente, aguardando revisão |
-| Verificação simulada de aplicação (J6) | Implementada; RN06/RN16/T04; resultados e limites na seção J6 ao final; aguarda revisão externa |
-| Compose final / Azure | Pendente — DevOps |
+| OpenAPI (J5) | Implementado/validado e J5 concluída no escopo aprovado; 34 operações após J6 |
+| Verificação simulada de aplicação (J6) | Implementada e validada no recorte Java/H2; resultados históricos ao final; não presumir validação Azure do fluxo |
+| Compose final / Azure | Implantado e funcionando; CRUD Azure confirmado; JOIN/persistência Azure ainda não comprovados |
 
 ## Validação funcional J5-E — 14/11/2026
 
@@ -161,7 +169,7 @@ Resultados já executados, consolidados documentalmente em 15/11/2026 no HEAD 8f
 - Uma única regressão completa com Java 21 e perfil test/H2 isolado: **256 testes, 0 falhas, 0 erros, 0 ignorados; BUILD SUCCESS**. O responsável substituiu o planejamento histórico de três regressões por essa execução única após a validação funcional.
 - Os 22 registros preexistentes permaneceram intactos; 29 registros fictícios novos e 13 eventos novos de auditoria (incluídos nesses 29) foram preservados para revisão. Backup, inventários e histórico Flyway preservados; PostgreSQL permaneceu idêntico durante a regressão H2. API temporária encerrada.
 
-Não houve validação de integração Flutter/Arduino, deploy, carga, concorrência PostgreSQL ou migrations em banco vazio. Essas evidências não encerram D-002 nem a J5 integral. OpenAPI/Swagger continua pendente conforme D-053; não foi implementado nem transferido automaticamente para outra etapa. Nesta consolidação documental não foram executados testes novamente.
+**Na validação J5-E de 14/11**, não houve integração Flutter/Arduino, deploy, carga, concorrência PostgreSQL ou migrations em banco vazio. Naquele recorte OpenAPI ainda estava pendente; foi entregue posteriormente na J5, e o deploy Azure foi confirmado em 18/11. D-002 continua aberta. Nesta consolidação documental os testes não foram executados novamente.
 
 ## Evidências históricas de execução da J1
 Em 06/11/2026:
@@ -509,7 +517,7 @@ Execute com JDK21 completo: `./mvnw -B test`; para empacotar após as regressõe
 
 Registro histórico de 10/11/2026: PostgreSQL não esteve acessível por ausência dos sockets default/desktop-linux; naquela execução não foram testados V2/startup dev, checks/FKs ou provisionamento real, e a evidência de 09/11 cobria apenas V0/V1. As pendências de acesso, validação de V0–V2 no esquema existente, startup, provisionamento e fluxo térmico do escopo J4 foram resolvidas na validação operacional de 12/11 descrita abaixo. Isso não comprova aplicação inédita de V2, todos os checks/FKs sob cenários adversos, carga/concorrência PostgreSQL, produção, hardware ou implantação.
 
-Não foram adicionados Swagger/OpenAPI, integração Arduino, Flutter, Azure, recebimento, decisão técnica, disponibilidade ou doses; J5/J6/J7 e DevOps não estão concluídos. Os recursos excluídos definitivamente constam em Limitações e escopo. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
+**No marco J4**, não foram adicionados Swagger/OpenAPI, integração Arduino/Flutter/Azure, recebimento, decisão técnica, disponibilidade ou doses; J5/J6/DevOps foram tratados nas etapas posteriores descritas neste documento. Os recursos excluídos definitivamente constam em Limitações e escopo. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
 
 
 ### Regressões finais independentes da J4 — 10/11/2026
@@ -646,7 +654,7 @@ Reutilizados AcessoService, FluxoOperacionalService, repositories e lock pessimi
 
 Validações reais com JDK 21.0.13.0.3 e perfil test/H2: direcionados `./mvnw -B -Dtest=AplicacaoIntegrationTest,OpenApiIntegrationTest test`, **38 testes aprovados**, 24.022 s, concluídos às 00:04:33-03:00 de 16/11/2026. Após acrescentar cobertura de recarga de lote com decisão concorrente, uma regressão completa `./mvnw -B test`: **304 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 01:33 min, concluída às 00:07:28-03:00. São 273 anteriores + 30 casos J6 + 1 caso OpenAPI. As consultas em outra transação após respostas HTTP 409 confirmaram a persistência da auditoria nos quatro estados impeditivos e a preservação de eventos anteriores; testes também cobrem repetição, perfis, isolamento, usuário inativo, UUID/corpo e disponibilidade nos sucessos.
 
-As evidências anteriores foram preservadas; não houve clean nem acesso/alteração ao PostgreSQL, migrations, dependências ou DevOps. H2 não comprova concorrência PostgreSQL, implantação ou integração Flutter. Codex foi utilizado para implementar, testar e documentar a J6; a declaração acadêmica anterior permanece preservada. **J6 tecnicamente implementada e validada no recorte autorizado, aguardando revisão externa e autorização antes de staging/commit**. Diff e relatório privado estão preparados para revisão. DevOps é a prioridade seguinte informada pelo responsável, sem início nesta execução.
+As evidências anteriores foram preservadas; não houve clean nem acesso/alteração ao PostgreSQL, migrations, dependências ou DevOps. H2 não comprova concorrência PostgreSQL, implantação ou integração Flutter. Codex foi utilizado para implementar, testar e documentar a J6; a declaração acadêmica anterior permanece preservada. **Registro histórico da J6: tecnicamente implementada e validada no recorte autorizado; revisão/staging ainda aguardados naquela execução de 16/11.** Esse texto não determina o estado Git atual. DevOps foi realizado posteriormente, com deploy/CRUD Azure confirmados em 18/11; esta tarefa atualiza apenas documentação e não autoriza commit/push.
 
 ## Docker — D1 DevOps — 16/11/2026
 
@@ -775,3 +783,8 @@ Essas evidências são das validações D1/D2 aprovadas; não representam novas
 execuções na revisão documental. Relatórios, credenciais e auxiliares permanecem
 externos ao Git. Codex foi utilizado na D1/D2 para infraestrutura, documentação e
 verificações relatadas, preservando a declaração acadêmica de uso de IA e a API J1–J6.
+
+
+## Consolidação documental DevOps — 18/11/2026
+
+O [How To DevOps](README_DEVOPS.md) reúne acesso rápido ao deploy existente, instalação nova em seção própria, SSH, configuração privada de RSA e banco, Compose, inspeções, demonstração, SELECT/JOIN/persistência e perguntas técnicas. O roteiro resumido tem dez momentos e mantém as 24 etapas detalhadas. A divergência do script atual (NSG na NIC) em relação ao deploy real (NSG na subnet) continua registrada, sem alteração do script. O estado corrente no início deste README prevalece sobre pendências históricas de deploy. Preservados os cinco integrantes e as declarações acadêmicas de IA; Codex foi utilizado nesta revisão para conferir e atualizar documentação, sem executar Azure/SSH/Docker, testes Java, commits ou push. Turma, nome da equipe, links de pitch/vídeo e PDF final continuam dependentes de confirmação/entrega. O Draw.io será fornecido separadamente.

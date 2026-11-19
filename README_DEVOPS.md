@@ -2,7 +2,11 @@
 
 **Global Solution FIAP 2026/2 — CitizenTech.** Documentação técnica, How To de reprodução e roteiro para apresentação presencial. Estado registrado em **18/11/2026**.
 
-> **Leia primeiro:** a execução local D1/D2 foi validada e aprovada. A VM Azure e a instalação do Docker foram informadas como concluídas pelo responsável; **a implantação da API/PostgreSQL e os testes na VM ainda estão pendentes**. Os procedimentos de nuvem abaixo são instruções para execução futura, não evidências de deploy já realizado. Nesta tarefa documental nenhum comando Azure, SSH ou Docker foi executado.
+O VaciSmart acompanha a temperatura de lotes de vacinas em um transporte simulado. Quando identifica um desvio, registra a ocorrência e bloqueia preventivamente os lotes afetados para conferência humana. A proposta também inclui uma consulta informativa de disponibilidade para o cidadão, sem reserva ou garantia de dose. Todos os dados são fictícios; o protótipo não toma decisões clínicas nem autoriza aplicação real de vacina.
+
+A Azure fornece a máquina virtual e a rede que hospedam a solução. Dentro da VM, o Docker executa a API Java e o PostgreSQL em containers separados, e o Compose reúne a configuração dos dois serviços. Este guia ajuda a acessar o ambiente já implantado, explicar essas escolhas ao professor e consultar o procedimento de instalação em um ambiente novo.
+
+Para começar a apresentação, use [Acessar e verificar o VaciSmart já implantado](#acessar-e-verificar-o-vacismart-já-implantado). O [roteiro resumido](#roteiro-resumido-em-10-momentos) indica a ordem da demonstração; as 24 etapas seguintes detalham os comandos e os cuidados de cada momento.
 
 ## Identificação e equipe
 
@@ -16,39 +20,52 @@
 
 **Turma:** 1TDSPA, anteriormente informada, **pendente de confirmação final**; os documentos atuais do repositório não a confirmam. Giovanni foi indicado para Java Advanced e DevOps; não foram atribuídas responsabilidades individuais aos demais integrantes.
 
-Repositório identificado no Git local: [Vacismart-java-api](https://github.com/gi13090/Vacismart-java-api). A disponibilidade pública da versão final deve ser conferida antes da entrega; os arquivos desta preparação ainda dependem de staging, commits e publicação autorizados. Vídeo e PDF final: pendentes.
+Repositório identificado no Git local: [Vacismart-java-api](https://github.com/gi13090/Vacismart-java-api). A página pública do repositório foi acessível na revisão documental; isso não comprova a publicação destas alterações locais. A versão final ainda depende de revisão e autorização explícita para commit/push. Vídeo e PDF final: pendentes.
 
 ## Sumário
 
 - [Estado real e pendências](#estado-real-e-pendências)
 - [Arquitetura e configurações](#arquitetura-e-configurações)
+- [Guia rápido do ambiente existente](#guia-rápido-do-ambiente-existente)
 - [Reprodução da infraestrutura](#reprodução-da-infraestrutura)
 - [Roteiro de apresentação ao professor](#roteiro-de-apresentação-ao-professor)
+- [Estudo — perguntas e respostas técnicas](#estudo--perguntas-e-respostas-técnicas)
 - [Evidências e entrega](#evidências-e-entrega)
 - [Cobertura da rubrica oficial](#cobertura-da-rubrica-oficial)
 - [Referências e declaração acadêmica](#referências-e-declaração-acadêmica)
 
 ## Estado real e pendências
 
-| Etapa | Situação confirmada | O que falta |
-|---|---|---|
-| D1 — infraestrutura local | Dockerfile multi-stage Java 21; Compose API/PostgreSQL 17.6; build; JDBC; Flyway; RSA externo; usuário não-root | Nenhuma pendência técnica no recorte local aprovado |
-| D2 — demonstração local | JWT RS256; POST/GET/PUT/DELETE; SELECT; JOIN; persistência após stop/start; dados anteriores preservados | Repetir a demonstração na Azure, sem tratar a evidência local como evidência de nuvem |
-| D3 — Azure | Azure for Students; recursos abaixo; provisionamento por CLI e SSH por ED25519, conforme informação do responsável | Conferir estado/configuração e registrar evidências para a entrega |
-| D4 — host da VM | SSH funcional; Docker Engine 29.10.0, Compose v5.8.0, serviço active e hello-world, conforme informação do responsável | Implantar API e PostgreSQL; validar JWT, CRUD, SQL, JOIN e persistência na VM |
-| Entregáveis | How To e script preparados para revisão | Diagrama final validado, prints, vídeo, PDF, turma e links finais |
+### Consulta rápida
+
+| Assunto | Estado registrado |
+|---|---|
+| Deploy Azure | API Java 21 e PostgreSQL 17.6 funcionando; projeto Compose `vacismart-azure` |
+| Host | `vm-vacismart`, Standard_D2s_v4, Ubuntu 22.04; Docker Engine 29.10.0 e Compose v5.8.0 |
+| Banco e integração | PostgreSQL saudável pela rede Docker; Flyway V0/V1/V2 aplicadas; nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados |
+| Acesso | API publicada em `127.0.0.1:8080` da VM; notebook acessa por túnel SSH; chaves JWT RSA externas ao repositório |
+| CRUD na Azure | POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404 |
+| Demonstrações pendentes | JOIN e persistência após reinício ainda não comprovados na Azure; organizar capturas das verificações já confirmadas |
+| Entrega acadêmica | Draw.io a fornecer separadamente; prints, vídeo, PDF, turma e links finais ainda precisam ser concluídos ou confirmados |
+
+### Como interpretar os resultados e os comandos
+
+- **Confirmado pelo responsável:** o estado Azure da consulta rápida e a associação do NSG à subnet foram informados pelo responsável. Esta revisão não fez uma nova inspeção do ambiente.
+- **Verificado na revisão documental:** leitura dos arquivos, coerência dos exemplos, links, sintaxe e diff. Não foram executados Azure CLI, SSH, Docker, SQL ou testes Java.
+- **Histórico local:** D1 validou Dockerfile multi-stage, build, JDBC/Flyway, RSA externo e usuário não-root; D2 validou JWT RS256, CRUD, SELECT, JOIN e persistência após stop/start, com dados anteriores preservados. D1/D2 foram aprovadas no recorte local e não comprovam execução na nuvem. D3/D4 registram o provisionamento Azure e a preparação do host informados pelo responsável.
+- **Procedimento a executar:** os comandos são instruções, e os campos “Resultado esperado” descrevem o que conferir. Eles não registram novos testes aprovados. Repetir operações de escrita ou interromper serviços exige preparar os dados e a janela de demonstração indicados no roteiro.
 
 Infraestrutura Azure informada:
 
 | Item | Configuração |
 |---|---|
 | Assinatura | Azure for Students; ID não publicado |
-| Grupo / região | `rg-vacismart` / `spaincentral` |
+| Grupo / região | `rg-vacismart` / Spain Central (`spaincentral`) |
 | VM / tamanho | `vm-vacismart` / `Standard_D2s_v4` |
 | Sistema observado | Ubuntu 22.04.5 LTS |
-| NIC / IP público | `nic-vacismart` / `pip-vacismart` |
+| NIC / IP público | `nic-vacismart` vinculada à `subnet-vacismart`; `pip-vacismart` associado à NIC |
 | VNet / sub-rede | `vnet-vacismart` / `subnet-vacismart` |
-| NSG | `nsg-vacismart`, SSH TCP/22 limitado ao IPv4 público do operador |
+| NSG | `nsg-vacismart` associado à `subnet-vacismart`; SSH TCP/22 limitado ao IPv4 público do operador |
 | Autenticação SSH | Chave pública ED25519; chave privada fica no computador do operador |
 | Disco do SO | Standard SSD (`StandardSSD_LRS`), 64 GB |
 
@@ -56,7 +73,7 @@ CIDRs, nome/prioridade da regra SSH, usuário administrativo e valores de IP/ass
 
 ## Arquitetura e configurações
 
-O VaciSmart é um protótipo acadêmico de monitoramento térmico de lotes de vacinas em transporte simulado. Registra ocorrências, bloqueios preventivos, decisões humanas e disponibilidade informativa ao cidadão. Usa dados fictícios; não é um sistema clínico nem autoriza administração real de vacina. Regras e contratos estão em [ESPECIFICACAO.md](docs/ESPECIFICACAO.md) e no [README da API](README.md).
+A arquitetura separa hospedagem, execução da aplicação e persistência. Regras e contratos da API estão em [ESPECIFICACAO.md](docs/ESPECIFICACAO.md) e no [README da API](README.md); aqui o foco é entender onde cada componente executa e como eles se comunicam.
 
 ### Responsabilidades
 
@@ -67,17 +84,19 @@ O VaciSmart é um protótipo acadêmico de monitoramento térmico de lotes de va
 - **API Spring Boot:** autentica por JWT RS256, aplica autorização e regras de negócio; usa JDBC/JPA e Flyway.
 - **PostgreSQL:** mantém o modelo relacional em volume nomeado. `lote` referencia `vacina` e `transporte`; `transporte` referencia `unidade_saude`.
 
-### Prévia técnica da arquitetura a validar na VM
+### Arquitetura implantada e diagrama de entrega
 
-O esquema abaixo corresponde à topologia configurada nos arquivos. **A parte de containers dentro da VM ainda precisa ser implantada e validada; este esquema não substitui o diagrama final de entrega.** Não há AKS, banco gerenciado, balanceador ou API pública anunciados.
+O esquema abaixo mostra os componentes do deploy descrito na consulta rápida. **Não foi encontrado arquivo Draw.io (`.drawio` ou `.drawio.*`) no repositório; o diagrama Draw.io será fornecido separadamente.** O Mermaid auxilia a leitura técnica e não é apresentado como esse arquivo de entrega. O NSG está associado à subnet, a NIC está vinculada à subnet e o Public IP está associado à NIC. Os demais detalhes de rede/disco foram mantidos do registro anterior.
 
 ```mermaid
 flowchart LR
     Operador[Computador do aluno / professor] -->|SSH ED25519 TCP 22, origem restrita| PIP[pip-vacismart]
-    PIP --> NSG[nsg-vacismart na nic-vacismart]
     subgraph Azure[Azure spaincentral / rg-vacismart]
-      NSG --> Host[vm-vacismart Ubuntu 22.04]
-      subgraph HostDocker[Docker Engine na VM - implantação pendente]
+      NSG[nsg-vacismart] -.->|associado a| Subnet[subnet-vacismart]
+      NIC[nic-vacismart] -->|vinculada a| Subnet
+      PIP -->|associado a| NIC
+      NIC --> Host[vm-vacismart Ubuntu 22.04]
+      subgraph HostDocker[Docker Engine na VM - projeto vacismart-azure]
         Loopback[127.0.0.1:8080 no host] --> API[api - Java 21 - UID 10001 - porta 8080]
         API -->|JDBC postgres:5432 pela rede bridge| PG[postgres:17.6 - porta interna 5432]
         PG --> Volume[Volume nomeado em /var/lib/postgresql/data]
@@ -117,11 +136,9 @@ As chaves JWT são um par RSA de pelo menos 2048 bits, pública X.509 e privada 
 
 ### Firewall e acesso
 
-O NSG libera somente o SSH necessário à origem autorizada; não se criam regras de entrada pública para 8080 ou 5432. A API é publicada em loopback da VM e acessada por túnel SSH. O banco tem porta **interna** 5432 e não possui `ports` no host. Assim, sua porta está configurada e disponível à API, sem exposição pública. Não depender apenas de UFW: publicação de portas Docker pode interagir com regras de firewall; preservar o bind loopback e o NSG restrito.
+O NSG `nsg-vacismart` está associado à `subnet-vacismart`, à qual a NIC `nic-vacismart` está vinculada; o Public IP `pip-vacismart` está associado à NIC. O NSG libera somente o SSH necessário à origem autorizada; não se criam regras de entrada pública para 8080 ou 5432. A API é publicada em loopback da VM e acessada por túnel SSH. O banco tem porta **interna** 5432 e não possui `ports` no host. Assim, sua porta está configurada e disponível à API, sem exposição pública. Não depender apenas de UFW: publicação de portas Docker pode interagir com regras de firewall; preservar o bind loopback e o NSG restrito.
 
-## Reprodução da infraestrutura
-
-**Procedimento futuro:** não foi executado nesta preparação. D3 e a instalação D4 já informadas não devem ser refeitas durante a apresentação. Reutilize os recursos existentes; não rode provisionamento apenas para obter prints.
+## Guia rápido do ambiente existente
 
 ### Ambientes e convenções
 
@@ -131,6 +148,66 @@ O NSG libera somente o SSH necessário à origem autorizada; não se criam regra
 - **[PSQL]:** cliente dentro do container PostgreSQL; comandos SQL e metacomandos `\...`.
 
 Variáveis de uma sessão não são transferidas automaticamente para outra. Repita as definições indicadas em cada terminal. Não use `set -x`, não exiba arquivos de credenciais, `docker inspect` completo ou `compose config` sem `--quiet` em capturas.
+
+### Acessar e verificar o VaciSmart já implantado
+
+Use este caminho para a aula. Os diretórios abaixo foram confirmados pelo responsável e pertencem ao usuário da sessão SSH: `~/vacismart`, `~/.config/vacismart` e `~/.config/vacismart/compose.env`. O nome do projeto é `vacismart-azure`. O `~` sempre corresponde ao diretório pessoal do usuário no terminal em que o comando é executado.
+
+**1. No notebook, em um terminal Bash:** conecte-se à VM e abra o túnel na mesma conexão. Informe os dados de acesso já utilizados no deploy; o caminho solicitado é o da chave SSH existente, que fica no notebook. Caso precise descobrir usuário/IP por Azure CLI, consulte o [passo 10 da instalação](#10-acesso-ssh-e-túnel).
+
+```bash
+# [LOCAL UBUNTU] A porta local 18081 deve estar livre.
+read -r -p 'Caminho da chave privada SSH existente no notebook: ' SSH_KEY
+read -r -p 'Usuário administrativo da VM: ' ADMIN_USER
+read -r -p 'IP público atual da VM: ' PUBLIC_IP
+ssh -i "$SSH_KEY" -o ExitOnForwardFailure=yes \
+  -L 127.0.0.1:18081:127.0.0.1:8080 "$ADMIN_USER@$PUBLIC_IP"
+```
+
+Confira a fingerprint do servidor por um canal confiável; não desative essa verificação. Após a conexão, **esse terminal passa a executar comandos na VM**. Mantenha-o aberto durante o uso do túnel. Se já houver outro túnel ocupando 18081, reutilize-o ou escolha outra porta local livre e ajuste a URL do navegador.
+
+**2. Na VM, dentro da sessão SSH:** defina os caminhos e a função `dc`. Ela evita repetir os parâmetros e garante que as consultas apontem para o projeto correto. Este bloco apenas verifica arquivos e consulta o ambiente; não cria diretórios, credenciais, imagens ou containers.
+
+```bash
+# [VM] Caminhos confirmados do ambiente existente.
+REPO_DIR="$HOME/vacismart"
+CONFIG_DIR="$HOME/.config/vacismart"
+ENV_FILE="$CONFIG_DIR/compose.env"
+COMPOSE_PROJECT=vacismart-azure
+API_PORT=8080
+BASE_URL="http://127.0.0.1:$API_PORT"
+
+dc() {
+  sudo docker compose --env-file "$ENV_FILE" --project-name "$COMPOSE_PROJECT" \
+    --file "$REPO_DIR/docker-compose.yml" "$@"
+}
+
+if [ -f "$REPO_DIR/docker-compose.yml" ] && [ -f "$ENV_FILE" ] && [ -d "$CONFIG_DIR" ]; then
+  dc config --quiet &&
+  dc ps &&
+  dc exec api id &&
+  dc exec api pwd &&
+  dc exec postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"' &&
+  curl --fail --silent --show-error --output /dev/null \
+    --write-out 'OpenAPI HTTP %{http_code}\n' "$BASE_URL/v3/api-docs"
+else
+  printf 'Arquivo ou diretório esperado não encontrado. Confira a sessão e os caminhos antes de continuar.\n' >&2
+fi
+```
+
+Confira API em execução, PostgreSQL healthy/aceitando conexões, UID/GID 10001:10001, diretório `/app` e HTTP 200 do OpenAPI. Se uma consulta falhar, interrompa a sequência e investigue; não gere novos arquivos de ambiente nem use `up` para tentar corrigir o problema. Para diagnóstico, consulte os [logs no passo 9](#9-mostrar-logs), revisando o conteúdo antes de exibi-lo.
+
+**3. No navegador do notebook:** abra `http://127.0.0.1:18081/swagger-ui/index.html`. A porta 18081 é local ao notebook; o destino do túnel continua sendo a porta 8080 no loopback da VM. A UI permite consultar a documentação; operações protegidas exigem login e Bearer conforme o [passo 15](#15-autenticar-o-gestor-demonstrativo).
+
+A partir daqui, siga o [roteiro da apresentação](#roteiro-de-apresentação-ao-professor). Não repita clone, instalação, geração de chaves, build, `up` ou bootstrap no ambiente que já funciona. Repita as definições de variáveis e da função `dc` se abrir outra sessão SSH.
+
+## Reprodução da infraestrutura
+
+### Instalação completa em um ambiente novo
+
+Os passos a seguir preservam o procedimento de referência: pré-requisitos, infraestrutura Azure, acesso SSH, Docker, código, configuração privada e inicialização. Use-os somente para preparar uma instalação nova em ambiente isolado; para a VM atual, use o [guia rápido](#acessar-e-verificar-o-vacismart-já-implantado).
+
+**Limite de reprodução:** o script atual associa o NSG à NIC, enquanto o deploy real usa NSG na subnet. Leia a [limitação detalhada nos passos 3–9](#39-grupo-nsg-rede-ssh-ip-nic-e-vm) antes de considerar uma execução. A correção do script não faz parte desta etapa documental.
 
 ### 1. Pré-requisitos: Azure CLI, assinatura e código
 
@@ -183,6 +260,8 @@ Confirme sucesso de cada comando. A chave privada nunca vai para Git, Cloud Shel
 
 ### 3–9. Grupo, NSG, rede, SSH, IP, NIC e VM
 
+**Limitação do script existente:** a implantação real usa NSG associado à subnet. O script abaixo ainda cria/exige associação do NSG à NIC e não configura essa associação na subnet; portanto, não reproduz exatamente a topologia implantada e pode rejeitá-la na verificação de recursos existentes. Sua adequação depende de etapa própria; o script foi preservado nesta correção documental. Não executar `--apply` no ambiente existente para tentar corrigir essa divergência.
+
 O arquivo [scripts/azure/provisionar-vm.sh](scripts/azure/provisionar-vm.sh) implementa a sequência abaixo por Azure CLI. A execução padrão apenas valida entradas e imprime plano local. `--apply` requer confirmação digitada; antes da primeira criação ele inspeciona todos os recursos já existentes. Erros de rede/permissão não são tratados como ausência. Recursos incompatíveis geram interrupção, sem sobrescrita, exclusão ou rollback destrutivo.
 
 | Passo | Comando implementado no script | Parâmetros relevantes |
@@ -192,7 +271,7 @@ O arquivo [scripts/azure/provisionar-vm.sh](scripts/azure/provisionar-vm.sh) imp
 | 5. VNet/sub-rede | `az network vnet create` e `az network vnet subnet create` somente se ausentes | CIDRs privados informados explicitamente; sub-rede contida na VNet |
 | 6. SSH restrito | `az network nsg rule create` somente se a regra não existir | TCP/22, origem pública individual /32, nome/prioridade explícitos |
 | 7. IP | `az network public-ip create` somente se ausente | pip-vacismart; para reprodução nova: Standard, Static, IPv4 |
-| 8. NIC | `az network nic create` somente se ausente | nic-vacismart ligada à sub-rede, NSG e IP |
+| 8. NIC | `az network nic create` somente se ausente | No script: NIC ligada à sub-rede, NSG e IP; diverge do deploy real, cujo NSG está associado à subnet |
 | 9. VM | `az vm create` somente se ausente | NIC existente; Ubuntu2204; Standard_D2s_v4; SSD 64 GB; autenticação SSH |
 
 Não há `--generate-ssh-keys`, criação de Docker Desktop ou abertura de portas da aplicação/banco. As características Standard/Static do IP são escolhas explícitas do script para reprodução; os metadados do IP existente devem ser conferidos, sem presumir o que não foi informado. O script também verifica chave/admin/NIC/disco da VM existente e aborta se divergirem.
@@ -253,7 +332,7 @@ test -n "$ADMIN_USER" && test -n "$PUBLIC_IP"
 ssh -i "$SSH_KEY" "$ADMIN_USER@$PUBLIC_IP"
 ```
 
-Se usar Cloud Shell para obter os metadados, transfira apenas os valores necessários à sessão local; mantenha a chave privada local. O túnel será aberto em outro terminal local depois que a API estiver implantada. Não criar regra NSG para 8080.
+Se usar Cloud Shell para obter os metadados, transfira apenas os valores necessários à sessão local; mantenha a chave privada local. Com a API já implantada, abra o túnel em outro terminal local, conforme o passo 14 do roteiro. Não criar regra NSG para 8080.
 
 ### 11. Docker Engine e Compose dentro da VM
 
@@ -308,10 +387,10 @@ O repositório instala versões disponíveis no momento; **29.10.0/v5.8.0 são v
 
 ### 12. Clone na VM
 
-**[VM]** Após publicação autorizada da versão correta no GitHub:
+**[VM NOVA]** Após publicação autorizada da versão correta no GitHub. O caminho escolhido abaixo é o mesmo usado no deploy atual; se ele já existir, confira a cópia e preserve seus arquivos:
 
 ```bash
-REPO_DIR="$HOME/Vacismart-java-api"
+REPO_DIR="$HOME/vacismart"
 if [ -e "$REPO_DIR" ]; then
   printf 'Diretório já existe: conferir a cópia, sem sobrescrever nem atualizar automaticamente.\n'
 else
@@ -327,10 +406,10 @@ Não copiar credenciais/chaves do computador local para o repositório, nem assu
 
 ### 13–14. Ambiente privado e chaves JWT
 
-**[VM, instalação nova]** Escolher um projeto Compose e conservar esse nome nas próximas execuções. `vacismart-azure` abaixo é a **configuração proposta para o novo deploy**, não um serviço Azure já validado. Em ambiente existente, descobrir e reutilizar projeto/arquivos originais; não gerar novas credenciais para volume já inicializado.
+**[VM, instalação nova somente]** O projeto confirmado na Azure é `vacismart-azure`. Conserve esse nome e os arquivos originais em todas as operações sobre esse deploy. Para uma reprodução independente, escolha outro projeto e porta em ambiente isolado. Não executar o bloco de geração no ambiente já implantado nem gerar novas credenciais para volume inicializado. Os caminhos de repositório, diretório privado e env-file são os mesmos confirmados no guia rápido. O subdiretório `jwt` é uma sugestão para as chaves de uma instalação nova; os caminhos reais das chaves existentes continuam definidos no env-file privado.
 
 ```bash
-REPO_DIR="$HOME/Vacismart-java-api"
+REPO_DIR="$HOME/vacismart"
 CONFIG_DIR="$HOME/.config/vacismart"
 KEY_DIR="$CONFIG_DIR/jwt"
 ENV_FILE="$CONFIG_DIR/compose.env"
@@ -339,6 +418,9 @@ API_PORT=8080
 BASE_URL="http://127.0.0.1:$API_PORT"
 install -d -m 700 "$CONFIG_DIR" "$KEY_DIR"
 
+# Subshell interrompe a preparação no primeiro erro, sem fechar o SSH.
+(
+set -euo pipefail
 if [ -e "$KEY_DIR/privada.pem" ] || [ -e "$KEY_DIR/publica.pem" ]; then
   test -f "$KEY_DIR/privada.pem" && test -f "$KEY_DIR/publica.pem" || {
     printf 'Par RSA incompleto: preservar e revisar.\n'
@@ -348,6 +430,11 @@ else
   (umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$KEY_DIR/privada.pem")
   openssl pkey -in "$KEY_DIR/privada.pem" -pubout -out "$KEY_DIR/publica.pem"
 fi
+# Validar integridade e correspondência sem mostrar material da chave.
+openssl pkey -in "$KEY_DIR/privada.pem" -check -noout >/dev/null
+PUBLICA_DER=$(openssl pkey -pubin -in "$KEY_DIR/publica.pem" -outform DER | openssl dgst -sha256)
+PRIVADA_PUBLICA_DER=$(openssl pkey -in "$KEY_DIR/privada.pem" -pubout -outform DER | openssl dgst -sha256)
+test "$PUBLICA_DER" = "$PRIVADA_PUBLICA_DER"
 # Em arquivos dedicados desta demonstração; não abrir leitura para todos.
 chmod 600 "$KEY_DIR/privada.pem" "$KEY_DIR/publica.pem"
 setfacl -m u:10001:r-- "$KEY_DIR/privada.pem" "$KEY_DIR/publica.pem"
@@ -366,6 +453,8 @@ EOF
   )
 fi
 chmod 600 "$ENV_FILE"
+)
+# Prosseguir somente se o subshell terminou com sucesso.
 
 dc() {
   sudo docker compose --env-file "$ENV_FILE" --project-name "$COMPOSE_PROJECT" \
@@ -379,7 +468,7 @@ O `.env.example` serve de referência, mas o Compose não repassa variáveis arb
 
 ### 15–16. Build, execução e verificações
 
-**[VM, futura implantação]** Os comandos abaixo usarão Docker Engine da VM; nenhum contexto Docker Desktop deve ser selecionado.
+**[VM NOVA]** Somente a primeira implantação usa as três primeiras linhas abaixo (`config`, `build`, `up`). **Na VM existente, começar em `dc ps`**, com a função da sessão já definida. `up` pode recriar containers e não faz parte desta revisão nem da demonstração do ambiente existente. Os comandos usam o Docker Engine da VM.
 
 ```bash
 dc config --quiet
@@ -413,9 +502,9 @@ sudo docker inspect "$DB_ID" --format '{{json .NetworkSettings.Ports}}'
 
 Não usar inspeção completa de Config.Env: ela contém credenciais. Rede bridge e DNS do serviço `postgres` explicam a comunicação interna.
 
-### Preparação de usuários operacionais para a futura VM
+### Usuários operacionais existentes e bootstrap em instalação nova
 
-O cadastro público cria somente CIDADAO. CRUD de vacinas/unidades/lotes exige GESTOR; não promover usuário via SQL. Se já houver gestor demonstrativo, usar suas credenciais privadas existentes e **não repetir o bootstrap**.
+**Na Azure, os usuários demonstrativos já foram criados, conforme confirmação do responsável; não executar novamente o bootstrap.** O cadastro público cria somente CIDADAO. CRUD de vacinas/unidades/lotes exige GESTOR; não promover usuário via SQL. Se já houver gestor demonstrativo, usar suas credenciais privadas existentes e **não repetir o bootstrap**.
 
 **[VM]** Conferência sem consultar hashes:
 
@@ -425,10 +514,14 @@ dc exec postgres sh -c 'psql -X -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT
 
 Para uma instalação nova, somente se for necessário provisionar usuários fictícios, o projeto já tem `UsuariosDemoConfig`: exige apenas perfil dev, flag explícita, confirmação `DADOS_FICTICIOS_LOCAIS` e quatro conjuntos de credenciais. Cria duas unidades e cidadão, funcionários A/B e gestor. Deve ser usado uma única vez por conjunto de e-mails; não sobrescreve usuários existentes.
 
-O procedimento abaixo prepara arquivos privados e executa **um processo Java auxiliar**, sem recriar ou reiniciar os containers. A API principal continua com bootstrap desabilitado. O auxiliar usa porta aleatória em loopback e encerra por timeout; o código 124 é esperado apenas se os usuários forem efetivamente criados e o login for conferido depois. A validação local utilizou esse mecanismo; sua execução na VM ainda está pendente.
+O procedimento abaixo prepara arquivos privados e executa **um processo Java auxiliar**, sem recriar ou reiniciar os containers. A API principal continua com bootstrap desabilitado. O auxiliar usa porta aleatória em loopback e encerra por timeout; o código 124 é esperado apenas se os usuários forem efetivamente criados e o login for conferido depois. A validação local utilizou esse mecanismo. A confirmação de usuários criados na Azure não comprova, por si só, qual procedimento foi utilizado; este bloco é apenas uma alternativa de reprodução para instalação nova.
 
 ```bash
-# [VM] Digitar credenciais fictícias próprias, fora de filmagem/captura.
+# [VM NOVA] Copiar o bloco inteiro; falhas interrompem o subshell.
+(
+set -euo pipefail
+umask 077
+# Digitar credenciais fictícias próprias, fora de filmagem/captura.
 for PAPEL in CIDADAO FUNCIONARIO_A FUNCIONARIO_B GESTOR; do
   read -r -p "E-mail fictício de $PAPEL: " "DEMO_${PAPEL}_EMAIL"
   read -r -s -p "Senha fictícia de $PAPEL (12–72 ASCII imprimíveis): " "DEMO_${PAPEL}_SENHA"
@@ -473,6 +566,7 @@ else
   BOOTSTRAP_STATUS=$?
 fi
 printf 'Status do auxiliar: %s (124 esperado por timeout; conferir usuários e login).\n' "$BOOTSTRAP_STATUS"
+)
 ```
 
 Não exibir os arquivos privados/log do auxiliar em prints. Confirmar os perfis por SELECT e autenticar. Se os usuários não aparecerem, diagnosticar o log privadamente e interromper; não repetir cegamente com os mesmos e-mails. Para conta operacional preexistente, preparar um JSON privado com a mesma estrutura `GESTOR: {email, senha}` usando editor seguro, sem publicar valores.
@@ -523,7 +617,24 @@ Desalocar não apaga o disco, mas disco/IP e outros recursos podem continuar ger
 
 ## Roteiro de apresentação ao professor
 
-Executar a apresentação **somente depois do deploy e dos testes na VM**. Preparar os terminais e variáveis do How To antes da aula. O professor deve ver resultados reais; quando algo falhar, mostrar e diagnosticar, sem anunciar aprovação. Antes de cada print, o ChatGPT/orientador deve avisar o aluno; não há captura automática neste roteiro.
+Antes da aula, abra o [guia rápido](#acessar-e-verificar-o-vacismart-já-implantado), organize os terminais e escolha os registros fictícios da demonstração. Os dez momentos abaixo ajudam a conduzir a explicação; as 24 etapas detalhadas continuam disponíveis para consulta. As falas são sugestões de ensaio: use-as conforme o resultado que estiver na tela e explique eventuais falhas.
+
+### Roteiro resumido em 10 momentos
+
+| Momento | O que mostrar | Sugestão de fala | Etapas detalhadas |
+|---|---|---|---|
+| 1. Apresentar o projeto | Problema, cinco integrantes e consulta rápida | “Nosso projeto acompanha a temperatura durante um transporte simulado e registra bloqueios para conferência humana.” | 1 |
+| 2. Situar a infraestrutura | Região, tamanho e estado da VM na Azure | “A aplicação e o banco rodam nesta VM. Vou mostrar como acessamos e administramos esse ambiente.” | 2–3 |
+| 3. Explicar a montagem | Versões, Dockerfile multi-stage e Compose | “O Dockerfile prepara a imagem da API. O Compose reúne API, banco e a configuração que os conecta.” | 4–6 |
+| 4. Conferir os serviços | Containers, portas, logs e acesso por exec | “Aqui conferimos os serviços em execução e usamos os logs para entender o startup.” | 7–10 |
+| 5. Mostrar isolamento e dados | USER, WORKDIR, rede e volume | “A API roda sem root, encontra o banco pela rede Docker e mantém os dados em um volume separado.” | 11–13 |
+| 6. Acessar com segurança | Swagger pelo túnel e autenticação sem capturar token | “O notebook acessa o loopback da VM pelo SSH. O JWT controla as operações da API.” | 14–15 |
+| 7. Demonstrar o CRUD | Criar, consultar, atualizar e excluir o descartável | “Vou usar uma vacina criada para a apresentação. Os registros ligados ao lote ficam preservados.” | 16–19 |
+| 8. Conferir o banco | SELECT, migrations, tabelas, FKs e JOIN | “Vamos comparar os UUIDs da API com os registros e os relacionamentos no PostgreSQL.” | 20–21 |
+| 9. Demonstrar persistência | Baseline e comparação após stop/start | “Com a referência salva, vamos parar e iniciar os mesmos containers e conferir se os dados permanecem.” | 22 |
+| 10. Fechar a explicação | Diagrama, decisões e limites | “O desenho reúne os componentes que mostramos. Vou retomar as escolhas e o que ainda depende de comprovação.” | 23–24 e estudo |
+
+A repetição do CRUD altera dados; use o descartável indicado no roteiro. Combine a interrupção do momento 9 antes de executar `stop/start`. JOIN e persistência Azure permanecem pendentes até que as respectivas verificações tenham sucesso; a fala sugerida não substitui a evidência.
 
 ### 1. Introduzir o VaciSmart
 
@@ -531,8 +642,8 @@ Executar a apresentação **somente depois do deploy e dos testes na VM**. Prepa
 - **Ferramenta:** navegador com este README e README da API.
 - **Procedimento:** apresentar problema, bloqueio preventivo, decisão humana e disponibilidade informativa; mostrar a tabela de estado real.
 - **Resultado esperado:** relação clara entre aplicação Java e infraestrutura entregue.
-- **Fala:** “O VaciSmart demonstra rastreabilidade térmica e informação ao cidadão, com dados fictícios e sem decisão clínica automática.”
-- **Precaução:** não afirmar integração clínica, funcionalidades não implementadas ou implantação Azure ainda não validada.
+- **Fala:** “Nosso projeto registra a temperatura durante um transporte simulado e informa a disponibilidade ao cidadão. Usamos dados fictícios, e a decisão clínica não é feita pelo sistema.”
+- **Precaução:** não afirmar integração clínica, funcionalidades não implementadas ou JOIN/persistência Azure ainda não comprovados.
 
 ### 2. Mostrar a VM e seu estado no Azure CLI
 
@@ -547,7 +658,7 @@ az vm get-instance-view --subscription "$SUBSCRIPTION_ID" -g "$RG" -n "$VM_NAME"
 ```
 
 - **Resultado esperado:** VM existente, Linux, tamanho/região corretos e estado Running.
-- **Fala:** “Azure fornece a VM e a rede; a aplicação e o banco são containers administrados dentro dela.”
+- **Fala:** “Nesta VM da Azure rodam os dois containers: a API e o banco. A Azure fornece a máquina e a rede; nós administramos os serviços com Docker e Compose.”
 - **Precaução:** não mostrar chaves, assinatura completa ou origem residencial; não executar provisionamento novamente.
 
 ### 3. Conectar por SSH
@@ -589,7 +700,7 @@ sed -n '1,160p' "$REPO_DIR/Dockerfile"
 ```
 
 - **Resultado esperado:** Java 21, unzip no build, Wrapper, JRE, WORKDIR, ENV, USER, EXPOSE e ENTRYPOINT.
-- **Fala:** “O build empacota com o Wrapper; o runtime leva o JAR e executa com UID 10001. unzip preserva a validação do ZIP pelo checksum.”
+- **Fala:** “Neste primeiro estágio, o Maven Wrapper compila e empacota a API. O estágio final leva o JAR e o JRE e roda com UID 10001. O unzip permite extrair o ZIP do Maven sem desabilitar a conferência do checksum.”
 - **Precaução:** não reconstruir a imagem ou executar Maven clean apenas para mostrar o arquivo.
 
 ### 6. Mostrar o docker-compose.yml
@@ -647,7 +758,7 @@ dc logs --tail=100 api postgres
 ```
 
 - **Resultado esperado:** Hikari conectado, migrations aplicadas/validadas, Spring iniciado e PostgreSQL pronto.
-- **Fala:** “Os logs ligam o startup da aplicação ao banco e mostram a evolução controlada do schema.”
+- **Fala:** “Nos logs, procuro a conexão JDBC, a conferência das migrations e a mensagem de que o Spring iniciou. Isso ajuda a identificar em qual parte ocorreu um problema.”
 - **Precaução:** conferir previamente que o trecho não contém credenciais/tokens; não mostrar o log privado do bootstrap.
 
 ### 10. Entrar nos containers
@@ -738,7 +849,7 @@ ssh -i "$SSH_KEY" -N -o ExitOnForwardFailure=yes \
 - **Procedimento:** executar o bloco de login/`auth/me` do How To com o JSON privado existente. Para usar o Swagger, fazer login **sem captura**, copiar o token retornado para Authorize e recolher/limpar a resposta de login antes do print. Usar as credenciais reais de demonstração já provisionadas; não há conta/senha padrão neste documento.
 - **Resultado esperado:** login 200 e /auth/me 200 com GESTOR. Sem JWT, a rota protegida retorna 401.
 - **Fala:** “O token é assinado com RS256 e o backend também consulta se o usuário está ativo e qual é seu papel.”
-- **Precaução:** nunca capturar token/senha; tokens expiram em 15 minutos e podem exigir novo login. Não usar cidadão para tentar criar unidades/vacinas/lotes.
+- **Precaução:** nunca capturar token/senha; a validade padrão dos tokens é de 15 minutos (confirmar `JWT_VALIDADE` do ambiente) e pode ser necessário novo login após a expiração. Não usar cidadão para tentar criar unidades/vacinas/lotes.
 
 ### 16. Executar CREATE manualmente
 
@@ -812,6 +923,15 @@ Dentro do psql:
 
 ```sql
 \dt public.*
+SELECT version();
+SELECT installed_rank, version, description, success
+FROM flyway_schema_history ORDER BY installed_rank;
+SELECT count(*) AS tabelas_public
+FROM information_schema.tables
+WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+SELECT count(*) AS chaves_estrangeiras
+FROM pg_constraint
+WHERE contype = 'f' AND connamespace = 'public'::regnamespace;
 \prompt 'UUID real da vacina PERSISTENTE: ' vacina_id
 \prompt 'UUID real do lote PERSISTENTE: ' lote_id
 SELECT id, nome, temperatura_min_c, temperatura_max_c, margem_atencao_c
@@ -820,12 +940,13 @@ SELECT id, codigo, vacina_id, transporte_id, estado, disponibilidade
 FROM lote WHERE id = :'lote_id'::uuid;
 ```
 
-- **Resultado esperado:** tabelas reais e registros que correspondem às respostas da API, incluindo alterações realizadas.
+- **Resultado esperado:** PostgreSQL 17.6, V0/V1/V2 com sucesso, nove tabelas em `public` (oito de negócio + `flyway_schema_history`), seis FKs e registros correspondentes à API. Contagens diferentes exigem diagnóstico, não ajuste de dados para forçar a evidência.
 - **Fala:** “A API gravou no PostgreSQL; estes SELECTs são executados diretamente no container do banco.”
 - **Precaução:** não selecionar senha_hash ou usar SQL de escrita. Se sair com `\q`, será necessário redefinir as variáveis psql ao entrar novamente.
 
 ### 21. Demonstrar relacionamentos por JOIN
 
+- **Situação Azure:** ainda não comprovado; o comando é roteiro, não resultado.
 - **Objetivo:** comprovar pelo menos duas tabelas relacionadas; aqui são quatro.
 - **Terminal:** [PSQL], mesma sessão com `lote_id` definido; se necessário, repetir `\prompt`.
 
@@ -849,19 +970,24 @@ ORDER BY conrelid::regclass::text;
 ```
 
 - **Resultado esperado:** linha com os quatro UUIDs reais e FKs do modelo, inclusive lote → vacina/transporte e transporte → unidade.
-- **Fala:** “O JOIN usa chaves estrangeiras reais; não são tabelas independentes montadas só para o vídeo.”
+- **Fala:** “Nesta consulta, o lote se liga à vacina e ao transporte, e o transporte se liga à unidade. As chaves estrangeiras mantêm essas referências no banco.”
 - **Precaução:** não usar o UUID já excluído como referência; sair com `\q` antes dos próximos comandos do shell.
 
 ### 22. Demonstrar persistência após stop/start
 
-- **Objetivo:** comparar os mesmos dados antes e depois de interromper os serviços.
+- **Situação Azure:** ainda não comprovada; volume configurado não comprova este teste.
+- **Objetivo:** comparar os mesmos dados antes e depois de interromper os serviços. O teste cobre stop/start de containers, não reboot, desalocação da VM ou restauração de backup.
 - **Terminal:** [VM], após sair do psql; avisar o professor e registrar evidência anterior **antes da parada**.
 - **Procedimento:** usar o lote persistente real; salvar baseline privado sem sobrescrever evidências anteriores.
 
 ```bash
+# Copiar o bloco inteiro; o subshell interrompe no primeiro erro.
+(
+set -euo pipefail
+umask 077
 read -r -p 'UUID real do lote preservado para persistencia: ' LOTE_ID
 EVID_DIR="$CONFIG_DIR/evidencias-$(date -u +%Y%m%dT%H%M%SZ)"
-install -d -m 700 "$EVID_DIR"
+mkdir -m 700 "$EVID_DIR" # Falha se já existir: não sobrescrever evidência.
 snapshot_dados() {
   dc exec -T postgres sh -c \
     'exec psql -X -A -t -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v lote_id="$1"' sh "$LOTE_ID" <<'SQL'
@@ -889,9 +1015,11 @@ PY
 # NÃO continuar se a referência falhar, estiver vazia ou apontar a outro lote.
 API_ANTES=$(dc ps -q api)
 DB_ANTES=$(dc ps -q postgres)
+test -n "$API_ANTES" && test -n "$DB_ANTES"
 INICIO_API_ANTES=$(sudo docker inspect "$API_ANTES" --format '{{.State.StartedAt}}')
 INICIO_DB_ANTES=$(sudo docker inspect "$DB_ANTES" --format '{{.State.StartedAt}}')
 VOLUME_ANTES=$(sudo docker inspect "$DB_ANTES" --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}')
+test -n "$VOLUME_ANTES"
 dc ps
 # Neste ponto, avisar e registrar a evidência anterior; só então parar/iniciar.
 dc stop
@@ -910,22 +1038,24 @@ if [ "$API_ANTES" = "$API_DEPOIS" ] && [ "$DB_ANTES" = "$DB_DEPOIS" ] && \
   printf 'Mesmos containers, novos inicios, mesmo volume e dados identicos.\n'
 else
   printf 'COMPARACAO FALHOU: nao declarar persistencia aprovada; preservar dados e diagnosticar.\n'
+  exit 1
 fi
 dc ps
+)
 ```
 
 - **Resultado esperado:** mesmos IDs e volume, novos StartedAt, banco healthy, HTTP 200 e dados idênticos. A aprovação só existe se baseline/readiness/comparação passarem.
-- **Fala:** “Interrompemos os processos, mas os mesmos UUIDs e valores continuam no PostgreSQL no volume original.”
+- **Fala:** “Depois que a comparação passar, podemos mostrar que os mesmos UUIDs e valores permaneceram no PostgreSQL, usando o volume original.”
 - **Precaução:** não remover serviços/volumes, não trocar projeto/ambiente, não aceitar comparação vazia, não repetir CREATE para simular persistência e não prosseguir após erro intermediário. Deixar os serviços funcionando ao concluir.
 
 ### 23. Explicar o diagrama de arquitetura real
 
 - **Objetivo:** ligar evidências aos componentes efetivamente usados na VM.
-- **Ferramenta:** diagrama final a preparar após validar o deploy, com a prévia técnica deste README como referência.
+- **Ferramenta:** Mermaid deste guia como apoio; arquivo Draw.io ausente e a ser fornecido separadamente, compatível com o deploy confirmado.
 - **Procedimento:** apontar computador/túnel SSH, IP/NSG/NIC, VNet/sub-rede, VM, Engine, API, PostgreSQL, rede bridge, volume no disco e RSA somente leitura. Conferir nomes com as inspeções da apresentação.
 - **Resultado esperado:** diagrama correspondente ao ambiente demonstrado, sem serviços fictícios ou fluxo genérico.
 - **Fala:** “Este desenho mostra onde cada componente executa e como os dados e acessos passam entre eles.”
-- **Precaução:** não apresentar a prévia como diagrama final nem marcar containers Azure como implantados antes das validações.
+- **Precaução:** não declarar o Draw.io entregue antes de recebê-lo e conferir seus componentes; não incluir IPs, contas ou segredos no desenho.
 
 ### 24. Responder às perguntas técnicas
 
@@ -933,32 +1063,56 @@ dc ps
 - **Ferramenta:** este roteiro, arquivos reais e resultados da VM; nenhuma operação nova obrigatória.
 - **Procedimento:** ensaiar as respostas abaixo, mostrando o arquivo/comando correspondente quando solicitado.
 - **Resultado esperado:** explicação consistente, sem confundir VM com container ou volume com backup.
-- **Fala e respostas de apoio:**
-  - Azure CLI provisiona a infraestrutura; Compose administra serviços dentro da VM.
-  - Multi-stage separa compilação e runtime; o JDK/Maven não acompanham a imagem final.
-  - USER 10001 limita o processo da aplicação; sudo no host é administração do Docker.
-  - EXPOSE é metadado; `ports` publica a API no loopback do host.
-  - O banco usa DNS `postgres` na rede Docker, não localhost da API.
-  - Healthcheck mede prontidão do banco; HTTP/logs confirmam a prontidão da API.
-  - O volume persiste no disco da VM; sua exclusão/destruição do disco não é protegida por stop/start.
-  - SSH ED25519 autentica o operador; RSA/RS256 assina JWT da aplicação; são pares distintos.
-  - Não há login operacional padrão; gestor é provisionado explicitamente com dados fictícios.
-  - DELETE exige recurso sem lotes/histórico; por isso o descartável é separado dos dados preservados.
+- **Fala sugerida:** “Posso explicar cada escolha a partir dos arquivos e do que mostramos: a VM hospeda o Docker, o Compose conecta os serviços, o SSH restringe o acesso e o volume mantém os dados. Também vou separar o que já comprovamos do que ainda está pendente.”
+- **Apoio para consulta:** a seção de estudo abaixo reúne as respostas sobre build/runtime, USER, EXPOSE, DNS, healthcheck, volume, chaves, usuários e exclusão de registros.
 - **Precaução:** se não souber ou a evidência estiver pendente, informar isso; não improvisar comandos destrutivos ou afirmar testes não executados.
+
+## Estudo — perguntas e respostas técnicas
+
+| Pergunta provável | Resposta técnica |
+|---|---|
+| O que já funciona e o que ainda precisa ser demonstrado? | API e PostgreSQL na Azure, CRUD completo, migrations e usuários estão confirmados pelo responsável. JOIN e persistência após reinício Azure continuam sem comprovação; o roteiro fornece os comandos. |
+| VM e container são a mesma coisa? | A VM tem seu próprio sistema operacional. Os containers são processos isolados que compartilham o kernel Linux dessa VM. Neste projeto, Azure CLI cuida dos recursos de nuvem e Compose cuida dos serviços dentro da VM. |
+| Por que usar multi-stage e Java 21? | Java 21 é a versão definida no pom e usada para compilar e executar a API. No build, precisamos do JDK e do Maven; para rodar o JAR, usamos o JRE. O multi-stage deixa as ferramentas de compilação fora da imagem final. As tags Java podem receber atualizações de patch; sem fixar digest, um build futuro pode baixar uma imagem diferente. |
+| Qual é a função do WORKDIR? | É o diretório de trabalho padrão da imagem. Usamos `/build` para compilar e `/app` para executar a API; por isso `dc exec api pwd` deve mostrar `/app`. O volume do PostgreSQL tem seu próprio caminho e não depende desse WORKDIR. |
+| Por que USER 10001? E o sudo? | A API não precisa de root para executar o JAR e atender na porta 8080, então roda como UID/GID 10001. O `sudo docker` administra o daemon no host e não transforma a API em root. A ACL concede leitura das chaves a esse UID, sem abrir leitura para todos; os bind mounts são somente leitura. |
+| O PostgreSQL também é sempre não-root? | O USER 10001 é uma escolha do Dockerfile da API. A imagem oficial do PostgreSQL pode iniciar o entrypoint com privilégios para preparar o volume e depois executar o servidor como o usuário Linux postgres. Esse usuário do sistema não é a mesma coisa que o usuário SQL configurado para o banco. |
+| Como a API encontra o banco? | O Compose coloca os dois serviços na rede bridge do projeto. Nessa rede, o nome `postgres` é resolvido por DNS; a URL JDBC usa esse nome e a porta 5432. `localhost` dentro da API apontaria para a própria API. `pg_isready` mostra que o banco aceita conexões; logs JDBC e CRUD/SELECT complementam essa conferência. |
+| EXPOSE abre a API na internet? | EXPOSE apenas informa a porta usada pela imagem. Quem publica a porta é `ports` no Compose, limitado a `127.0.0.1:8080` da VM. Dentro do container, a API escuta em `0.0.0.0` para receber o encaminhamento do Docker. O banco não tem porta publicada no host. |
+| Por que não liberar 8080/5432 no NSG? | Para esta demonstração, acessamos a VM por SSH restrito e encaminhamos a API pelo túnel. Assim, o tráfego entre notebook e VM é cifrado, e a API continua no loopback. Não há HTTPS público neste deploy. CORS controla acesso pelo navegador, mas não substitui autenticação ou firewall. |
+| SSH e JWT usam a mesma chave? | São pares diferentes. A chave ED25519 autentica o operador no SSH. O par RSA assina/verifica JWT com RS256: privada PKCS#8 e pública X.509, externas ao repositório e montadas somente para leitura. As senhas dos usuários são armazenadas como hashes BCrypt. |
+| Onde estão as senhas e como tratá-las no vídeo? | Em arquivos privados externos, nunca na imagem ou Git. Não mostrar env-files, Config.Env completo, headers Bearer, respostas de login ou hashes. As variáveis de ambiente ainda são acessíveis a administradores do Docker: não são um cofre de segredos. |
+| O que Flyway e Hibernate fazem? | O Flyway registra a versão do schema e aplica as migrations em ordem: V0 contém um comentário, V1 cria sete tabelas e V2 cria usuario. A tabela flyway_schema_history registra esse histórico; com ela, são nove tabelas e seis FKs no domínio. O Hibernate usa `validate` para conferir os mapeamentos sem criar ou alterar o schema. |
+| O JOIN prova o quê? | Consulta relações entre lote, transporte, unidade e vacina, usando FKs reais. Deve retornar o lote identificado no GET; existência das FKs sozinha não comprova a execução do JOIN na Azure. |
+| Volume é backup? | Não. O volume nomeado separa dados do filesystem do container e permanece após stop/start. Continua no disco da VM; perda/remoção do disco exige backup separado. Não há backup/restauração Azure comprovados nesta entrega. |
+| Mudar DB_PASSWORD troca a senha de um banco existente? | Não. As variáveis POSTGRES_* são usadas na inicialização de um diretório de dados vazio. Alterar o env-file não troca automaticamente a senha já gravada no banco. Preserve arquivo privado, projeto e volume; uma mudança de credencial precisa de um procedimento próprio, sem apagar dados. |
+| Como provar persistência sem recriar serviços? | Primeiro salvamos uma consulta com dados reais e os UUIDs, IDs dos containers, StartedAt e nome do volume. Depois fazemos stop/start, aguardamos banco e HTTP e comparamos tudo. Os dados devem permanecer, e os horários de início devem mudar. Esse teste não comprova reboot da VM nem recuperação de desastre. |
+| Há restart automático e alta disponibilidade? | O Compose atual não define restart automático. Ao retomar a VM, precisamos conferir o Docker e iniciar os containers existentes com `dc start`. Como há uma única VM e um volume local, uma falha no host pode afetar toda a solução; não implementamos alta disponibilidade. |
+| Por que não demonstrar Cache, HATEOAS ou Actuator? | Esses recursos foram excluídos do escopo pela decisão D-046. OpenAPI está implementado. Na apresentação, mostramos o que existe e conferimos a rubrica com o professor, sem atribuir cobertura a recursos ausentes. |
+| Todos os fluxos Java foram testados na Azure? | A confirmação atual cobre CRUD, banco/rede, migrations e usuários. Os testes Java/H2 e verificações PostgreSQL locais anteriores são históricos e não comprovam todos os fluxos J5/J6 na nuvem nem integração Mobile/Arduino. |
+| Por que hospedar na Azure em uma VM? | A VM coloca API e banco em um host de nuvem acessível pela equipe por SSH e permite demonstrar Linux, rede e containers. Ela também deixa conosco a administração do sistema e dos dados. Os dois serviços deste protótipo não usam AKS nem banco gerenciado. |
+| Por que Docker e Compose? | O Dockerfile descreve como montar a imagem da API. O Compose reúne serviços, variáveis externas, rede, volume e dependência do banco em um arquivo, reduzindo a quantidade de comandos manuais. A reprodução também depende dos arquivos privados corretos; uma imagem não inclui o volume do banco. |
+| Por que PostgreSQL? | O modelo tem relações entre unidades, transportes, vacinas e lotes. O PostgreSQL permite persistir esses vínculos, usar transações e reforçar a integridade com FKs e constraints. Os testes H2 continuam úteis, mas não substituem a conferência no PostgreSQL real. |
+| Existe login padrão? E por que excluir só o descartável? | Não há credencial operacional padrão: o gestor é criado explicitamente com dados fictícios privados. Para o DELETE, usamos um registro da própria apresentação sem lotes nem histórico, preservando o conjunto que será usado no JOIN e na persistência. |
 
 ## Evidências e entrega
 
 ### Capturas e comprovações a organizar
 
-Nenhuma captura é automática. O ChatGPT orientará o aluno antes de cada print. Preparar, **após deploy validado na VM**, evidências de Azure CLI/VM, Docker Engine/Compose, dois containers em background, logs, exec, UID não-root, WORKDIR, portas, rede, volume, JWT sem token visível, POST/GET/PUT/DELETE, SELECT/JOIN e comparação antes/depois do stop/start.
+Organizar capturas do deploy já confirmado e obter separadamente as comprovações faltantes de JOIN/persistência. Revisar antes de publicar evidências de Azure CLI/VM, Docker Engine/Compose, dois containers em background, logs, exec, UID não-root, WORKDIR, portas, rede, volume, JWT sem token visível, POST/GET/PUT/DELETE, SELECT/JOIN e comparação antes/depois do stop/start.
 
-As evidências locais D1/D2 são históricas e não comprovam execução em nuvem. Não publicar credenciais, chaves, tokens, env-files, logs privados, IDs de assinatura ou IP residencial. Recortar/ocultar dados de conta e origem SSH; mostrar somente o necessário. Conservar evidências brutas em diretório privado externo ao Git.
+Para classificar as evidências, siga a [origem dos resultados](#como-interpretar-os-resultados-e-os-comandos). Não publicar credenciais, chaves, tokens, env-files, logs privados, IDs de assinatura ou IP residencial. Recortar/ocultar dados de conta e origem SSH; mostrar somente o necessário. Conservar evidências brutas em diretório privado externo ao Git.
 
 ### Checklist de entrega
 
-- [ ] Deploy real da API e PostgreSQL na VM concluído e validado.
-- [ ] CRUD/JWT/SELECT/JOIN/persistência repetidos na Azure e comprovados.
-- [ ] Diagrama final da arquitetura real validado após o deploy; não apenas fluxograma.
+- [x] Deploy real da API Java 21/PostgreSQL 17.6 na Azure confirmado pelo responsável.
+- [x] Projeto `vacismart-azure`, banco saudável, rede Docker, RSA externo e Flyway V0/V1/V2 aplicadas confirmados.
+- [x] CRUD Azure confirmado: POST 201, GET 200, PUT 200, DELETE 204, GET posterior 404.
+- [x] Usuários demonstrativos criados; banco com nove tabelas e seis FKs, conforme responsável.
+- [ ] Organizar capturas sanitizadas de login/rota protegida e SELECT de dados de negócio na Azure; não inferir o conteúdo de uma captura ausente.
+- [ ] JOIN na Azure com UUID real e resultado não vazio comprovado.
+- [ ] Persistência na Azure após stop/start com comparação antes/depois comprovada.
+- [ ] Arquivo Draw.io da arquitetura fornecido separadamente e conferido com o ambiente real.
 - [ ] GitHub público acessível com Java, Dockerfile, docker-compose.yml, script Azure CLI e How To na versão publicada.
 - [ ] Vídeo YouTube **não listado**, mínimo **720p**, legível, com narração ou legendas explicativas; mostrar VM, Compose, containers, CRUD, logs e SELECT.
 - [ ] Link do vídeo inserido na entrega: **pendente, não inventado**.
@@ -968,16 +1122,16 @@ As evidências locais D1/D2 são históricas e não comprovam execução em nuve
 
 ## Cobertura da rubrica oficial
 
-Foi localizado e consultado o material **“2TDS Agosto - Global Solution 2026-2.pdf”**, páginas **37–43**, seção DevOps Tools & Cloud Computing. Não está incluído no repositório público; o aluno deve consultar a cópia disponibilizada pela FIAP. O outro PDF de 1TDS localizado não foi usado como rubrica desta entrega.
+A documentação anterior registra que foi localizado e consultado o material **“2TDS Agosto - Global Solution 2026-2.pdf”**, páginas **37–43**, seção DevOps Tools & Cloud Computing. Não está incluído no repositório público; o aluno deve consultar a cópia disponibilizada pela FIAP. O registro anterior informa que o outro PDF de 1TDS não foi usado como rubrica desta entrega. Nesta revisão o PDF original não estava no repositório; pesos, páginas e requisitos abaixo foram preservados desse registro, sem nova conferência direta. Confirmar com a turma e a rubrica oficial aplicável antes da entrega, especialmente enquanto a turma permanecer pendente.
 
 | Critério do material oficial | Peso indicado | Cobertura / pendência real |
 |---|---|---|
-| Arquitetura macro da solução | 10 | Topologia descrita e prévia técnica; diagrama final ainda pendente |
+| Arquitetura macro da solução | 10 | Topologia implantada descrita; arquivo Draw.io será fornecido separadamente |
 | VM Azure e provisionamento CLI | 10 | D3 informada como concluída; script e comandos documentados; registrar evidências |
-| Container da aplicação e Dockerfile | 15 | Local validado; execução na VM ainda pendente |
-| Container do banco e persistência | 15 | Local validado; SELECT/JOIN e stop/start na VM ainda pendentes |
-| Compose e integração API/banco | 5 | Arquivo existente com serviços/rede/volume/portas/ambiente/dependências; deploy VM pendente |
-| GitHub, README/How To e evidências | 15 | Documentação preparada; publicação autorizada, evidências e links finais pendentes |
+| Container da aplicação e Dockerfile | 15 | API Java 21 funcionando na VM; multi-stage, UID/WORKDIR documentados; organizar capturas |
+| Container do banco e persistência | 15 | PostgreSQL 17.6 saudável na VM, nove tabelas/seis FKs; JOIN e prova de persistência pendentes |
+| Compose e integração API/banco | 5 | Projeto `vacismart-azure` funcionando; serviços/rede/volume, loopback e dependências documentados |
+| GitHub, README/How To e evidências | 15 | How To revisado; publicação depende de autorização explícita; evidências e links finais pendentes |
 | Apresentação presencial | 30 | Roteiro cobre nuvem, aplicação, integração, banco, arquitetura e domínio; ensaio/apresentação pendentes |
 
 O documento oficial atribui 70 pontos à entrega técnica e 30 à apresentação. Registra apresentação entre 23 e 27/11, na aula da disciplina; confirmar a agenda da turma. Também prevê penalidades para solução somente local, ausência de fonte/Dockerfile/Compose, CRUD/SELECT/relacionamentos incompletos, How To insuficiente, vídeo ilegível/abaixo de 720p e arquitetura genérica. **Nenhuma pontuação está sendo declarada como obtida.**
@@ -989,16 +1143,12 @@ O documento oficial atribui 70 pontos à entrega técnica e 30 à apresentação
 - [Azure CLI — interfaces de rede](https://learn.microsoft.com/en-us/cli/azure/network/nic?view=azure-cli-latest).
 - [Azure CLI — IP público](https://learn.microsoft.com/en-us/cli/azure/network/public-ip?view=azure-cli-latest).
 - [Docker Engine no Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
+- [PostgreSQL 17 — psql e variáveis SQL](https://www.postgresql.org/docs/17/app-psql.html).
 - [Compose start e espera de serviços](https://docs.docker.com/reference/cli/docker/compose/start/).
 - [Estados e cobrança da VM](https://learn.microsoft.com/en-us/azure/virtual-machines/states-billing).
 
-Codex foi utilizado para infraestrutura e validações locais D1/D2 já relatadas e, nesta preparação, para ler a rubrica, consultar documentação oficial, redigir este How To e o script e realizar verificações estáticas. O responsável informou a situação D3/D4; Codex não provisionou/consultou recursos Azure, não acessou SSH nem executou Docker nesta tarefa documental. A declaração acadêmica e o histórico do [README principal](README.md) foram preservados. A equipe deve complementar somente usos de ferramentas e atividades realmente realizados.
+Codex foi utilizado para infraestrutura e validações locais D1/D2 já relatadas e, nesta preparação, para ler a rubrica, consultar documentação oficial, redigir este How To e o script e realizar verificações estáticas. O responsável informou a situação D3/D4 e, nesta revisão de 18/11/2026, confirmou deploy/CRUD Azure, usuários e estrutura do banco; Codex não provisionou/consultou recursos Azure, não acessou SSH nem executou Docker nesta tarefa documental. A declaração acadêmica e o histórico do [README principal](README.md) foram preservados. Nesta revisão Codex também conferiu documentação, código/configurações em leitura, links e referências técnicas oficiais, corrigiu instruções e realizou validações documentais estáticas; não releu o PDF acadêmico original. Neste refinamento editorial, Codex reorganizou o texto, incorporou os caminhos da VM informados pelo responsável e conferiu links, exemplos e diff, sem executar serviços ou testes operacionais. A equipe deve complementar somente usos de ferramentas e atividades realmente realizados.
 
-### Organização Git proposta — ainda não executada
+### Revisão e publicação
 
-| Commit | Arquivos exatos |
-|---|---|
-| `build(devops): adiciona infraestrutura Docker da API e PostgreSQL` | Dockerfile, docker-compose.yml, .dockerignore, .env.example |
-| `docs(devops): documenta Azure e roteiro de demonstracao` | README.md, README_DEVOPS.md, scripts/azure/provisionar-vm.sh |
-
-Não incluir ambientes privados, chaves, logs ou auxiliares. Staging, commits e push aguardam autorização própria após revisão do ChatGPT.
+Esta etapa altera somente README.md e README_DEVOPS.md. Código, configurações e script Azure permanecem intactos. Não houve staging, commit ou push. Os relatórios privados de revisões anteriores não substituem o diff atual dos dois READMEs; a publicação aguarda revisão do ChatGPT e autorização explícita do responsável.
