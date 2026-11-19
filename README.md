@@ -1,38 +1,18 @@
-# VaciSmart — API Java
+# VaciSmart — Java Advanced
 
-Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento térmico de lotes de vacinas em transporte simulado, bloqueio preventivo e informação de disponibilidade ao cidadão. Dados fictícios: não é sistema clínico nem autoriza aplicação real.
+**FIAP Global Solution 2026/2 · CitizenTech · Turma 2TDPA**
 
-> **DevOps — Azure e apresentação:** comece por [Acessar e verificar o VaciSmart já implantado](README_DEVOPS.md#acessar-e-verificar-o-vacismart-já-implantado). O guia reúne a consulta rápida do estado Azure, o roteiro presencial, as perguntas técnicas e o procedimento separado para instalação nova; SELECTs e JOIN na Azure foram confirmados pelo responsável; persistência após stop/start continua sem comprovação e não será demonstrada nesta etapa.
+Uma ocorrência térmica durante o transporte de vacinas precisa ser registrada e encaminhada para conferência. O VaciSmart demonstra esse fluxo: recebe leituras de um transporte simulado, identifica desvios e bloqueia preventivamente os lotes afetados. A temperatura voltar ao normal não libera o lote. O recebimento e a decisão técnica são ações humanas, com autoria e histórico.
 
-**Estado corrente — 18/11/2026:** API Java 21 e PostgreSQL 17.6 implantados e funcionando na Azure Spain Central, `rg-vacismart`, VM `vm-vacismart` Standard_D2s_v4, Ubuntu 22.04. Docker Engine 29.10.0, Compose v5.8.0 e projeto `vacismart-azure`. Banco saudável e acessível pela rede Docker, Flyway V0/V1/V2 aplicadas, nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados. API publicada somente em `127.0.0.1:8080` da VM, acesso pelo notebook via túnel SSH e chaves JWT RSA externas ao repositório. CRUD Azure confirmado pelo responsável: POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404. **Atualização D5-B:** infraestrutura, CRUD, SELECTs e um JOIN na Azure confirmados pelo responsável. A persistência após stop/start não foi comprovada e não será demonstrada nesta etapa. Conforme informado pelo responsável, o vídeo de demonstração DevOps foi publicado e o relatório PDF final foi preparado; a submissão no Portal FIAP não está confirmada. O diagrama editável e sua imagem PNG estão incluídos em `docs/arquitetura/`, conforme links abaixo. Esta revisão foi documental, sem nova execução operacional.
+A consulta ao cidadão apresenta a disponibilidade informada pela unidade, sem expor a logística interna nem oferecer reserva ou garantia de dose. O projeto usa somente dados fictícios: não é um sistema clínico e não autoriza aplicação real de vacina.
 
-Os marcos datados abaixo preservam o histórico. Recebimento, decisão técnica, disponibilidade e aplicação simulada já estão implementados em J5/J6; pendências de implementação citadas nos marcos J2–J4 não descrevem o estado atual. Não se infere a validação Azure de todos esses fluxos a partir do CRUD confirmado.
+O beneficiário final é o cidadão; funcionário de unidade e gestor operam os fluxos internos. A proposta se relaciona ao **ODS 3 — Saúde e Bem-Estar**, com apoio dos **ODS 9 — Indústria, Inovação e Infraestrutura** e **10 — Redução das Desigualdades**: rastrear ocorrências, apoiar a conferência e oferecer informação compreensível sobre atendimento.
 
-Na VM, o repositório fica em `~/vacismart`; o diretório privado é `~/.config/vacismart`, com o env-file `~/.config/vacismart/compose.env`. Esses caminhos foram informados pelo responsável. Use o projeto Compose `vacismart-azure` e siga os comandos do guia rápido na sessão SSH, sem exibir o conteúdo do env-file.
+## Equipe e entregas
 
-## Arquitetura DevOps
+Nome da equipe: pendente de confirmação. As responsabilidades individuais dos demais integrantes não foram atribuídas; Giovanni Sacristan é o responsável informado por Java Advanced e DevOps.
 
-![Arquitetura Azure e Docker do VaciSmart](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Preview.png)
-
-- [Diagrama editável Draw.io](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Final.drawio): arquivo final fornecido pelo responsável, preservado sem alterações.
-- [Imagem PNG da arquitetura](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Preview.png): prévia fornecida pelo responsável, preservada sem alterações.
-
-O desenho representa a topologia Azure confirmada: NSG associado à subnet, NIC vinculada à subnet e Public IP associado à NIC. A inclusão do diagrama não equivale a uma nova validação operacional. A divergência do script Azure, que ainda associa o NSG à NIC, continua documentada no guia DevOps.
-
-## Marcos anteriores de implementação
-
-Estado da J4 em 12/11/2026: **J4 concluída e oficialmente aprovada pelo responsável**, após a validação operacional final no PostgreSQL. A J4 implementa autenticação JWT e autorização por perfil/unidade. As evidências de J1–J3 abaixo são históricas; a seção Segurança — J4 descreve o comportamento vigente e registra o fechamento da etapa.
-Estado atualizado em 15/11/2026: J5-A–D implementadas, J5-E funcionalmente validada e documentação consolidada. **OpenAPI/Swagger implementado como fechamento da D-053 na J5**, com 33 operações documentadas e UI validada; D-053 encerrada tecnicamente, aguardando revisão no ChatGPT. A seção Swagger/OpenAPI ao final registra as evidências atuais; os marcos anteriores permanecem históricos.
-
-Registro de 16/11/2026 (histórico): J5 concluída no escopo aprovado pelo responsável, incluindo Swagger/OpenAPI. J6 implementa `POST /api/v1/aplicacoes` para verificação demonstrativa, conforme seção ao final; aguarda revisão externa antes de staging/commit. As seções datadas anteriores são históricas.
-
-## Problema, beneficiário e ODS
-O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A consulta informativa de disponibilidade ao cidadão foi implementada na J5-D e validada no PostgreSQL na J5-E, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
-
-## Equipe
-**Turma: 2TDPA.** Nome da equipe: pendente de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni Sacristan — RM 567548. Não foram confirmadas responsabilidades dos demais integrantes.
-
-| Nome | RM |
+| Integrante | RM |
 |---|---|
 | Gabriel Deotti Zanatta | 567258 |
 | Murilo Massini | 567383 |
@@ -40,56 +20,135 @@ O projeto demonstra como registrar ocorrências térmicas e apoiar a conferênci
 | Caike Roberto de Souza Hollo | 568104 |
 | Gianluca Kenis de Araujo | 566765 |
 
-## Pitch
-[**Vídeo pitch do VaciSmart — Global Solution 2026/2**](https://youtu.be/bewo6oRARp8)
+- [Vídeo pitch do VaciSmart — Global Solution 2026/2](https://youtu.be/ttOAN3gsTNY).
+- [Repositório da equipe](https://github.com/gi13090/Vacismart-java-api).
 
-Vídeo de demonstração DevOps: [VaciSmart — DevOps na Azure](https://youtu.be/3u34dh-gbf0).
+O link do pitch foi fornecido pelo responsável; duração e acesso ao vídeo não foram validados nesta revisão. Para Java Advanced, o material oficial orienta a submissão no Portal FIAP de um arquivo TXT contendo somente o link do repositório público; este README não confirma que a submissão foi realizada.
 
-Relatório PDF final: preparado pelo responsável. A submissão no Portal FIAP não está confirmada.
+## Como usar este README
 
-## Como executar
-Pré-requisitos: JDK 21, Docker Engine e Docker Compose, porta 5432 disponível e acesso ao Maven Central no primeiro uso. O Maven Wrapper fixa Maven 3.9.11. Spring Boot 4.1.2 ([versão estável](https://spring.io/projects/spring-boot/), [compatibilidade Java](https://docs.spring.io/spring-boot/system-requirements.html)); decisões em DUVIDAS.md.
+| Para consultar | Seção |
+|---|---|
+| Entender os fluxos do projeto | [Funcionalidades e regras](#funcionalidades-e-regras) |
+| Explicar a estrutura do backend | [Tecnologias e arquitetura Java](#tecnologias-e-arquitetura-java) e [Modelagem JPA](#modelagem-jpa) |
+| Consultar contratos e exemplos | [Endpoints e operações REST](#endpoints-e-operações-rest) |
+| Estudar as escolhas de persistência | [Consultas Spring Data JPA](#consultas-spring-data-jpa) |
+| Explicar erros e permissões | [Validação e tratamento de erros](#validação-e-tratamento-de-erros) e [Segurança](#segurança) |
+| Rodar a API no desenvolvimento | [Como executar a API](#como-executar-a-api) e [Swagger/OpenAPI](#swaggeropenapi) |
+| Preparar a avaliação | [Rubrica](#cobertura-da-rubrica-java-advanced), [roteiro](#roteiro-para-apresentação-presencial) e [estudo](#estudo--perguntas-e-respostas-técnicas) |
 
-Configure JAVA_HOME para um **JDK completo** 21 (java e javac) e adicione `$JAVA_HOME/bin` ao PATH, somente na sessão atual. Exemplo (substitua o caminho pela sua instalação):
-```bash
-export JAVA_HOME=/caminho/do/jdk-21
-export PATH="$JAVA_HOME/bin:$PATH"
-```
+### Documentação complementar
 
-Antes de iniciar a API, disponibilize o par RSA externo e exporte `JWT_CHAVE_PUBLICA` e `JWT_CHAVE_PRIVADA` na mesma sessão, conforme [Chaves e ambiente local](#chaves-e-ambiente-local). Sem as chaves, o startup falha. Os testes no perfil test geram seu próprio par efêmero.
+A documentação de infraestrutura, com acesso à VM existente, Docker e arquitetura Azure, está no [README_DEVOPS.md](README_DEVOPS.md). O [contrato Mobile](docs/INTEGRACAO_MOBILE_GEMINI.md) é uma referência do backend para o aplicativo; não comprova integração ponta a ponta.
 
-Na raiz (copie o exemplo somente se ainda não houver .env local; preserve os valores existentes):
-```bash
-cp .env.example .env
-# Revise .env: os valores fornecidos são exemplos exclusivos do desenvolvimento local.
-docker compose -f compose.dev.yml up -d
-docker compose -f compose.dev.yml ps
-./mvnw test
-# Exporte as mesmas variáveis para o Spring (Compose não as exporta para a API).
-set -a
-. ./.env
-set +a
-# As chaves JWT externas já devem estar disponíveis no ambiente desta sessão.
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-O arquivo .env deve conter somente atribuições de variáveis confiáveis; o comando acima o executa no shell. A API também aceita DB_URL, DB_USER e DB_PASSWORD já exportadas. Defaults de exemplo existem somente no perfil dev. Não há perfil padrão nem credenciais de produção. API operacional em http://127.0.0.1:8080/api/v1; A raiz não possui endpoint; sem token, a proteção padrão responde401. O servidor continua vinculado a 127.0.0.1 para demonstração local. Configure as chaves RSA externas antes do startup, conforme Segurança — J4. Endpoints operacionais exigem JWT.
+## Funcionalidades e regras
 
-O perfil dev usa PostgreSQL, Flyway e `ddl-auto=validate`. `V0__baseline.sql` contém somente comentário e foi preservada. `V1__modela_nucleo_termico.sql` cria as sete tabelas do núcleo, chaves estrangeiras, checks e índices; não há seed automático na J2. `V2__modela_usuarios.sql` acrescenta os usuários da J4; V0, V1 e V2 foram validadas no PostgreSQL 17.6 conforme o fechamento de 12/11/2026. O perfil test usa H2 em memória (modo PostgreSQL), sem Flyway e `create-drop`. Fuso America/Sao_Paulo e JSON com datas ISO-8601. Nunca usar as credenciais de exemplo fora do ambiente local.
+### Cadastros e preparação do transporte
 
-O Compose de desenvolvimento publica o PostgreSQL somente em `127.0.0.1:5432`, mantendo a porta interna 5432 e a comunicação pela rede dos containers. A restrição vale ao criar/reconfigurar o serviço com o arquivo atualizado; containers existentes não foram recriados nesta consolidação. O Maven Wrapper mantém Maven 3.9.11 e sua URL original, agora com `distributionSha256Sum` conferido contra o ZIP validado pelo SHA-512 oficial do Maven Central; fonte e método registrados em DUVIDAS.md (D-047).
+| Módulo | Funcionamento implementado | Regra que protege o fluxo |
+|---|---|---|
+| Unidades de saúde | Cadastro, consulta, atualização e exclusão | Escritas de unidade são exclusivas do gestor; exclusão respeita dependências e integridade referencial |
+| Vacinas | Catálogo operacional com faixa térmica e margem de atenção por vacina | Mínimo menor que máximo, margem não negativa e duas vezes a margem menor ou igual à amplitude; parâmetros ficam congelados quando existem lotes |
+| Transportes | Cadastro com código e unidade responsável, consulta e edição antes do monitoramento | Começam `CADASTRADO`; funcionário atua na própria unidade e não transfere um transporte para outra |
+| Lotes | Cadastro associado a vacina e transporte; consulta e alteração do código | Cadastro só em transporte `CADASTRADO`; inicia `EM_MONITORAMENTO`/`NAO_DISPONIVEL`; não há DELETE de lote |
+| Início do monitoramento | Ação explícita muda `CADASTRADO` para `EM_TRANSPORTE` | Exige pelo menos um lote, registra o horário de início e gera auditoria |
 
-Para parar sem apagar o volume:
-```bash
-docker compose -f compose.dev.yml down
-```
+Os estados não são `campos` livres dos DTOs de cadastro. O backend executa as transições por operações próprias e rejeita alterações incompatíveis, em vez de confiar no estado enviado pelo cliente.
 
-## Estrutura
-`pom.xml` e Maven Wrapper na raiz; código em `src/main/java/br/com/fiap/vacismart`; pacotes config, domain (entity, enums, rules), repository, service, web (controller, dto, advice), security. Domínio, repositories, service e config implementam o núcleo J2; web contém Controllers, DTOs e Advice da J3. security contém configuração JWT, respostas 401/403 e autorização baseada nos vínculos persistidos. Especificação em [docs/ESPECIFICACAO.md](docs/ESPECIFICACAO.md); governança em [AGENTS.md](AGENTS.md); decisões em [DUVIDAS.md](DUVIDAS.md).
+### Leituras, ocorrências e bloqueio preventivo
 
-## Entidades e relacionamentos
-A J2 modela UnidadeSaude, Vacina, Transporte, Lote, LeituraTemperatura, Ocorrencia e EventoAuditoria com UUID gerado pelo Hibernate. `Entidade` centraliza somente o identificador. Nomes de tabelas/colunas seguem snake_case. Os estados e a disponibilidade são enums persistidos como STRING.
+A ingestão atual é uma **simulação humana autenticada**. O campo `dispositivoId` identifica textualmente a origem, mas não funciona como credencial de hardware. O transporte deve estar `EM_TRANSPORTE`; `transporteId` do JSON deve coincidir com o da rota. `medidaEm` deve ter offset e estar entre o início do monitoramento e o instante de recebimento pelo servidor.
 
-```mermaid
+`ClassificadorTemperatura` usa `BigDecimal` e os parâmetros da vacina. Para o exemplo com mínimo 2 °C, máximo 8 °C e margem 1 °C:
+
+| Classificação | Intervalo do exemplo | Efeito |
+|---|---|---|
+| `NORMAL` | De 3 a 7 °C, inclusive | Persiste a leitura |
+| `ATENCAO` | De 2 a menos de 3 °C, ou acima de 7 até 8 °C | Registra atenção; não bloqueia nem descarta |
+| `FORA_DA_FAIXA` | Abaixo de 2 ou acima de 8 °C | Abre ocorrência e bloqueia os lotes afetados ainda `EM_MONITORAMENTO` |
+
+A precisão é numeric(10,3), com até sete dígitos inteiros e três casas decimais significativas. 5.2000 é numericamente aceito; 8.0001 é rejeitado para evitar arredondamento que mude a classificação.
+
+Em um transporte com vacinas diferentes, a mesma leitura ambiental é comparada com cada faixa. A leitura guarda a pior classificação encontrada, mas apenas os lotes cuja vacina estiver fora da faixa podem ser bloqueados. Não se presume a temperatura individual de cada embalagem.
+
+Há no máximo uma ocorrência `ABERTA` de cada tipo por transporte. A normalização térmica não encerra automaticamente a ocorrência de temperatura e não libera o lote. `MonitoramentoService` também verifica perda de telemetria quando chamado explicitamente: mais de três minutos sem recebimento, por padrão, abre `PERDA_DE_TELEMETRIA`. Exatamente três minutos não abre; o limite é configurável pelo parâmetro vacismart.telemetria.limite, por exemplo PT3M. Não existe agendador periódico. O recebimento avalia essa condição, e a retomada de leituras encerra somente a ocorrência de telemetria. A perda de telemetria sozinha não bloqueia lotes.
+
+### Recebimento, decisão e disponibilidade
+
+| Etapa | Quem pode executar | Resultado e restrições |
+|---|---|---|
+| Receber transporte | `FUNCIONARIO` da unidade de destino ou `GESTOR` | `EM_TRANSPORTE` passa a `RECEBIDO`; lotes `EM_MONITORAMENTO` passam a `AGUARDANDO_CONFERENCIA`; bloqueados permanecem bloqueados |
+| Decidir tecnicamente | Somente `GESTOR` | `Transporte` `RECEBIDO` e lote aguardando conferência ou bloqueado; LIBERAR ou DESCARTAR exige `justificativa` de até 1000 caracteres |
+| Confirmar disponibilidade | `FUNCIONARIO` da unidade ou `GESTOR` | Exige transporte `RECEBIDO` e lote `LIBERADO`; muda para `CONFIRMADA` e audita a mudança |
+| Retirar disponibilidade | `FUNCIONARIO` da unidade ou `GESTOR` | Mantém as mesmas pré-condições; muda para `NAO_DISPONIVEL` sem descartar o lote |
+
+A decisão técnica leva o lote a um destino terminal e não publica disponibilidade nem encerra ocorrências. Repetir uma decisão retorna 409. Já o comando de disponibilidade representa o estado desejado: repetir um valor válido retorna 204 sem novo evento, após revalidar as pré-condições.
+
+### Consulta cidadã e verificação simulada de aplicação
+
+`ConsultaDisponibilidadeService` retorna a mesma visão pública aos três perfis ativos. A página parte dos pares unidade × vacina e apresenta `CONFIRMADA`, `CONFIRMACAO_RETIRADA` ou `SEM_INFORMACAO`. A ausência de informação não significa falta real de estoque, e a presença de um par não afirma oferta pela unidade.
+
+O retorno contém referências públicas de vacina/unidade, situação, `atualizadoEm` e mensagem. `atualizadoEm` vem do maior horário de eventos pertinentes de confirmação/retirada; sem evento, é null. Não é a data da consulta. Dados de lotes, transportes, leituras, dispositivos, funcionários e quantidades não são expostos.
+
+A verificação de aplicação recebe somente `loteId`. Se o lote estiver `LIBERADO`, retorna 200 com resultado `PERMITIDA` e aviso de simulação; não exige disponibilidade `CONFIRMADA`, não baixa estoque e não registra administração clínica. Qualquer outro estado gera auditoria `APLICACAO_REJEITADA` e resposta 409. Negação por perfil/unidade não produz esse evento de negócio.
+
+### Histórico, autoria e limites
+
+`EventoAuditoria` registra entidade, `referenciaId`, acao, autor, `dataHora` e `justificativa`. As ações automáticas de monitoramento usam SISTEMA; os fluxos humanos usam o UUID autenticado. Consultar histórico não altera estados. O histórico do transporte contém eventos da entidade `Transporte` e não agrega automaticamente os eventos dos lotes.
+
+São limites do MVP: não há GPS, rotas, coordenadas, reserva, agendamento, push/e-mail/SMS, integração SUS/RNDS, QR Code, mapa de surtos, IA no produto ou caderneta clínica. A autenticação própria de dispositivo e a finalização do transporte não estão implementadas. A integração Mobile ponta a ponta permanece sem comprovação.
+
+## Tecnologias e arquitetura Java
+
+As versões abaixo são as declaradas nos arquivos do projeto, não uma indicação da versão mais recente disponível.
+
+| Tecnologia | Uso no VaciSmart |
+|---|---|
+| Java 21 e Maven Wrapper 3.3.4 / Maven 3.9.11 | Compilação, records de DTO e execução reproduzível pelo Wrapper |
+| Spring Boot 4.1.2 / Spring Web | Inicialização, configuração e API REST |
+| Spring Data JPA / Hibernate | Entidades, transações, consultas derivadas, JPQL e `Specification` |
+| PostgreSQL 17.6 / Flyway | Banco de desenvolvimento e migrations V0/V1/V2; Hibernate em validate |
+| Bean Validation | Validação de DTOs de entrada, complementada por regras de domínio |
+| Spring Security / OAuth2 Resource Server / Nimbus | BCrypt, emissão e validação de JWT RS256, autorização e CORS |
+| springdoc-openapi 3.2.0 | OpenAPI e Swagger UI |
+| Spring Boot Test / JUnit / H2 | Testes unitários e de integração no perfil test |
+| Lombok | Getters e construtores de suporte nas entidades, sem setters genéricos de estado |
+
+### Separação de responsabilidades
+
+~~~mermaid
+flowchart LR
+    Cliente[Cliente HTTP] --> Seguranca[Spring Security]
+    Seguranca --> Controller[Controller e DTO de entrada]
+    Controller --> Service[Service transacional]
+    Service --> Repository[Repository]
+    Repository --> Database[(PostgreSQL)]
+    Service --> Dominio[Entidades e regras]
+    Controller --> Saida[DTO de saída]
+    Advice[ErroApiAdvice] -.-> Controller
+~~~
+
+| Camada | Exemplos reais | Responsabilidade |
+|---|---|---|
+| Controllers | `VacinaController`, `TransporteController`, `OperacaoTransporteController`, `LoteController`, `AplicacaoController` | Receber a requisição, validar o DTO e definir a resposta HTTP |
+| Services de cadastro e consulta | `CadastroService`, `ConsultaOperacionalService`, `ConsultaDisponibilidadeService` | Aplicar escopo, consultar/persistir e mapear os resultados dentro da transação |
+| Services de negócio | `MonitoramentoService`, `FluxoOperacionalService` | Coordenar regras, locks, mudanças de estado e eventos de auditoria |
+| Domínio | `Lote`, `Transporte`, `Vacina`, `ClassificadorTemperatura`, `Validacoes` | Manter invariantes e impedir transições inválidas |
+| Repositories | `LoteRepository`, `TransporteRepository`, `OcorrenciaRepository`, `DisponibilidadeConsultaRepository` | Executar consultas e acesso ao banco |
+| DTOs | `VacinaEntradaDto`, `LoteSaidaDto`, `PaginaDto`, `DisponibilidadeSaidaDto`, `MapeadorDto` | Definir contratos sem serializar entidades ou carregar relações livremente |
+| Segurança | `SegurancaConfig`, `ChavesJwtConfig`, `AcessoService`, `AutenticacaoService` | Validar identidade, emitir tokens e verificar papel/unidade |
+| Configurações | `RelogioConfig`, `UsuariosDemoConfig`, `OpenApiConfig` | Relógio testável, provisionamento fictício explícito e documentação |
+| Advice | `ErroApiAdvice` | Converter falhas de validação/negócio em respostas padronizadas |
+
+As classes estão em [src/main/java/br/com/fiap/vacismart](src/main/java/br/com/fiap/vacismart). Os controllers não devem decidir se uma temperatura bloqueia um lote. Essa regra precisa ser coordenada nos Services, junto da transação e da autorização, inclusive quando a chamada não vem diretamente de um endpoint. As entidades também protegem suas próprias invariantes: o Service coordena o caso de uso, sem substituir as regras de `Lote` ou `Transporte`.
+
+## Modelagem JPA
+
+`Entidade` é uma `@MappedSuperclass` que centraliza id com `@GeneratedValue`(strategy = GenerationType.UUID). As oito entidades concretas usam UUID; enums são persistidos como STRING e nomes de tabelas/colunas seguem snake_case.
+
+O Mermaid abaixo preserva o diagrama do núcleo térmico. A tabela seguinte inclui também `Usuario` e seu vínculo condicional com a unidade.
+
+~~~mermaid
 erDiagram
     UNIDADE_SAUDE ||--o{ TRANSPORTE : recebe
     VACINA ||--o{ LOTE : caracteriza
@@ -105,698 +164,589 @@ erDiagram
         datetime dataHora
         string justificativa
     }
-```
+~~~
 
-Os vínculos são unidirecionais do lado N para 1. Auditoria identifica o objeto por entidade e referenciaId, sem FK polimórfica. Cada leitura guarda transporte, dispositivoId textual, temperaturaC, medidaEm, recebidaEm e classificação agregada; não há entidade Dispositivo nem integração com hardware.
-
-`Vacina` guarda temperaturaMinC, temperaturaMaxC e margemAtencaoC. `Transporte.inicioMonitoramentoEm` é a referência para detectar silêncio antes da primeira leitura. Auditoria não tem setters, é marcada `@Immutable` e tem colunas não atualizáveis; o serviço somente insere eventos. Não há operação pública de alteração/exclusão de auditoria. A proteção contra SQL direto e políticas de retenção ficam para a infraestrutura futura.
-
-### Regras implementadas na J2
-
-- `MonitoramentoService.iniciarMonitoramento`: CADASTRADO → EM_TRANSPORTE, exige pelo menos um lote e registra auditoria SISTEMA. Ação de simulação, exposta localmente por POST /api/v1/transportes/{id}/monitoramento na J3, então sem autenticação; desde a J4 exige JWT e autorização por perfil/unidade.
-- `registrarLeitura`: aceita somente EM_TRANSPORTE; valida dispositivo, decimal e medição entre o início do monitoramento e o recebimento. Persiste a leitura e classifica cada vacina usando BigDecimal.compareTo. Aceita medições atrasadas dentro desse intervalo; telemetria considera recebimento.
-- Demo A: NORMAL de 3 a 7 inclusive, ATENCAO de 2 a menos de 3 ou acima de 7 até 8, FORA_DA_FAIXA abaixo de 2 ou acima de 8. A atenção fica registrada na classificação e não bloqueia.
-- Faixas por vacina: min < max, margem >= 0 e 2 × margem <= max − min. Valores numeric(10,3), até sete dígitos inteiros e três decimais, são validados antes de persistir para impedir arredondamento que altere a classificação. Não se fixam faixas universais.
-- Transporte misto: uma leitura do sensor representa o ambiente compartilhado. Cada lote é avaliado com os parâmetros da sua vacina. A classificação persistida da leitura é a mais grave encontrada; somente lotes cuja vacina estiver FORA_DA_FAIXA e cujo estado for EM_MONITORAMENTO são bloqueados. Auditoria identifica cada lote afetado. A classificação agregada não deve ser usada futuramente para decidir todos os lotes. Não se deduz a temperatura individual de cada embalagem.
-- Desvio abre no máximo uma ocorrência ABERTA por tipo/transporte. Normalização não encerra a ocorrência térmica nem libera lotes; novos desvios não repetem o evento de bloqueio de lote já bloqueado. Nunca há descarte automático ou conclusão clínica.
-- `encerrarOcorrencia`: encerra uma aberta com justificativa e auditoria SISTEMA, sem mudar lote ou disponibilidade. É operação interna, sem decisão técnica nem autenticação no marco J2; na J4 o serviço verifica acesso ao transporte. Não há endpoint de encerramento.
-- `verificarPerdaTelemetria`: método explícito, sem agendador. Mais de três minutos desde o último recebimento (ou início sem leituras) abre PERDA_DE_TELEMETRIA. Exatamente três minutos não abre. Parâmetro `vacismart.telemetria.limite` aceita duração ISO-8601 positiva, padrão `PT3M`. O retorno booleano informa se uma ocorrência nova foi criada. Telemetria sozinha não bloqueia lotes. Retomada de leitura válida encerra somente essa ocorrência e audita; não libera lote nem confirma disponibilidade.
-- Todas as operações do serviço são transacionais. Lock pessimista na linha de Transporte serializa início, leituras, encerramento e verificação. Índice único parcial no PostgreSQL reforça a unicidade de ocorrências abertas. Testes H2 verificam também concorrência e rollback.
-
-**No marco J2**, recebimento, decisões técnicas, aplicação e disponibilidade ainda não tinham métodos. Esses fluxos foram acrescentados em J5/J6, descritos adiante; finalização de transporte e credencial própria de dispositivo continuam sem implementação.
-
-## Usuários de teste por papel
-
-O provisionamento opcional da J4 cria cidadão, funcionário A, funcionário B e gestor fictícios. E-mails e senhas são fornecidos localmente, sem valores padrão no código. Veja Segurança — J4. O dispositivo terá credencial própria em etapa futura; não é um quarto perfil humano.
-
-## Endpoints
-A J3 implementa os endpoints operacionais locais detalhados adiante, com prefixo /api/v1. Consulta de disponibilidade ao cidadão implementada na J5-D e validada no PostgreSQL real na J5-E; recebimento foi acrescentado na J5-A, decisão técnica na J5-B e alteração interna de disponibilidade na J5-C; cadastro/login e própria conta estão na seção J4.
-
-Contrato completo para o colega e o Gemini: [Integração Mobile/Gemini — J4 e adendos J5](docs/INTEGRACAO_MOBILE_GEMINI.md), com os 29 pares método/rota da J4 e os adendos de recebimento J5-A, decisão técnica J5-B disponibilidade interna J5-C e consulta cidadã J5-D, DTOs, validações e exemplos conferidos no código. Documento reconstruído a partir do backend; não substitui por inferência o contrato original da equipe. D-002 continua aberta até o alinhamento bilateral e a validação real com o aplicativo.
-
-## Justificativas: consultas, cascade e fetch
-Todos os `@ManyToOne` são LAZY e obrigatórios, evitando carregar a cadeia inteira em consultas simples. Não há cascade: unidades, vacinas, transportes, lotes, leituras e ocorrências têm ciclos próprios; salvar/remover um filho não deve salvar/remover seus pais nem apagar histórico. Repositories salvam as referências explicitamente. A consulta de lotes usa `@EntityGraph(attributePaths = "vacina")` porque a classificação precisa dos parâmetros de todas as vacinas, evitando N+1 nesse fluxo. Open-in-view permanece desabilitado.
-
-Sete interfaces estendem JpaRepository. As consultas derivadas do núcleo J2 atendem lotes por transporte, leituras por transporte/último recebimento, ocorrências por transporte/tipo/estado e auditoria por referência. Uma JPQL com `PESSIMISTIC_WRITE` busca o transporte por UUID para serializar as regras. A J3 acrescenta consultas paginadas, JPQL de ocorrências e Specifications de lotes/transportes, detalhadas adiante. Entidades não são contratos HTTP; records específicos definem entradas e saídas.
-
-## Testes
-Execute `./mvnw -B test` com JDK 21 completo. A suíte contém teste de contexto, testes isolados do classificador e integração do serviço/repositories com `@SpringBootTest`, perfil test e H2. Os testes controlam `Clock`, sem Thread.sleep, e cobrem limites, parâmetros inválidos, transporte misto, persistência, auditoria, bloqueio seletivo, ausência de liberação/descarte automático, duplicidade sequencial/concorrente, rollback e perda de telemetria.
-
-T01–T03 e T09 têm cobertura de domínio nesta J2. No marco J2, T04–T08/T10 dependiam de etapas posteriores; T06/T10 têm cobertura HTTP de segurança na J4. H2 usa create-drop com Flyway desabilitado: não valida V1, o índice parcial ou compatibilidade integral com PostgreSQL. As evidências históricas de J1–J4 e a validação PostgreSQL de 12/11/2026 aparecem separadas abaixo.
-
-## Limitações e escopo
-J1 entregou bootstrap; J2 acrescentou domínio, persistência e regras térmicas; J3 acrescenta REST, validação, paginação e filtros; J4 acrescenta Security/JWT e provisionamento opt-in exclusivo de dev. OpenAPI foi entregue na J5, conforme seção Swagger/OpenAPI ao final. Compose final API + banco e implantação Azure foram concluídos em DevOps, conforme estado de 18/11/2026 e README_DEVOPS.md.
-Por decisão definitiva do responsável em 12/11/2026, **Spring Cache, Spring HATEOAS e Spring Boot Actuator não serão implementados** e não integram J5/J6/J7; o planejamento histórico D-007 foi superado por D-046. OpenAPI/Swagger está implementado na J5, conforme seção ao final. Continuam fora do MVP: GPS/rastreamento de veículos, rotas/localização de transporte, agendamento/reserva, notificações externas (push/e-mail/SMS), integração SUS/RNDS, QR Code, mapa de surtos, IA e funcionalidades clínicas reais. A especificação da API prevalece sobre os materiais de referência; caderneta digital continua pendente; disponibilidade informativa ao cidadão está descrita na seção J5-D ao final.
-
-## Declaração de uso de IA
-Codex foi usado na J1 para estrutura/configuração/documentação e, na J2, para consultar o blogBackend, implementar domínio, regras, testes e documentação e executar as validações relatadas abaixo. Na J3 foi usado para implementar e testar a API REST, consultas e documentação. Na J4 foi usado para implementar autenticação/autorização, testes, documentação e relatório local. Em 12/11/2026, após a validação operacional final e a revisão externa dos relatórios pelo ChatGPT, o responsável aprovou oficialmente a conclusão da J4. A atualização documental pré-push também utilizou Codex, sem implementação nova. Claude: ferramenta indicada pelo solicitante; não houve uso de Claude verificável nas execuções relatadas. A equipe deve complementar apenas com seu uso real, sem atribuir revisões ou atividades não comprovadas.
-
-## Status por funcionalidade
-| Funcionalidade | Status |
+| `Entidade` | Relacionamento e cardinalidade |
 |---|---|
-| Bootstrap Maven/Java 21, perfis e pacotes | Criado |
-| PostgreSQL 17.6 / Flyway V0, V1 e V2 | Validação local histórica; também aplicadas na Azure, conforme confirmação de 18/11/2026 |
-| Governança e especificação | Criadas |
-| Contexto no perfil test | Validação abaixo |
-| Entidades, repositories, regras térmicas e auditoria (J2) | Implementados; evidências abaixo |
-| Seed automático | Não implementado na J2; dados fictícios nas fixtures de testes |
-| CRUD HTTP e consultas avançadas (J3) | Implementados; regressões abaixo |
-| Segurança (J4) | Concluída e aprovada pelo responsável em 12/11/2026 |
-| Recebimento de transporte (J5-A) | Implementado; fluxo validado no PostgreSQL na J5-E |
-| Decisão técnica de lote (J5-B) | Implementada; liberação pelo gestor validada no PostgreSQL na J5-E |
-| Confirmação/retirada de disponibilidade (J5-C) | Implementada; confirmação/retirada validadas no PostgreSQL na J5-E |
-| Consulta informativa ao cidadão (J5-D) | Implementada; consulta autenticada validada no PostgreSQL real |
-| Validação funcional (J5-E) | Executada e aprovada tecnicamente; documentação consolidada em 15/11/2026 |
-| OpenAPI (J5) | Implementado/validado e J5 concluída no escopo aprovado; 34 operações após J6 |
-| Verificação simulada de aplicação (J6) | Implementada e validada no recorte Java/H2; resultados históricos ao final; não presumir validação Azure do fluxo |
-| Compose final / Azure | Implantado e funcionando; CRUD, SELECTs e um JOIN confirmados; persistência após stop/start não comprovada e fora desta etapa |
+| `UnidadeSaude` | Uma unidade pode receber zero ou vários transportes |
+| `Vacina` | Uma vacina pode caracterizar zero ou vários lotes |
+| `Transporte` | Cada transporte tem uma unidade obrigatória; pode conter vários lotes, leituras e ocorrências |
+| `Lote` | Cada lote tem exatamente uma vacina e um transporte |
+| `LeituraTemperatura` | Cada leitura pertence a um transporte e guarda `dispositivoId` textual, temperatura/datas e classificação |
+| `Ocorrencia` | Cada ocorrência pertence a um transporte; possui tipo e estado |
+| `Usuario` | `FUNCIONARIO` tem exatamente uma unidade; `CIDADAO` e `GESTOR` não têm vínculo de unidade. Uma unidade pode ter vários funcionários |
+| `EventoAuditoria` | Identifica o objeto por entidade + `referenciaId`; não existe FK polimórfica |
 
-## Validação funcional J5-E — 14/11/2026
+### LAZY, cascade e EntityGraph
 
-Resultados já executados, consolidados documentalmente em 15/11/2026 no HEAD 8fea0bebd1dadf6c9197d12eddc64fb0bf2ef130:
+Os relacionamentos `@ManyToOne` são unidirecionais e LAZY. Isso evita carregar uma cadeia inteira de objetos para uma consulta que só precisa de IDs. O vínculo de `Usuario` é opcional no mapeamento, mas obrigatório para funcionário pelas regras e constraints.
 
-- Java 21, PostgreSQL 17.6 e Hibernate com ddl-auto=validate. Flyway validou V0/V1/V2 já aplicadas, sem divergência ou nova migration.
-- 57 verificações HTTP reais aprovadas: autenticação por perfil, criação de dados fictícios exclusivos, monitoramento, bloqueio preventivo, recebimento sem liberação automática, decisão do gestor e confirmação/retirada de disponibilidade. Essas verificações não são testes JUnit adicionais.
-- GET /api/v1/disponibilidade retornou 200 autenticado no PostgreSQL real: filtros por unidade/vacina, paginação, ordenação, UUIDs/datas e situações CONFIRMADA, CONFIRMACAO_RETIRADA e SEM_INFORMACAO. A retirada de um lote preservou a confirmação do outro; a última retirada mudou a situação. Restrições de privacidade e casos representativos 401/403/409 conferidos.
-- Uma única regressão completa com Java 21 e perfil test/H2 isolado: **256 testes, 0 falhas, 0 erros, 0 ignorados; BUILD SUCCESS**. O responsável substituiu o planejamento histórico de três regressões por essa execução única após a validação funcional.
-- Os 22 registros preexistentes permaneceram intactos; 29 registros fictícios novos e 13 eventos novos de auditoria (incluídos nesses 29) foram preservados para revisão. Backup, inventários e histórico Flyway preservados; PostgreSQL permaneceu idêntico durante a regressão H2. API temporária encerrada.
+Não usamos cascade: salvar um lote não deve cadastrar uma vacina implicitamente, e excluir um transporte não deve apagar seu histórico ou seus lotes. `CadastroService` resolve as referências explicitamente e verifica dependências antes de excluir; as FKs do PostgreSQL continuam sendo a proteção final, inclusive contra escritas fora da API.
 
-**Na validação J5-E de 14/11**, não houve integração Flutter/Arduino, deploy, carga, concorrência PostgreSQL ou migrations em banco vazio. Naquele recorte OpenAPI ainda estava pendente; foi entregue posteriormente na J5, e o deploy Azure foi confirmado em 18/11. D-002 continua aberta. Nesta consolidação documental os testes não foram executados novamente.
+O método `LoteRepository`.`findByTransporteId` usa `@EntityGraph`(attributePaths = "vacina"). Durante a classificação térmica, o serviço precisa dos parâmetros das vacinas de todos os lotes. Esse carregamento direcionado evita consultas adicionais por lote nesse fluxo, sem tornar todos os relacionamentos EAGER.
 
-## Evidências históricas de execução da J1
-Em 06/11/2026:
-- Maven Wrapper gerado pelo plugin oficial 3.3.4, tipo only-script, fixando Maven 3.9.11.
-- A instalação `/usr/lib/jvm/java-21-openjdk-amd64` continha runtime 21, mas não javac; primeira tentativa de teste falhou com `release version 21 not supported` ao recorrer ao compilador 17.
-- Usado Eclipse Temurin 21.0.13+9 em instalação temporária, baixado pela API oficial Adoptium, com SHA-256 verificado. JAVA_HOME/PATH foram selecionados apenas para a execução; nenhum Java instalado, JAVA_HOME global ou configuração de sistema foi alterado. A instalação temporária não é pré-requisito permanente.
-- Antes dos testes: `java -version` = Temurin 21.0.13; `javac -version` = 21.0.13; `./mvnw -version` = Maven 3.9.11 com runtime Temurin 21.0.13.
-- `./mvnw -B test`, com JAVA_HOME/PATH do JDK acima selecionados para a execução: **BUILD SUCCESS**, 1 teste, 0 falhas, 0 erros e 0 ignorados; contexto no perfil test com H2. Houve avisos não fatais de processamento de anotações e de autoanexação do agente Mockito/Byte Buddy no Java 21.
-- `docker compose -f compose.dev.yml config --quiet`: passou.
-- `docker compose -f compose.dev.yml up -d --wait`: falhou; daemon Docker indisponível (`/var/run/docker.sock` ausente no ambiente com execução autorizada). CLI Docker 29.9.0 e Compose v5.5.1 estão presentes. PostgreSQL e migration V0 **não validados em execução**.
-- `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`: não executado por falta do PostgreSQL. Após disponibilizar o daemon, repetir os passos de execução acima.
-- `git diff --check`: passou; `.env` e `target` são ignorados; especificação conferida por igualdade integral com o pedido.
+### Integridade, transações e auditoria
 
-Relatório Surefire local: `target/surefire-reports/`. Os logs temporários de validação não são versionados.
+Flyway mantém [V0/V1/V2](src/main/resources/db/migration): V0 contém somente um comentário; V1 cria sete tabelas do núcleo com checks, FKs e índices; V2 acrescenta usuario e seus vínculos. São oito tabelas de negócio, seis FKs e, contando flyway_schema_history, nove tabelas no schema. Não existe seed automático de dados de negócio nas migrations.
 
-## Referência didática da J2
+`MonitoramentoService` e `FluxoOperacionalService` usam `@Transactional`. Mudança de estado e auditoria participam da mesma transação: uma falha que causa rollback não deve deixar metade da operação gravada. `CadastroService` e os serviços de consulta usam readOnly nas leituras e transações de escrita nas mutações.
 
-Consultado [blogBackend](https://github.com/opatriarcha/2026_fiap_2tdspa_java_advanced/tree/2f3f5aaba185267023f4aace702fd2a4c6be81cf/blogBackend), commit `2f3f5aaba185267023f4aace702fd2a4c6be81cf`, como referência didática. Exemplos lidos: Post, Comment, Order, CommentRepository, CommentService, AbstractCrudService, CommentServiceTest, CustomRepositoriesIntegrationTest e pom.xml. Foram aproveitados os conceitos de UUID, mapeamentos, Bean Validation, JpaRepository, injeção por construtor, transações em serviços e separação de testes isolados/integração. As classes foram criadas para o domínio VaciSmart.
+`TransporteRepository`.`buscarParaAtualizacao` usa `PESSIMISTIC_WRITE`. As operações relacionadas ao transporte são serializadas por esse lock; após adquiri-lo, o serviço recarrega a entidade e revalida a unidade. O refresh do lote evita decidir usando um estado carregado antes de uma operação concorrente. Um índice único parcial no PostgreSQL reforça a unicidade da ocorrência `ABERTA` por tipo/transporte.
 
-Diferenças: mantemos Boot 4.1.2 e a estrutura de pacotes existente; o exemplo usa 4.1.0 e CRUD genérico. Aqui o serviço coordena regras específicas, usa BigDecimal para temperaturas, referências LAZY sem cascade e auditoria por evento. Post usa ManyToOne sem fetch explícito; Comment explicita LAZY e usa remoção por cascade no banco, que não se aplica ao nosso histórico. Order demonstra CascadeType.ALL, não adotado. QueryDSL, JWT e JaCoCo do exemplo não foram adicionados.
+`EventoAuditoria` é `@Immutable`, tem colunas não atualizáveis e não oferece endpoint de edição/exclusão. Isso protege o uso pela aplicação, sem prometer impedir SQL direto de um administrador do banco.
 
-## Evidências históricas da J2 — 08/11/2026
+**Por que a auditoria de aplicação rejeitada não sofre rollback junto com o 409?** `FluxoOperacionalService`.`verificarAplicacao` grava o evento e retorna false normalmente. A transação pode concluir; só depois `AplicacaoController` lança a exceção convertida em 409. Se a exceção fosse lançada dentro da mesma transação, o rollback poderia desfazer o evento. A garantia depende dessa fronteira entre Service transacional e Controller sem transação.
 
-JDK temporário Temurin 21.0.13, Maven Wrapper 3.9.11, Boot 4.1.2, perfil test/H2. Nenhuma versão ou perfil alterado. Com JAVA_HOME/PATH desse JDK selecionados para a execução, cada rodada independente usou:
+## Endpoints e operações REST
 
-```bash
-./mvnw -B test
-```
+Todas as rotas de negócio começam com **/api/v1**. As tabelas mostram o caminho completo. Os perfis são obtidos do usuário ativo no banco; funcionário fica restrito à unidade nos recursos operacionais.
 
-| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
-|---|---|---|---|---|---|---|---|
-| 1 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 14.871 s | 2026-11-08T00:56:43-03:00 |
-| 2 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.321 s | 2026-11-08T00:59:35-03:00 |
-| 3 | 45 | 0 | 0 | 0 | BUILD SUCCESS | 11.353 s | 2026-11-08T00:59:47-03:00 |
+### Identidade e catálogos
 
-Execução preliminar anterior ao ajuste de normalização decimal: BUILD SUCCESS, 43 testes, zero falhas/erros/ignorados. As três rodadas acima incluem o código final e os casos adicionais de `5.2000`. Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais: processamento de anotações e agente Mockito/Byte Buddy no Java 21.
-
-`git diff --check` passou. Especificação, pom, application.yml e V0 comparados com 7e60863: sem alterações. PostgreSQL, aplicação das migrations V0+V1, checks/índice parcial e startup dev continuam não testados operacionalmente; não foi alterado banco real, Azure ou produção. A J2 está pronta para revisão do domínio com essa pendência explícita.
-
-## API REST operacional — J3
-
-**Registro histórico da J3, anterior à segurança. A J4 exige JWT e aplica a matriz de permissões abaixo.** Bind padrão 127.0.0.1. Nenhuma configuração de CORS irrestrito. Na J3 os papéis da especificação ainda não estavam protegidos; não há API pública de dados internos. Não publicar, criar proxy/túnel ou implantar na Azure nesta etapa.
-
-Arquitetura: Controller recebe/valida → Service transacional aplica regras e mapeia DTOs → Repository consulta/persiste. Os Controllers não classificam temperatura. `OperacaoTransporteController` chama diretamente `MonitoramentoService.registrarLeitura`; a entidade retornada é convertida em `LeituraSaidaDto`, nunca serializada. Demais consultas mapeiam dentro da transação, com open-in-view desabilitado. Relacionamentos seguem LAZY/sem cascade; DTOs usam somente os IDs dos vínculos, sem carregar nomes de pais. O EntityGraph da J2 continua atendendo a classificação térmica.
-
-Todas as rotas abaixo recebem o prefixo `/api/v1`. Todos os IDs são UUID. GET nunca altera estado. POST de criação retorna 201, corpo e Location relativo resolvível; PUT retorna 200 e corpo; DELETE permitido e início de monitoramento retornam 204 sem corpo.
-
-| Método | Rota | Entrada ou consulta | Regra / saída |
+| Método | Rota | Finalidade / autorização | Sucesso |
 |---|---|---|---|
-| POST | /unidades | nome | Cria unidade; UnidadeSaidaDto |
-| GET | /unidades | page, size, sort | Página de unidades |
-| GET | /unidades/{id} | — | UnidadeSaidaDto |
-| PUT | /unidades/{id} | nome | Atualiza nome |
-| DELETE | /unidades/{id} | — | Somente sem transportes/histórico |
-| POST | /vacinas | nome, temperaturaMinC, temperaturaMaxC, margemAtencaoC | Cria vacina; VacinaSaidaDto |
-| GET | /vacinas | page, size, sort | Página de vacinas |
-| GET | /vacinas/{id} | — | VacinaSaidaDto |
-| PUT | /vacinas/{id} | mesmos campos de criação | Faixa só muda se não existirem lotes; nome pode mudar |
-| DELETE | /vacinas/{id} | — | Somente sem lotes/histórico |
-| POST | /transportes | codigo, unidadeSaudeId | Estado inicial CADASTRADO |
-| GET | /transportes | unidadeId, estado, page, size, sort | Página com filtros combináveis |
-| GET | /transportes/{id} | — | TransporteSaidaDto |
-| PUT | /transportes/{id} | codigo, unidadeSaudeId | Somente CADASTRADO |
-| DELETE | /transportes/{id} | — | Somente CADASTRADO sem lotes/leituras/ocorrências/histórico |
-| POST | /transportes/{id}/monitoramento | Sem corpo | Regra da J2: exige lotes, muda para EM_TRANSPORTE e audita |
-| POST | /lotes | codigo, vacinaId, transporteId | Transporte CADASTRADO; EM_MONITORAMENTO/NAO_DISPONIVEL |
-| GET | /lotes | transporteId, vacinaId, estado, page, size, sort | Página com filtros combináveis |
-| GET | /lotes/{id} | — | LoteSaidaDto |
-| PUT | /lotes/{id} | codigo | Somente EM_MONITORAMENTO com transporte CADASTRADO; vínculos imutáveis |
-| GET | /lotes/{id}/historico | page, size, sort | Auditoria somente do lote identificado |
-| POST | /transportes/{id}/leituras | transporteId, dispositivoId, temperaturaC, medidaEm | transporteId obrigatório e igual à rota; regra térmica J2 |
-| GET | /transportes/{id}/leituras | page, size, sort | Página de leituras do transporte |
-| GET | /transportes/{id}/leituras/{leituraId} | — | Leitura somente se pertencer ao transporte |
-| GET | /transportes/{id}/ocorrencias | estado, page, size, sort | Página de ocorrências; JPQL |
-| GET | /transportes/{id}/historico | page, size, sort | Auditoria somente da entidade Transporte; eventos dos lotes são consultados nos respectivos lotes |
+| POST | /api/v1/auth/cadastro | Público; cadastra somente `CIDADAO` | 201 + Location |
+| POST | /api/v1/auth/login | Público; autentica conta ativa | 200 |
+| GET | /api/v1/auth/me | Própria conta; três perfis autenticados | 200 |
+| POST | /api/v1/unidades | Cria unidade; `GESTOR` | 201 + Location |
+| GET | /api/v1/unidades | Lista unidades; `FUNCIONARIO` vê a própria, `GESTOR` vê todas | 200 |
+| GET | /api/v1/unidades/{id} | Consulta unidade no escopo | 200 |
+| PUT | /api/v1/unidades/{id} | Atualiza nome; `GESTOR` | 200 |
+| DELETE | /api/v1/unidades/{id} | Exclui sem vínculos impeditivos; `GESTOR` | 204 |
+| POST | /api/v1/vacinas | Cria vacina; `GESTOR` | 201 + Location |
+| GET | /api/v1/vacinas | Lista catálogo operacional; `FUNCIONARIO`/`GESTOR` | 200 |
+| GET | /api/v1/vacinas/{id} | Consulta vacina; `FUNCIONARIO`/`GESTOR` | 200 |
+| PUT | /api/v1/vacinas/{id} | Atualiza vacina respeitando congelamento das faixas; `GESTOR` | 200 |
+| DELETE | /api/v1/vacinas/{id} | Exclui sem lotes/histórico; `GESTOR` | 204 |
 
-No marco histórico J3, não havia endpoints de login/cidadão; cadastro público de cidadão, login e própria conta foram acrescentados na J4, conforme a seção de segurança. Permanecem ausentes DELETE de lotes, CRUD de auditoria, escrita pública em ocorrências, recebimento, decisão técnica, disponibilidade, aplicação de doses, liberação ou descarte. Verificação de perda de telemetria e encerramento de ocorrências continuam métodos internos, sem endpoint/agendador.
+### Transportes, lotes e fluxo operacional
 
-### Validações e preservação do histórico
+| Método | Rota | Finalidade / autorização | Sucesso |
+|---|---|---|---|
+| POST | /api/v1/transportes | Cria transporte na unidade autorizada; `FUNCIONARIO`/`GESTOR` | 201 + Location |
+| GET | /api/v1/transportes | Lista com filtros e escopo de unidade | 200 |
+| GET | /api/v1/transportes/{id} | Consulta transporte no escopo | 200 |
+| PUT | /api/v1/transportes/{id} | Atualiza somente `CADASTRADO`; `FUNCIONARIO`/`GESTOR` | 200 |
+| DELETE | /api/v1/transportes/{id} | Exclui `CADASTRADO` sem vínculos/histórico; `FUNCIONARIO`/`GESTOR` | 204 |
+| POST | /api/v1/transportes/{id}/monitoramento | Inicia monitoramento; `FUNCIONARIO`/`GESTOR`, sem corpo | 204 |
+| POST | /api/v1/transportes/{id}/recebimento | Recebe na unidade; `FUNCIONARIO`/`GESTOR`, sem corpo | 204 |
+| POST | /api/v1/lotes | Cria lote antes do monitoramento; `GESTOR` | 201 + Location |
+| GET | /api/v1/lotes | Lista com filtros e escopo de unidade | 200 |
+| GET | /api/v1/lotes/{id} | Consulta lote no escopo | 200 |
+| PUT | /api/v1/lotes/{id} | Atualiza somente código antes do monitoramento; `FUNCIONARIO`/`GESTOR` | 200 |
+| POST | /api/v1/lotes/{id}/decisao-tecnica | LIBERAR ou DESCARTAR com `justificativa`; `GESTOR` | 204 |
+| POST | /api/v1/lotes/{id}/disponibilidade | `CONFIRMADA` ou `NAO_DISPONIVEL`; `FUNCIONARIO`/`GESTOR` no escopo | 204 |
+| POST | /api/v1/aplicacoes | Verificação simulada por lote; `FUNCIONARIO`/`GESTOR` no escopo | 200 |
 
-Entradas e saídas são records diferentes. Campos desconhecidos no JSON são rejeitados com 400, incluindo `estado`, `disponibilidade`, `autor`, `id` e classificações calculadas quando não pertencem ao DTO de entrada. `@NotBlank`/`@Size` limitam nome a 150, código a 60 e dispositivoId a 100 caracteres. `@NotNull` exige referências e dados de leitura. `@DecimalMin`/`@DecimalMax` delimitam numeric(10,3); `Validacoes.decimal` preserva a validação exata da J2 sem arredondar (aceita 5.2000, rejeita 8.0001). `Validacoes.faixa` exige min < max, margem >= 0 e 2 × margem <= max − min. A margem deve ser informada explicitamente (demo: 1).
+### Leituras, histórico e consulta cidadã
 
-A prioridade da classificação é explícita: NORMAL=0, ATENCAO=10, FORA_DA_FAIXA=20. `maisGraveQue` usa esse valor, sem ordinal e sem alterar parâmetros térmicos. A comparação continua estrita: classificações iguais não substituem a atual.
+| Método | Rota | Finalidade / autorização | Sucesso |
+|---|---|---|---|
+| POST | /api/v1/transportes/{id}/leituras | Registra leitura simulada; `FUNCIONARIO`/`GESTOR` no escopo | 201 + Location |
+| GET | /api/v1/transportes/{id}/leituras/{leituraId} | Consulta leitura pertencente ao transporte | 200 |
+| GET | /api/v1/transportes/{id}/leituras | Lista leituras do transporte autorizado | 200 |
+| GET | /api/v1/transportes/{id}/ocorrencias | Lista ocorrências; filtro opcional estado | 200 |
+| GET | /api/v1/transportes/{id}/historico | Lista eventos do próprio transporte | 200 |
+| GET | /api/v1/lotes/{id}/historico | Lista eventos do lote autorizado | 200 |
+| GET | /api/v1/disponibilidade | Consulta informativa global; `CIDADAO`, `FUNCIONARIO` ou `GESTOR` | 200 |
 
-Faixas de vacinas com lotes ficam congeladas, inclusive antes do início, para impedir reinterpretação de avaliações existentes. Renomear a vacina é permitido com parâmetros numericamente iguais. Lote só permite corrigir código antes do monitoramento; vacina/transporte não podem ser trocados. Cadastro de novos lotes após o início retorna 409. Código de lote/transporte é único; colisão retorna 409. Atualizações cadastrais não mudam estados; transições existentes continuam auditadas pela J2, com autor SISTEMA na simulação.
+Nas cinco consultas operacionais de leituras/histórico/ocorrências, aplicam-se `FUNCIONARIO` da unidade ou `GESTOR`. Os erros relevantes são 400 para entrada inválida, 401 para autenticação ausente/inválida, 403 para acesso negado, 404 para recurso ausente no escopo e 409 para conflito de estado ou dependência; o [tratamento de erros](#validação-e-tratamento-de-erros) explica as diferenças. POST de aplicação não LIBERADA retorna 409 após auditoria; não é uma criação com 201.
 
-Locks pessimistas de unidade e vacina serializam exclusão/alteração com criação de referências; operações de lote/transporte usam o lock do transporte já adotado no monitoramento. FKs/uniqueness permanecem como proteção adicional. SQL direto e concorrência no PostgreSQL real não são comprovados pelos testes H2. Criar/editar/excluir referências é responsabilidade do Service, sem cascade de remoção.
+Não existem endpoints de exclusão de lote, CRUD de ocorrências/auditoria, encerramento de ocorrência, finalização de transporte ou credencial própria de dispositivo.
 
-### Paginação, ordenação e filtros
+### Exemplo de CRUD de vacina
 
-Todas as listagens usam `Pageable` e paginação no banco; nenhuma carrega tudo para paginar em memória. `page` inicia em 0; padrão `size=20`, máximo 100 (valores maiores são limitados a 100). O resolver padrão Spring Data normaliza page negativo/inválido para 0 e size inválido/não positivo para o padrão. `sort=campo,asc` ou `sort=campo,desc`, repetível. Sem sort, ordena por id; id também desempata outras ordenações. Não implica ordem cronológica: use os campos de data quando necessário. Campo fora da lista abaixo retorna 400.
+Execute no Swagger como `GESTOR`. Os corpos abaixo são exemplos, não registros previamente existentes. Use um nome exclusivo e guarde o UUID retornado. Para o DELETE, escolha uma vacina criada para descarte na apresentação, sem lotes nem histórico.
 
-| Recurso | Campos permitidos em sort |
+1. POST /api/v1/vacinas, com resultado esperado 201 e Location:
+
+~~~json
+{
+  "nome": "Vacina demonstrativa Java",
+  "temperaturaMinC": 2,
+  "temperaturaMaxC": 8,
+  "margemAtencaoC": 1
+}
+~~~
+
+2. GET /api/v1/vacinas/{id}: substitua {id} pelo UUID retornado; esperado 200 com os dados da vacina.
+3. PUT /api/v1/vacinas/{id}, esperado 200. Para esse registro sem lotes, mantenha as faixas e altere o nome:
+
+~~~json
+{
+  "nome": "Vacina demonstrativa Java atualizada",
+  "temperaturaMinC": 2,
+  "temperaturaMaxC": 8,
+  "margemAtencaoC": 1
+}
+~~~
+
+4. DELETE /api/v1/vacinas/{id}: esperado 204 sem corpo, se não houver dependências. Novo GET no mesmo UUID deve retornar 404. Não excluir a vacina usada no fluxo térmico.
+
+### Exemplos de operações relacionadas
+
+Os textos UUID_REAL_* são marcadores a substituir por UUIDs efetivamente retornados pela API. Crie primeiro uma unidade e uma vacina, depois o transporte e o lote; a ordem corresponde às FKs.
+
+| Operação | JSON de entrada |
 |---|---|
-| unidades, vacinas | id, nome |
-| transportes | id, codigo, estado, inicioMonitoramentoEm |
-| lotes | id, codigo, estado |
-| leituras | id, medidaEm, recebidaEm, temperaturaC, classificacao |
-| ocorrências | id, abertaEm, encerradaEm, tipo, estado |
-| histórico | id, dataHora, acao |
+| POST /api/v1/unidades | {"nome":"Unidade demonstrativa Java"} |
+| POST /api/v1/transportes | {"codigo":"TRP-JAVA-EXCLUSIVO","unidadeSaudeId":"UUID_REAL_UNIDADE"} |
+| POST /api/v1/lotes | {"codigo":"LOTE-JAVA-EXCLUSIVO","vacinaId":"UUID_REAL_VACINA","transporteId":"UUID_REAL_TRANSPORTE"} |
+| PUT /api/v1/lotes/{id} | {"codigo":"LOTE-JAVA-ATUALIZADO"} |
+| POST /api/v1/lotes/{id}/decisao-tecnica | {"decisao":"LIBERAR","justificativa":"Conferência humana demonstrativa realizada."} |
+| POST /api/v1/lotes/{id}/disponibilidade | {"disponibilidade":"CONFIRMADA"} |
+| POST /api/v1/aplicacoes | {"loteId":"UUID_REAL_LOTE"} |
 
-Exemplo: `GET /api/v1/lotes?transporteId={uuid}&vacinaId={uuid}&estado=EM_MONITORAMENTO&page=0&size=10&sort=codigo,asc`. Filtros opcionais combinam com AND; ausência de resultados autorizados retorna página vazia. Na J4, transporteId em filtros de lotes também verifica acesso ao transporte: funcionário recebe 403 para pai alheio/inexistente e gestor recebe 404 para inexistente; filtros de unidade alheia são negados. Não garantir página vazia para todo UUID sem correspondência. Consulta de recurso ou filho inexistente sob pai autorizado retorna 404, respeitada a proteção por perfil/unidade descrita na J4.
+Inicie o monitoramento antes de registrar leituras. Exemplo de POST /api/v1/transportes/{id}/leituras:
 
-Formato próprio, estável, sem metadados internos do PageImpl:
-```json
-{"conteudo":[{"id":"11111111-1111-1111-1111-111111111111","nome":"Unidade Demonstrativa 01"}],"pagina":0,"tamanho":20,"totalElementos":1,"totalPaginas":1}
-```
+~~~json
+{
+  "transporteId": "UUID_REAL_TRANSPORTE",
+  "dispositivoId": "ARDUINO-DEMO-01",
+  "temperaturaC": 9.3,
+  "medidaEm": "2026-11-19T10:00:00-03:00"
+}
+~~~
 
-### Consultas JPA justificadas
+Troque a data do exemplo por um instante válido da demonstração, entre `inicioMonitoramentoEm` e o recebimento atual. Usar uma data antiga ou futura pode retornar 400. Não tente liberar o lote antes do recebimento; não trate a liberação técnica como confirmação automática de disponibilidade.
 
-- Derivadas: `findByTransporteId(UUID, Pageable)` lista leituras de um transporte; `findByEntidadeAndReferenciaId` consulta auditoria do recurso; `existsByVacinaId` e `existsByUnidadeSaudeId` protegem dependências sem carregar coleções.
-- JPQL: `OcorrenciaRepository.consultarPorTransporte` filtra por transporte e, opcionalmente, estado. Permite inspeção operacional de abertas/encerradas com a mesma consulta paginada e contagem no banco. JPQL usa parâmetros e não concatena entradas do usuário. A JPQL de lock da J2 permanece.
-```java
+## Consultas Spring Data JPA
+
+### Query Methods: consultas derivadas para necessidades diretas
+
+Em [LeituraTemperaturaRepository](src/main/java/br/com/fiap/vacismart/repository/LeituraTemperaturaRepository.java), a assinatura existente é:
+
+~~~java
+Page<LeituraTemperatura> findByTransporteId(UUID transporteId, Pageable pageable);
+~~~
+
+O Spring Data interpreta o nome e filtra leituras pelo UUID do transporte, com paginação no banco. É adequado porque a condição é fixa e simples; não há necessidade de escrever JPQL para essa consulta. `ConsultaOperacionalService` verifica o acesso ao transporte antes da chamada.
+
+Outros exemplos reais são `findFirstByTransporteIdOrderByRecebidaEmDesc`, usado na telemetria, e `existsByVacinaId`, que verifica dependências sem carregar todos os lotes.
+
+### JPQL com @Query: ocorrências por transporte e estado
+
+[OcorrenciaRepository](src/main/java/br/com/fiap/vacismart/repository/OcorrenciaRepository.java) declara:
+
+~~~java
 @Query("select o from Ocorrencia o where o.transporte.id = :transporteId "
         + "and (:estado is null or o.estado = :estado)")
-Page<Ocorrencia> consultarPorTransporte(UUID transporteId, EstadoOcorrencia estado, Pageable pageable);
-```
-- `Specification`: `Filtros.lotes` combina transporteId, vacinaId e estado; `Filtros.transportes` combina unidadeId e estado. Evita a multiplicação de métodos para cada combinação e aplica filtros/ordenação/paginação no SQL. Nenhum QueryDSL acrescentado.
+Page<Ocorrencia> consultarPorTransporte(
+        @Param("transporteId") UUID transporteId,
+        @Param("estado") EstadoOcorrencia estado,
+        Pageable pageable);
+~~~
 
-### Exemplos HTTP locais
+JPQL usa entidades e atributos Java, não nomes de tabelas SQL. `transporteId` restringe o pai; estado nulo significa todos os estados, e um valor como `ABERTA` restringe o resultado. Os valores são parâmetros vinculados, sem concatenação da entrada do usuário. A mesma consulta atende a inspeção geral e a busca de ocorrências abertas, mantendo `Page` e contagem no banco.
 
-Os UUIDs e horários abaixo são ilustrativos. Substitua pelos IDs retornados pelos cadastros. Cadastre unidade → vacina → transporte → lote; inicie monitoramento; só então envie leitura com medidaEm entre o início retornado pelo GET do transporte e o instante atual, sempre com offset.
+### Specification: combinar filtros sem multiplicar métodos
 
-```http
-POST /api/v1/unidades
-Content-Type: application/json
+[Filtros](src/main/java/br/com/fiap/vacismart/repository/Filtros.java) monta os predicados de lotes por `transporteId`, `vacinaId` e estado, e de transportes por `unidadeId` e estado. Trecho do método real:
 
-{"nome":"Unidade Demonstrativa 01"}
-```
-```http
-HTTP/1.1 201 Created
-Location: /api/v1/unidades/11111111-1111-1111-1111-111111111111
+~~~java
+if (transporteId != null) filtros.add(cb.equal(root.get("transporte").get("id"), transporteId));
+if (vacinaId != null) filtros.add(cb.equal(root.get("vacina").get("id"), vacinaId));
+if (estado != null) filtros.add(cb.equal(root.get("estado"), estado));
+return cb.and(filtros.toArray(Predicate[]::new));
+~~~
 
-{"id":"11111111-1111-1111-1111-111111111111","nome":"Unidade Demonstrativa 01"}
-```
-```http
-POST /api/v1/vacinas
-Content-Type: application/json
+Cada parâmetro opcional acrescenta uma condição com AND. O mesmo método atende consultas com nenhum, um ou vários filtros, sem criar uma assinatura derivada para cada combinação. `LoteRepository` e `TransporteRepository` implementam `JpaSpecificationExecutor`. `CadastroService` acrescenta o escopo do funcionário na consulta antes da paginação e da contagem; não filtra uma página já carregada em memória.
 
-{"nome":"Vacina Demo A","temperaturaMinC":2.0,"temperaturaMaxC":8.0,"margemAtencaoC":1.0}
+Exemplos de consultas:
 
-POST /api/v1/transportes
-Content-Type: application/json
+~~~http
+GET /api/v1/lotes?estado=BLOQUEADO_PREVENTIVAMENTE&page=0&size=10&sort=codigo,asc
+GET /api/v1/transportes?estado=RECEBIDO&page=0&size=10&sort=codigo,desc
+~~~
 
-{"codigo":"TRP-001","unidadeSaudeId":"11111111-1111-1111-1111-111111111111"}
+Os filtros por UUID podem ser acrescentados com os IDs reais: `transporteId`/`vacinaId` em lotes e `unidadeId` em transportes.
 
-POST /api/v1/lotes
-Content-Type: application/json
+### Paginação e ordenação
 
-{"codigo":"VAC-2026-001","vacinaId":"22222222-2222-2222-2222-222222222222","transporteId":"33333333-3333-3333-3333-333333333333"}
+`Pageable` transporta página, `tamanho` e ordenação até o Repository. `Page` contém os resultados e a contagem; `PaginaDto` apresenta `conteudo`, `pagina`, `tamanho`, `totalElementos` e `totalPaginas`, sem expor a representação interna do Spring Data.
 
-POST /api/v1/transportes/33333333-3333-3333-3333-333333333333/monitoramento
-```
-Resposta do início: `204 No Content`. A leitura mantém o campo transporteId do exemplo da especificação, conferido contra a rota:
-```http
-POST /api/v1/transportes/33333333-3333-3333-3333-333333333333/leituras
-Content-Type: application/json
+A página começa em zero; `tamanho` padrão 20 e máximo 100. O resolver normaliza parâmetros page/size inválidos conforme sua configuração. Paginacao.validar limita o `tamanho` e rejeita propriedades de sort fora da lista permitida com 400; acrescenta id como desempate. Não existe ordenação livre por `campos` internos ou senha.
 
-{"transporteId":"33333333-3333-3333-3333-333333333333","dispositivoId":"ARDUINO-DEMO-01","temperaturaC":9.3,"medidaEm":"2026-11-10T14:20:30-03:00"}
-```
-```http
-HTTP/1.1 201 Created
-Location: /api/v1/transportes/33333333-3333-3333-3333-333333333333/leituras/44444444-4444-4444-4444-444444444444
-
-{"id":"44444444-4444-4444-4444-444444444444","transporteId":"33333333-3333-3333-3333-333333333333","dispositivoId":"ARDUINO-DEMO-01","temperaturaC":9.3,"medidaEm":"2026-11-10T14:20:30-03:00","recebidaEm":"2026-11-10T14:20:31-03:00","classificacao":"FORA_DA_FAIXA"}
-```
-Os offsets de saída podem ser normalizados pelo serializador para o mesmo instante; não depender da representação textual exata do offset. A consulta posterior do lote afetado devolve BLOQUEADO_PREVENTIVAMENTE e NAO_DISPONIVEL. 5.2 classifica NORMAL e 7.5 ATENCAO; nenhuma libera/descarta. No transporte misto só bloqueia os lotes fora da faixa da respectiva vacina. Normalização não encerra ocorrência térmica nem libera lote.
-
-### Respostas de erro
-
-`ErroApiAdvice` estende ResponseEntityExceptionHandler e usa `application/problem+json` (`ProblemDetail`). 400: Bean Validation, JSON/campo desconhecido, UUID/enum/data inválidos, faixa/precisão inválida ou transporteId divergente da rota. 404: recurso/referência inexistente. 409: estado incompatível, duplicidade, dependências ou concorrência. 405: método HTTP não permitido. 500: resposta genérica segura, sem stack trace ou detalhes de persistência. Erros MVC como 415 preservam seu código adequado. No marco J3 não havia 401/403 funcional; a J4 acrescentou esses códigos e o escopo por unidade, detalhados na matriz e nos erros de segurança vigentes.
-
-```json
-{"type":"about:blank","title":"Conflict","status":409,"detail":"Lote já possui monitoramento","instance":"/api/v1/lotes/55555555-5555-5555-5555-555555555555"}
-```
-Validação de DTO acrescenta `campos`, por exemplo `[{"campo":"nome","mensagem":"não deve estar em branco"}]` (mensagem depende do idioma do Validator). Erro inesperado usa `detail="Erro interno ao processar a requisição"`.
-
-### Testes e limites da J3
-
-Testes HTTP usam `@SpringBootTest(RANDOM_PORT)`, JDK HttpClient, Jackson 3, Clock fixo e H2 separado (`vacismart-http`), passando por Controller → Service → Repository real, sem mocks de domínio. Não exigem nova dependência de testes. O controlador de falha inesperada existe somente em src/test e não entra no JAR.
-
-Total final: 89 testes (45 da J2 preservados + 12 de prioridade explícita + 32 HTTP). Cobrem criação/Location/consulta, DTO inválido, UUID/enum/datas inválidos, 404, atualizações permitidas/proibidas, faixa congelada, rollback, duplicidade, paginação/ordenação/limite, Specifications, JPQL, 5.2/7.5/9.3, bloqueio/auditoria, normalização sem liberação/descarte, transporte misto, exclusão protegida, GET sem transição e histórico somente leitura, além de 500 seguro. Primeiro teste após a correção: 57/0/0/0; implementação inicial com HTTP: 86/0/0/0; preliminar final: 89/0/0/0. Todos BUILD SUCCESS.
-
-PostgreSQL real, Flyway V0/V1, checks/índice parcial e startup dev continuam pendentes de validação operacional. Os testes H2 usam create-drop/Flyway desabilitado e não comprovam esses itens. Não houve acesso a banco real, deploy, push ou avanço à J4.
-
-### Regressões finais independentes da J3 — 08/11/2026
-
-Cada rodada iniciou novo processo Maven/JVM com o código final, com JAVA_HOME/PATH do JDK 21 selecionados para a execução:
-```bash
-./mvnw -B test
-```
-
-| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
-|---|---|---|---|---|---|---|---|
-| 1 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 17.187 s | 2026-11-08T22:47:57-03:00 |
-| 2 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.076 s | 2026-11-08T22:48:15-03:00 |
-| 3 | 89 | 0 | 0 | 0 | BUILD SUCCESS | 16.016 s | 2026-11-08T22:48:33-03:00 |
-
-Compilação e empacotamento: `./mvnw -B -DskipTests package`, com o mesmo JDK 21, BUILD SUCCESS; testes omitidos somente nesse comando após as três regressões completas. Artefato local: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais de annotation processing e Mockito/Byte Buddy persistem.
-
-## Correção de mapeamento JPA/PostgreSQL — 09/11/2026
-
-A execução real em dev revelou `missing column [temperaturac]` em leitura_temperatura. A configuração do projeto não substitui a nomenclatura padrão do Boot4.1.2: estratégia física `org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl` e implícita `org.springframework.boot.hibernate.SpringImplicitNamingStrategy`, confirmadas nas propriedades efetivas do Hibernate. A estratégia física não insere underscore antes da maiúscula final isolada `C`: os quatro campos abaixo divergiam da V1.
-
-| Entidade / atributo Java | Nome físico inferido antes | Coluna da V1 / mapeamento corrigido |
+| Recurso | Filtros específicos | Campos de sort permitidos |
 |---|---|---|
-| LeituraTemperatura.temperaturaC | temperaturac | temperatura_c |
-| Vacina.temperaturaMinC | temperatura_minc | temperatura_min_c |
-| Vacina.temperaturaMaxC | temperatura_maxc | temperatura_max_c |
-| Vacina.margemAtencaoC | margem_atencaoc | margem_atencao_c |
+| Unidades | Escopo de unidade do usuário | id, nome |
+| Vacinas | Sem filtro específico de negócio | id, nome |
+| Transportes | `unidadeId`, estado | id, codigo, estado, `inicioMonitoramentoEm` |
+| Lotes | `transporteId`, `vacinaId`, estado | id, codigo, estado |
+| Leituras | `Transporte` da rota | id, `medidaEm`, `recebidaEm`, `temperaturaC`, classificacao |
+| Ocorrências | `Transporte` da rota; estado opcional | id, abertaEm, encerradaEm, tipo, estado |
+| Histórico | `Entidade`/referência da rota | id, `dataHora`, acao |
+| Disponibilidade | `unidadeId`, `vacinaId` | unidadeNome, vacinaNome |
 
-Correção mínima: quatro `@Column(name = ...)` em LeituraTemperatura e Vacina, preservando precisão/escala/nullability, atributos Java, JSON, regras e estratégia global. As outras cinco entidades, os IDs herdados de Entidade e todos os JoinColumn já correspondiam à V1. Nenhuma migration, dependência, contrato HTTP ou configuração de perfil foi alterada. dev continua `ddl-auto=validate`.
+A ordenação operacional padrão resulta em id. Disponibilidade usa unidadeNome e vacinaNome ascendentes quando não há sort, com UUIDs de unidade/vacina como desempate.
 
-Por que H2 não detectou antes: o perfil test usa create-drop; o Hibernate criava as colunas com os mesmos nomes inferidos que usava nas consultas. O novo `MapeamentoSchemaTest` compara os nomes físicos efetivos de todas as sete entidades (38 colunas, incluindo IDs/FKs) com os CREATE TABLE do recurso V1. Antes da correção: 7 testes, 2 falhas (vacina/leitura), 0 erros/ignorados. Depois: suíte completa com **96 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 22.018s, conclusão 2026-11-09T00:01:01-03:00. Os 89 testes anteriores permanecem inalterados. O teste compara nomes; não executa SQL PostgreSQL, não valida índices/checks nem substitui startup real.
+### Consulta agregada de disponibilidade
 
-Validação operacional atual: container existente postgres:17.6 saudável; consulta PostgreSQL confirmou versão17.6 e V0/V1 com success=true. Inicialização real com perfil dev e porta local livre (41293): Flyway `Successfully validated 2 migrations`, schema public na versão1 e `No migration necessary`; Hibernate `Initialized JPA EntityManagerFactory`; aplicação `Started VaciSmartApplication in 5.558 seconds` às 2026-11-09T00:03:16-03:00. O processo temporário foi encerrado após o startup. Banco/volume/container foram preservados; nenhuma migration foi reaplicada. Isto valida o startup/esquema existente, não todos os fluxos funcionais ou concorrência em PostgreSQL. As pendências anteriores de startup/validação de esquema acima são evidências históricas, superadas por esta execução; testes funcionais PostgreSQL, checks/índice parcial sob carga e segurança continuam fora desta correção.
+`DisponibilidadeConsultaRepository` usa `EntityManager` e SQL nativo com CTE para paginar os pares unidade × vacina antes de agregar os estados e os eventos. Agregações separadas evitam multiplicar linhas de lotes por eventos. A contagem usa o mesmo universo e filtros; não conta cada lote como uma linha pública. Os filtros são vinculados, e os fragmentos de ordenação vêm de uma lista fixa.
 
-A falha de regressão anterior à correção, descrita acima, era esperada e não representa falha no código final.
+Essa consulta atende uma projeção pública específica e não retorna entidades operacionais. Sua validação funcional no PostgreSQL é histórica; não há medição de desempenho em carga que permita prometer ganho quantitativo.
 
-Para repetir no Ubuntu com o PostgreSQL existente, use JDK21 completo no JAVA_HOME/PATH, o .env local já configurado (não o sobrescreva) e as chaves JWT externas exportadas antes do startup, conforme [Chaves e ambiente local](#chaves-e-ambiente-local). A partir de um diretório do clone VaciSmart confirmado, identifique sua raiz pelo Git:
-```bash
-cd "$(git rev-parse --show-toplevel)"
+## Validação e tratamento de erros
+
+Os records de entrada recebem `@Valid` nos Controllers. `VacinaEntradaDto`, por exemplo, exige nome não branco de até 150 caracteres e valores térmicos não nulos; `LoteEntradaDto` exige código de até 60 e UUIDs de vacina/transporte. O cadastro cidadão valida e-mail e senha de 12 a 72 caracteres ASCII imprimíveis. As saídas têm DTOs próprios e não incluem senha/hash.
+
+Bean Validation valida a forma dos `campos`. `Validacoes` e as entidades verificam invariantes como faixa térmica coerente, precisão decimal e ordem das transições. Os Services verificam relações, escopo e condições que dependem do banco. Jackson rejeita `campos` JSON desconhecidos, UUIDs inválidos e enums não reconhecidos.
+
+[ErroApiAdvice](src/main/java/br/com/fiap/vacismart/web/advice/ErroApiAdvice.java) é um `@RestControllerAdvice` que estende `ResponseEntityExceptionHandler`. Retorna ProblemDetail; a validação de DTO acrescenta `campos` com nome e mensagem. Exemplo ilustrativo para um nome vazio:
+
+~~~json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Campos inválidos",
+  "campos": [
+    {"campo": "nome", "mensagem": "não deve estar em branco"}
+  ]
+}
+~~~
+
+A mensagem de cada campo depende do idioma do Validator. `instance` pode aparecer, mas não é obrigatório em todas as respostas. Os filtros de segurança usam `ErrosSeguranca` para 401/403, pois nem toda negação chega ao Controller ou ao Advice. Rejeições de CORS podem ocorrer sem corpo ProblemDetail.
+
+| Código | Situação no VaciSmart |
+|---|---|
+| 400 | DTO, JSON, precisão, UUID, enum, data ou sort inválido; `transporteId` do corpo diferente da rota |
+| 401 | JWT ausente/inválido/expirado, conta inativa ou credenciais incorretas; resposta informa WWW-Authenticate: Bearer |
+| 403 | Perfil sem permissão ou recurso fora da unidade autorizada |
+| 404 | Recurso ausente no escopo permitido |
+| 409 | Estado incompatível, e-mail/código duplicado, vínculos, integridade ou concorrência; inclui aplicação simulada rejeitada |
+| 500 | Falha inesperada, com mensagem genérica e sem stack trace na resposta |
+
+Para lote/transporte inexistente ou alheio, o funcionário recebe 403 uniforme, evitando revelar a existência de um recurso de outra unidade; o gestor recebe 404 para inexistente. O tratamento de 500 existe no Advice e é exercitado por suporte exclusivo de teste, sem um endpoint de falha no código de produção.
+
+## Segurança
+
+### Cadastro, senha e emissão do JWT
+
+`AuthController` recebe cadastro e login; `AutenticacaoService` normaliza o e-mail, verifica unicidade e senha, exige conta ativa e emite JWT. Cadastro público cria somente `CIDADAO` e retorna 201 sem `token`; login retorna 200 com `token`, tipo Bearer, `expiraEm` e usuário. O banco armazena **hash BCrypt com custo 12**, não senha reversivelmente criptografada.
+
+`SegurancaConfig` usa OAuth2 Resource Server e Nimbus. A chave privada RSA assina com RS256 e a pública verifica a assinatura; `ChavesJwtConfig` exige par correspondente com no mínimo 2048 bits, privada PEM PKCS#8 e pública PEM/X.509. Chaves externas são obrigatórias no desenvolvimento. O perfil test gera seu próprio par efêmero.
+
+O `token` contém sub (UUID), perfil, iss, iat e exp. O decoder valida RS256, emissor, validade e claims obrigatórias; rejeita emissão futura, UUID inválido e expiração sem tolerância adicional de relógio. A validade padrão é PT15M, configurável por `JWT_VALIDADE`, positiva e no máximo uma hora. Não há refresh `token`, revogação individual nem rotação com múltiplas chaves/JWKS.
+
+### Da requisição à autorização
+
+~~~mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant A as AuthController / AutenticacaoService
+    participant S as Spring Security
+    participant B as UsuarioRepository
+    participant R as Controller / Service
+    C->>A: POST /api/v1/auth/login
+    A->>B: Buscar usuário ativo e conferir BCrypt
+    A-->>C: JWT RS256 e expiração
+    C->>S: Requisição com Authorization Bearer
+    S->>S: Validar assinatura, emissor e tempo
+    S->>B: Consultar usuário ativo e perfil atual
+    S->>R: Autorizar rota e identificar usuário
+    R->>R: AcessoService valida unidade/recurso
+    R-->>C: DTO ou erro padronizado
+~~~
+
+A API é stateless, sem sessão HTTP para autenticar, com CSRF desabilitado no modelo de Bearer em header. O perfil da claim é informativo: a cada requisição, os privilégios vêm do usuário ativo no banco. Mudanças de papel, vínculo ou ativação são reavaliadas; um JWT ainda não expirado não preserva privilégios antigos.
+
+`AcessoService` aplica a mesma proteção nos Services. O Controller não aceita autor, perfil ou unidade de autorização enviados livremente pelo cliente.
+
+| Operação | `CIDADAO` | `FUNCIONARIO` | `GESTOR` |
+|---|---|---|---|
+| Cadastro/login | Públicos | Públicos | Públicos |
+| Consultar própria conta | Própria | Própria | Própria |
+| Consultar disponibilidade informativa | Global | Global, mesma visão pública | Global, mesma visão pública |
+| Consultar unidades | Não | Própria unidade | Todas |
+| Criar/editar/excluir unidade | Não | Não | Sim, respeitando dependências |
+| Consultar vacinas | Não | Sim | Sim |
+| Criar/editar/excluir vacina | Não | Não | Sim, respeitando vínculos/faixas |
+| Transportes e leituras | Não | Somente unidade vinculada | Escopo global |
+| Criar lote | Não | Não | Sim |
+| Consultar lote, editar código e histórico | Não | Somente unidade vinculada | Escopo global |
+| Recebimento e disponibilidade | Não | Somente unidade vinculada | Escopo global |
+| Decisão técnica | Não | Não | Sim |
+| Verificação simulada de aplicação | Não | Somente unidade vinculada | Escopo global |
+
+Escopo global não elimina as regras térmicas ou de estado. O gestor também recebe 409 se tentar uma transição inválida.
+
+### CORS e cuidados de demonstração
+
+`CORS_ORIGENS` recebe origens explícitas separadas por vírgula, por exemplo http://localhost:5173, sem caminho, curinga, usuário ou query. A lista vazia não libera automaticamente o app. O código permite GET/POST/PUT/DELETE/OPTIONS, headers Authorization e Content-Type, expõe Location e não habilita allowCredentials. CORS é uma política do navegador, não uma autorização para acessar a API; Postman não comprova CORS do Mobile.
+
+Não exiba chaves, senhas, hashes ou tokens em capturas. No Swagger, faça login e preencha Authorize fora da gravação, depois recolha a resposta de login. Este protótipo não implementa proteção adicional contra abuso de login, recuperação de senha ou administração pública de perfis.
+
+## Swagger/OpenAPI
+
+`OpenApiConfig` e as anotações dos oito controllers descrevem **34 operações HTTP**: 3 de autenticação, 5 de unidades, 5 de vacinas, 7 de transportes, 7 de lotes, 5 de leituras/ocorrências/histórico do transporte, 1 de disponibilidade e 1 de aplicação. A contagem foi conferida nos mappings atuais e na expectativa de OpenApiIntegrationTest, sem executar a API nesta revisão.
+
+| Caminho local | Uso |
+|---|---|
+| http://127.0.0.1:8080/swagger-ui.html | Entrada da interface |
+| http://127.0.0.1:8080/swagger-ui/index.html | Interface Swagger |
+| http://127.0.0.1:8080/v3/api-docs | Documento OpenAPI JSON |
+| http://127.0.0.1:8080/v3/api-docs.yaml | Documento YAML |
+| http://127.0.0.1:8080/v3/api-docs/swagger-config | Configuração usada pela UI |
+
+A documentação fica desabilitada por padrão e só é habilitada na expressão de perfis (dev ou test), sem prod nem production ativos. Os GETs documentais são públicos nesses perfis; isso não libera operações protegidas. Fora deles, as rotas documentais são negadas.
+
+No Swagger, execute /api/v1/auth/login com suas credenciais fictícias existentes. Copie somente o valor de `token` para **Authorize**; a UI adiciona o prefixo Bearer ao header. A autorização não fica persistida pela interface. DTOs, permissões, filtros, respostas 201/Location, 204 sem corpo e erros estão documentados. A interface não cria usuários operacionais automaticamente.
+
+## Como executar a API
+
+Este procedimento é para **Java no computador de desenvolvimento e PostgreSQL em Docker local**, usando compose.dev.yml. Não é o Compose de dois serviços da Azure. Para o ambiente já implantado e o acesso por túnel, siga o [README_DEVOPS.md](README_DEVOPS.md#acessar-e-verificar-o-vacismart-já-implantado).
+
+Todos os comandos abaixo são instruções para um terminal Bash. Não foram executados nesta revisão documental. Confirme sucesso de cada passo antes de continuar; preserve banco, ambiente e chaves existentes.
+
+### 1. Conferir código, JDK e Maven Wrapper
+
+Tenha Git, JDK completo 21 (java e javac), Docker Engine/Compose para o banco, OpenSSL para as chaves e acesso aos registries/Maven Central no primeiro uso. Em uma instalação nova, clone o repositório e entre na raiz; em cópia existente, apenas use a raiz correta.
+
+~~~bash
+# Somente para uma cópia nova:
+git clone https://github.com/gi13090/Vacismart-java-api.git
+cd Vacismart-java-api
+
+# Substitua pelo diretório do JDK 21 instalado.
+export JAVA_HOME=/caminho/do/jdk-21
+export PATH="$JAVA_HOME/bin:$PATH"
 java -version
 javac -version
-./mvnw -B test
-docker compose -f compose.dev.yml ps
+./mvnw -version
+~~~
+
+O Wrapper fixa Maven 3.9.11 e confere o SHA-256 da distribuição configurada em .mvn/wrapper/maven-wrapper.properties. Não é necessário instalar Maven globalmente. Se o checkout perder a permissão do Wrapper, use chmod +x mvnw; não troque a versão do JDK para contornar uma cópia incorreta.
+
+### 2. Preparar o ambiente local do banco
+
+~~~bash
+# Na raiz; não sobrescreve um .env existente.
+if [ ! -e .env ]; then
+  (umask 077; cp .env.example .env)
+fi
+chmod 600 .env
+~~~
+
+Edite o arquivo local com atribuições de variáveis confiáveis, usando aspas de shell quando necessário. [.env.example](.env.example) contém somente exemplos de desenvolvimento; não use sua senha de exemplo em produção. Configure os quatro valores em conjunto:
+
+| Variável | Valor esperado no desenvolvimento |
+|---|---|
+| `DB_NAME` | Nome do banco |
+| `DB_USER` | Usuário SQL |
+| `DB_PASSWORD` | Senha privada escolhida para esse banco |
+| `DB_URL` | jdbc:postgresql://localhost:5432/ seguido do mesmo `DB_NAME` |
+
+Exporte os valores para o Java; o Compose ler .env não exporta variáveis para um processo Maven no host:
+
+~~~bash
 set -a
 . ./.env
 set +a
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-Na versão atual, configure também as chaves JWT descritas abaixo. O .env deve conter atribuições confiáveis: o comando acima o executa no shell. Aguarde as mensagens de validação Flyway, `Initialized JPA EntityManagerFactory` e `Started VaciSmartApplication`, sem `Schema validation: missing column`. Caso a porta8080 já esteja em uso, acrescente `-Dspring-boot.run.arguments=--server.port=8081` ao último comando. Em outro terminal, `curl -i -H "Authorization: Bearer $JWT_ACESSO" "http://127.0.0.1:8080/api/v1/unidades?page=0"` deve retornar200 com a página para funcionário/gestor autenticado (JWT_ACESSO é obtido no login); sem token, retorna401 (ajuste a porta, se necessário). Ctrl+C encerra somente a API. Não é necessário apagar banco/volume, alterar migrations ou usar ddl-auto=update/create. API continua somente local; sem push ou deploy.
+~~~
 
+O comando acima executa o arquivo no shell: use somente um .env que você controla. Não exiba seu conteúdo em prints. Alterar `POSTGRES_`* ou `DB_`* não reconfigura automaticamente um volume PostgreSQL já inicializado; nesse caso, reutilize as credenciais existentes e não apague o volume para “corrigir” acesso.
 
-## Segurança — J4
+### 3. Iniciar e conferir o PostgreSQL local
 
-### Arquitetura e persistência
+A porta local 5432 deve estar livre. Se usar um PostgreSQL existente, configure `DB_URL`/credenciais para ele e não inicie um segundo serviço na mesma porta.
 
-`AuthController → AutenticacaoService → UsuarioRepository` cadastra somente CIDADAO e autentica com BCrypt (custo12). `Usuario` contém UUID, nome, e-mail normalizado em minúsculas/único, hash, perfil, unidade opcional e ativo. FUNCIONARIO exige unidade; os demais perfis não têm vínculo. `V2__modela_usuarios.sql` cria tabela, FK, índice e checks; V0/V1 permanecem intactas. Não há CRUD público de usuários, perfis ou vínculos.
+~~~bash
+docker compose -f compose.dev.yml config --quiet
+docker compose -f compose.dev.yml up -d --wait
+docker compose -f compose.dev.yml ps
+docker compose -f compose.dev.yml exec postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+~~~
 
-Spring Security Resource Server valida assinatura RS256, emissor, expiração e claims obrigatórias; NimbusJwtEncoder oficial emite tokens. Claims: `sub` (UUID), `perfil`, `iss`, `iat`, `exp`. Validade padrão15 minutos, configurável entre um valor positivo e uma hora (`JWT_VALIDADE`, ISO-8601), sem tolerância adicional na expiração. Não há refresh token. API stateless, sem HTTP Basic, login por formulário ou sessão. CSRF desabilitado porque a credencial é Bearer explícita no cabeçalho, sem autenticação automática por cookie.
+O arquivo usa postgres:17.6, publicação somente em 127.0.0.1:5432, healthcheck e volume nomeado postgres_dev_data. Não use compose config sem --quiet em capturas, pois a saída resolvida contém credenciais. Não execute down -v nem prune.
 
-A cada requisição, o usuário ativo e o perfil são consultados no banco. Os serviços também consultam a identidade persistida e aplicam o escopo da unidade; `perfil` no token é informativo. Desativação, mudança de perfil ou troca de vínculo valem na próxima requisição, inclusive com token anterior. Não se promete interromper uma operação que já estava em execução. Chaves privadas e senhas nunca são respostas HTTP; DTOs de autenticação omitem dados em `toString`.
+### 4. Configurar as chaves JWT externas
 
-### Matriz de permissões do marco J4 (adendos J5-A/J5-B/J5-C/J5-D ao final)
+Use um par RSA dedicado, fora do repositório. Se já existe um par válido, informe seus caminhos e preserve-o. O exemplo abaixo gera arquivos apenas quando nenhum dos dois existe e usa um subshell para interromper a geração ao primeiro erro.
 
-| Operação | CIDADAO | FUNCIONARIO | GESTOR |
-|---|---|---|---|
-| POST /auth/cadastro e /auth/login | Públicas | Públicas | Públicas |
-| GET /auth/me | Própria conta | Própria conta | Própria conta |
-| GET /unidades e /unidades/{id} | Negado | Somente própria unidade | Todas |
-| POST, PUT, DELETE /unidades | Negado | Negado | Permitido conforme vínculos |
-| GET /vacinas e /vacinas/{id} | Negado | Permitido | Permitido |
-| POST, PUT, DELETE /vacinas | Negado | Negado | Permitido conforme regras |
-| GET, POST, PUT, DELETE /transportes e consulta por ID | Negado | Somente própria unidade | Todas conforme regras |
-| GET /lotes, /lotes/{id}; PUT /lotes/{id} | Negado | Somente própria unidade | Todas conforme regras |
-| POST /lotes | Negado | Negado | Permitido, como exige a especificação |
-| POST /transportes/{id}/monitoramento | Negado | Somente própria unidade | Todas conforme regras |
-| GET/POST /transportes/{id}/leituras, GET de leitura por ID | Negado | Somente própria unidade, simulação local | Todas, simulação local |
-| GET de ocorrências e históricos operacionais existentes | Negado | Somente própria unidade | Todas |
-| Alterar auditoria, liberar/descartar, recebimento e decisão técnica | Não implementado | Não implementado | Não implementado |
+~~~bash
+KEY_DIR="$HOME/.config/vacismart-java/jwt"
+install -d -m 700 "$KEY_DIR"
+(
+  set -eu
+  if [ -e "$KEY_DIR/privada.pem" ] || [ -e "$KEY_DIR/publica.pem" ]; then
+    test -f "$KEY_DIR/privada.pem" && test -f "$KEY_DIR/publica.pem"
+  else
+    umask 077
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$KEY_DIR/privada.pem"
+    openssl pkey -in "$KEY_DIR/privada.pem" -pubout -out "$KEY_DIR/publica.pem"
+  fi
+  chmod 600 "$KEY_DIR/privada.pem" "$KEY_DIR/publica.pem"
+)
+# Só continuar se a preparação terminou sem erro.
+export JWT_CHAVE_PUBLICA="file:$KEY_DIR/publica.pem"
+export JWT_CHAVE_PRIVADA="file:$KEY_DIR/privada.pem"
+~~~
 
-Todas as rotas usam `/api/v1`. Somente os dois POSTs exatos de cadastro/login são públicos; demais métodos e caminhos exigem autenticação. Rotas novas ficam protegidas por padrão. Cidadão não recebe catálogo operacional, transporte, lote, leitura, dispositivo, ocorrência ou auditoria. A consulta de disponibilidade e a caderneta não fazem parte desta etapa.
+O processo Java roda como seu usuário local e deve ler ambos os arquivos. São URIs file: absolutas; caminhos do container não servem para o Java no host. O startup valida o par. Nunca use a chave privada SSH como chave JWT, nem gere outro par a cada reinício se quiser preservar tokens até a expiração.
 
-Funcionário não pode transferir transporte para outra unidade. Cadastros/edições/exclusões respeitam estados, dependências e histórico da J3. O escopo das listagens de unidades, transportes e lotes é aplicado na consulta SQL antes da paginação, incluindo contagem e filtros. Históricos, ocorrências e leituras verificam o transporte/lote pai. Após obter o lock do transporte, a entidade é recarregada com EntityManager.refresh sob PESSIMISTIC_WRITE e a unidade é conferida novamente. Isso evita autorizar com a unidade antiga mantida no cache JPA antes de uma transferência concorrente. O gestor mantém as mesmas restrições térmicas; normalização nunca libera lote, não há descarte automático e auditoria continua imutável. Eventos automáticos de monitoramento preservam o autor SISTEMA da J2; os fluxos humanos de recebimento/decisão com autoria individual permanecem futuros.
+`JWT_EMISSOR` usa vacismart por padrão; `JWT_VALIDADE` usa PT15M. Se houver frontend de navegador, configure `CORS_ORIGENS` com a origem real permitida, sem curinga. Não ative perfis prod/production para tentar usar este guia de desenvolvimento.
 
-Erros: 401 para credenciais inválidas, usuário inativo/inexistente, ausência de Bearer ou JWT inválido/expirado; `WWW-Authenticate: Bearer`. 403 para perfil/escopo negado. Para funcionário, UUID de transporte/lote inexistente e UUID de outra unidade produzem a mesma resposta403, sem revelar existência. Gestor recebe404 para recurso inexistente; leitura inexistente sob transporte autorizado também404. Erros continuam em `application/problem+json` com campos `type`, `title`, `status`, `detail`; 400/404/405/409/500 da J3 são preservados. CORS rejeitado pelo filtro pode responder403 sem corpo ProblemDetail.
+### 5. Escolher os usuários demonstrativos
 
-### Chaves e ambiente local
+O cadastro público cria cidadão. Para demonstrar operações internas, use os usuários operacionais já provisionados ou prepare um conjunto fictício novo pelo bootstrap abaixo. Não há senha padrão nem promoção de perfil pelo corpo de uma requisição.
 
-Não há chave padrão, segredo embutido ou geração automática em dev. Sem os arquivos, a aplicação falha no startup. Use OpenSSL localmente para gerar um par **exclusivo da demonstração**, fora do Git:
+| Papel demonstrativo | Perfil persistido | Uso |
+|---|---|---|
+| Cidadão | `CIDADAO`, sem unidade | Consulta pública autenticada; negação nas rotas técnicas |
+| Funcionário A | `FUNCIONARIO`, unidade fictícia A | Fluxo operacional da própria unidade |
+| Funcionário B | `FUNCIONARIO`, unidade fictícia B | Conferir isolamento entre unidades |
+| Gestor | `GESTOR`, sem vínculo obrigatório | Cadastros restritos e decisão técnica global |
 
-```bash
-umask 077
-mkdir -p "$HOME/.config/vacismart-dev"
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$HOME/.config/vacismart-dev/privada.pem"
-openssl pkey -in "$HOME/.config/vacismart-dev/privada.pem" -pubout -out "$HOME/.config/vacismart-dev/publica.pem"
-export JWT_CHAVE_PRIVADA="file:$HOME/.config/vacismart-dev/privada.pem"
-export JWT_CHAVE_PUBLICA="file:$HOME/.config/vacismart-dev/publica.pem"
-export JWT_EMISSOR=vacismart
-export JWT_VALIDADE=PT15M
-export CORS_ORIGENS=http://localhost:5173
-```
+**Somente no primeiro provisionamento de um conjunto novo:** antes de iniciar a API, defina quatro e-mails fictícios distintos e senhas privadas de 12–72 caracteres ASCII imprimíveis. Estes e-mails são exemplos, não contas que o código cria por padrão.
 
-A chave privada usa PEM PKCS#8, pública X.509; o par deve corresponder e ter ao menos2048 bits. Não gerar novas chaves a cada reinício se quiser preservar tokens até a expiração. Rotação por substituição coordenada invalida tokens assinados pela chave anterior; múltiplas chaves/JWKS e revogação individual não estão implementados. Proteger arquivos, ambiente e transporte TLS na futura infraestrutura; não reutilizar as chaves de demonstração. O perfil test recebe par efêmero gerado exclusivamente em `src/test`, sem chaves fixas no repositório.
-
-CORS: `CORS_ORIGENS` aceita lista separada por vírgulas de origens exatas (`http(s)://host:porta`), sem caminho, wildcard ou credenciais. Vazio desabilita origens de navegador. Métodos GET/POST/PUT/DELETE/OPTIONS, cabeçalhos Authorization/Content-Type e resposta Location são autorizados para as origens configuradas. Não habilita cookies. Preflight permitido não fornece acesso aos dados; a requisição real exige JWT. Clientes Flutter nativos e Arduino não dependem de CORS para proteção: continuam precisando de autenticação.
-
-### Provisionamento fictício opcional
-
-O bootstrap é desabilitado por padrão. Exige **somente o perfil dev**, `VACISMART_DEMO_HABILITADO=true` e `VACISMART_DEMO_CONFIRMACAO=DADOS_FICTICIOS_LOCAIS`; não é ativado com prod/test e rejeita qualquer perfil adicional. Forneça os quatro pares de credenciais; não há senha padrão:
-
-```bash
+~~~bash
 export DEMO_CIDADAO_EMAIL=cidadao@demo.invalid
 export DEMO_FUNCIONARIO_A_EMAIL=funcionario.a@demo.invalid
 export DEMO_FUNCIONARIO_B_EMAIL=funcionario.b@demo.invalid
 export DEMO_GESTOR_EMAIL=gestor@demo.invalid
 for papel in CIDADAO FUNCIONARIO_A FUNCIONARIO_B GESTOR; do
   read -r -s -p "Senha fictícia para $papel: " "DEMO_${papel}_SENHA"
-  echo
+  printf '\n'
   export "DEMO_${papel}_SENHA"
 done
 export VACISMART_DEMO_HABILITADO=true
 export VACISMART_DEMO_CONFIRMACAO=DADOS_FICTICIOS_LOCAIS
+~~~
+
+`UsuariosDemoConfig` exige somente o perfil dev, a flag e a confirmação explícitas; cria duas unidades e quatro usuários em uma transação. Se uma conta já existe, falha sem sobrescrevê-la. O perfil test ou qualquer perfil adicional impede esse provisionamento.
+
+### 6. Iniciar a API e usar o Swagger
+
+Na mesma sessão com banco e chaves exportados:
+
+~~~bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
+~~~
 
-Configure também banco/JDK/chaves antes desse comando. O bootstrap cria duas unidades fictícias A/B e quatro usuários numa transação, codifica senhas e não registra credenciais. Exige e-mails novos e válidos; se alguma conta já existir, falha sem sobrescrevê-la. Depois da primeira execução, retire `VACISMART_DEMO_HABILITADO`, a confirmação e as variáveis de credenciais do ambiente (ou abra uma sessão limpa e reconfigure apenas banco/JWT). Não repetir o bootstrap para alterar usuários. Os testes automatizados comprovam as condições do runner. A execução real, pendente em 10/11, foi validada no PostgreSQL 17.6 em 12/11/2026: quatro usuários e duas unidades novos, com bootstrap desabilitado no reinício utilizado para os testes e dados preexistentes preservados.
+O startup deve validar/aplicar V0/V1/V2 pelo Flyway, conferir o mapeamento com Hibernate validate e iniciar a API em 127.0.0.1:8080. A raiz / não é um endpoint de negócio; uma rota protegida sem JWT retornar 401 não significa falha de inicialização.
 
-### Cadastro, login e uso do Bearer
+Se ativou o bootstrap no passo anterior, após sua primeira execução bem-sucedida encerre somente esse processo Java com Ctrl+C, desative as variáveis abaixo e inicie a API novamente com o mesmo comando:
 
-Cadastro público aceita exclusivamente `nome`, `email`, `senha`; `perfil`, `unidadeSaudeId`, `ativo` e outros campos desconhecidos retornam400. Nome até150 caracteres; e-mail válido até254, normalizado; senha de12 a72 caracteres ASCII imprimíveis (evita ultrapassar72 bytes do BCrypt). Senha não é normalizada nem removida de espaços. E-mail duplicado retorna409, inclusive com caixa diferente. As strings entre `<...>` abaixo são marcadores para dados fictícios escolhidos localmente, não credenciais prontas:
+~~~bash
+unset VACISMART_DEMO_HABILITADO VACISMART_DEMO_CONFIRMACAO
+for papel in CIDADAO FUNCIONARIO_A FUNCIONARIO_B GESTOR; do
+  unset "DEMO_${papel}_EMAIL" "DEMO_${papel}_SENHA"
+done
+~~~
 
-```http
-POST /api/v1/auth/cadastro
-Content-Type: application/json
+Acesse [Swagger local](http://127.0.0.1:8080/swagger-ui/index.html). Faça login com a conta fictícia preparada, use Authorize e siga os exemplos de CRUD/fluxo deste README. Para uma leitura, confira o horário atual e o início do monitoramento antes de preencher `medidaEm`.
 
-{"nome":"Cidadão fictício","email":"novo@demo.invalid","senha":"<senha-ficticia-local>"}
-```
+### 7. Executar os testes e encerrar o ambiente
 
-Resposta201: `{id,nome,email,perfil:"CIDADAO",unidadeSaudeId:null}`, com Location `/api/v1/auth/me` (consulta exige login). Login:
+A suíte usa perfil test/H2 e chaves efêmeras; o teste não depende de rodar o bootstrap ou a API de desenvolvimento.
 
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
+~~~bash
+./mvnw -B test
+~~~
 
-{"email":"novo@demo.invalid","senha":"<senha-ficticia-local>"}
-```
+Esse comando é uma instrução de uso, não uma execução feita nesta revisão. Para encerrar, use Ctrl+C no processo Java e, quando não precisar mais do banco local:
 
-Resposta200: `{token,tipo:"Bearer",expiraEm,usuario:{id,nome,email,perfil,unidadeSaudeId}}`. Guarde o token apenas no cliente local e envie em todas as operações autenticadas, incluindo os exemplos operacionais da J3 acima:
+~~~bash
+docker compose -f compose.dev.yml stop
+~~~
 
-```http
-GET /api/v1/auth/me
-Authorization: Bearer <token-retornado-no-login>
+A parada preserva o volume. Backups precisam de procedimento próprio; um volume não é backup. O guia de infraestrutura documenta as opções de retomada.
 
-GET /api/v1/transportes?page=0&size=20
-Authorization: Bearer <token-de-funcionario-ou-gestor>
-```
+## Testes e resultados
 
-O segundo exemplo é negado ao cidadão. Não incluir tokens reais em arquivos versionados, logs ou capturas de apresentação. As credenciais pessoais do funcionário não serão usadas pelo Arduino. A ingestão atual é exclusivamente a simulação autenticada: autenticação própria de dispositivos continua pendente e nenhuma rota pública de leitura foi criada.
+Os testes combinam casos unitários de regras e integrações `SpringBootTest`. Os testes HTTP iniciam servidor real em `RANDOM_PORT`, usam `HttpClient` do JDK e percorrem Controller → Service → Repository. O relógio `Clock` é controlado nos cenários que dependem de tempo.
 
-### Validação e limites atuais
-
-Execute com JDK21 completo: `./mvnw -B test`; para empacotar após as regressões: `./mvnw -B -DskipTests package`. Os testes existentes foram preservados: HTTP J3 agora autentica um gestor fictício; os testes de regras térmicas isolam somente a autorização com Mockito, mantendo regras, persistência, concorrência, locks, rollback e auditoria reais. Novos testes HTTP de segurança exercitam o Resource Server, login e serviços/repositories reais com cidadão, gestor e funcionários A/B; verificam revogação por estado/vínculo, JWTs inválidos, paginação/contagem, filtros, IDs e fluxo térmico autorizado. MapeamentoSchemaTest também compara a entidade Usuario com V2, sem substituir PostgreSQL real.
-
-Registro histórico de 10/11/2026: PostgreSQL não esteve acessível por ausência dos sockets default/desktop-linux; naquela execução não foram testados V2/startup dev, checks/FKs ou provisionamento real, e a evidência de 09/11 cobria apenas V0/V1. As pendências de acesso, validação de V0–V2 no esquema existente, startup, provisionamento e fluxo térmico do escopo J4 foram resolvidas na validação operacional de 12/11 descrita abaixo. Isso não comprova aplicação inédita de V2, todos os checks/FKs sob cenários adversos, carga/concorrência PostgreSQL, produção, hardware ou implantação.
-
-**No marco J4**, não foram adicionados Swagger/OpenAPI, integração Arduino/Flutter/Azure, recebimento, decisão técnica, disponibilidade ou doses; J5/J6/DevOps foram tratados nas etapas posteriores descritas neste documento. Os recursos excluídos definitivamente constam em Limitações e escopo. Proteção contra abuso de login/cadastro, recuperação de senha, revogação individual e rotação com múltiplas chaves são limitações futuras; não foram inventados fluxos adicionais nesta J4.
-
-
-### Regressões finais independentes da J4 — 10/11/2026
-
-Temurin21.0.13+9 (JDK temporário com SHA-256 oficial conferido), Maven Wrapper3.9.11, Boot4.1.2/Security7.1.2 e H2. Cada rodada executou um processo Maven/JVM independente com o código final, recompilando a partir de `clean`, com JAVA_HOME/PATH desse JDK selecionados para a execução:
-
-```bash
-./mvnw -B clean test
-```
-
-| Rodada | Testes | Falhas | Erros | Ignorados | Resultado | Duração Maven | Conclusão (America/Sao_Paulo) |
-|---|---|---|---|---|---|---|---|
-| 1 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 58.924 s | 2026-11-10T13:16:18.650746-03:00 |
-| 2 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 59.176 s | 2026-11-10T13:17:19.354027-03:00 |
-| 3 | 180 | 0 | 0 | 0 | BUILD SUCCESS | 59.327 s | 2026-11-10T13:18:20.170805-03:00 |
-
-Total180 =96 casos anteriores preservados +1 novo caso de mapeamento Usuario/V2 +74 casos de integração de segurança (HTTP e serviços) +9 casos de entidade/provisionamento. Empacotamento posterior com Java21: `./mvnw -B -DskipTests package`, BUILD SUCCESS, 2.549 s, concluído 2026-11-10T13:18:24-03:00. Artefato: `target/vacismart-java-api-0.0.1-SNAPSHOT.jar`. Nenhuma alteração de código entre as três regressões e o empacotamento.
-
-Relatórios Surefire em `target/surefire-reports/`, não versionados. Avisos não fatais de annotation processing e autoanexação Mockito/Byte Buddy permanecem. Desenvolvimento preliminar: compilação inicialmente corrigiu import ambíguo de RSAKey; primeira suíte163/0/1/0 corrigiu asserção que tentava converter o emissor textual em URL; suíte ajustada175/0/0/0. Antes da revisão final também passaram três rodadas com179 testes. O reforço com refresh sob lock e o teste de transferência concorrente foram adicionados depois; essas rodadas anteriores não validam essa última correção. Teste concorrente isolado:1/0/0/0, BUILD SUCCESS (15.526s). Somente as três rodadas com180 testes acima representam o código final.
-
-Em 10/11/2026, migration V2 no PostgreSQL, startup dev e bootstrap real permaneceram NÃO TESTADOS por indisponibilidade dos sockets Docker. Essa limitação histórica foi superada no escopo operacional registrado a seguir. O relatório A–L permanece exclusivamente local em `RELATORIO_REVISAO_CHATGPT.md`, ignorado e fora do Git. O aceite da J4 não autoriza publicação nem avanço automático de etapa.
-
-### Encerramento e validação operacional da J4 — 12/11/2026
-
-**J4 oficialmente concluída e aprovada pelo responsável.** Ambiente validado: Java 21, Spring Boot 4.1.2 e PostgreSQL 17.6, com Flyway V0/V1/V2 já aplicadas e bem-sucedidas. Os dois startups da validação final conferiram as três migrations, sem necessidade de nova aplicação, e o Hibernate validou o esquema com `ddl-auto=validate`.
-
-| Evidência anterior a esta edição documental | Resultado e limite |
+| Área | Classes de teste e verificação |
 |---|---|
-| Suíte automatizada em 12/11, às 00:03:56 | **180 testes aprovados, 0 falhas, 0 erros, 0 ignorados; BUILD SUCCESS**, 57.854 s; perfil test/H2. As três regressões de 10/11 permanecem registradas acima. |
-| Repetição na auditoria preventiva de 12/11 | **180/0/0/0; BUILD SUCCESS**, 56.235 s; execução isolada do mesmo código, JDK 21/Maven 3.9.11 offline e H2. |
-| Validação operacional final no PostgreSQL 17.6 | **109 verificações aprovadas, 0 falhas no escopo solicitado**; verificações HTTP, claims/assinatura, estado, persistência e integridade, não 109 testes JUnit. |
+| Classificação e precisão | ClassificadorTemperaturaTest, ClassificacaoTemperaturaTest |
+| Domínio, persistência, locks e rollback | MonitoramentoServiceIntegrationTest, MapeamentoSchemaTest |
+| Contratos HTTP e fluxos operacionais | ApiIntegrationTest |
+| JWT, papéis, conta ativa e isolamento de unidades | SegurancaIntegrationTest, UsuariosDemoConfigTest |
+| Aplicação simulada e auditoria após 409 | AplicacaoIntegrationTest |
+| OpenAPI, UI e perfis de documentação | OpenApiIntegrationTest, DocumentacaoDesabilitadaIntegrationTest, OpenApiPerfisTest |
 
-O cadastro público de cidadão já havia sido validado na etapa anterior de 12/11 e não foi repetido no bloco das 109 verificações. Na validação final, o provisionamento opt-in criou quatro contas demonstrativas — cidadão, funcionários A/B e gestor — representando os três perfis CIDADAO, FUNCIONARIO e GESTOR. Login, JWT RS256 e própria conta foram validados nas quatro contas; senhas com BCrypt, endpoints operacionais protegidos e isolamento entre unidades nos dois sentidos foram conferidos.
+As classes ficam em [src/test/java/br/com/fiap/vacismart](src/test/java/br/com/fiap/vacismart). O perfil test usa H2 em memória, modo PostgreSQL, create-drop e Flyway desabilitado. Ele verifica regras, transações e contratos, mas não comprova migrations, índice parcial, comportamento integral do PostgreSQL ou desempenho em carga.
 
-O fluxo térmico completo **do escopo J4** percorreu normal → atenção → fora da faixa → normal, com quatro leituras persistidas, ocorrência térmica aberta, bloqueio preventivo, auditoria/histórico e nenhuma liberação ou descarte automático. Consultas JPQL de ocorrências com estado ausente, ABERTA e ENCERRADA, contagem e paginação foram aprovadas para funcionário autorizado e gestor. Os três registros preexistentes (dois usuários e uma unidade) permaneceram integralmente preservados. O bootstrap foi desabilitado no reinício dos testes e as duas instâncias temporárias da API foram encerradas.
+### Evidências já registradas
 
-Esses resultados são registros das validações anteriores, não testes executados nesta atualização documental. H2 não comprova PostgreSQL; validação local não comprova produção, carga/concorrência PostgreSQL, hardware ou integração Mobile. Recebimento, decisão técnica, liberação, disponibilidade informativa e caderneta digital continuam sem implementação; OpenAPI/Swagger permanece previsto. O documento externo `VaciSmart_Integracao_Mobile_Gemini_J4_2026-11-10.md`, informado pelo responsável, não foi localizado no workspace. A versão [interna para Mobile/Gemini](docs/INTEGRACAO_MOBILE_GEMINI.md) foi reconstruída a partir do código atual; não comprova equivalência ao `02_MODELO_E_CONTRATOS.md` ausente nem encerra o alinhamento bilateral. Nenhum contrato HTTP foi modificado.
-
-
-## Recebimento operacional — J5-A — 13/11/2026
-
-`POST /api/v1/transportes/{id}/recebimento`, sem corpo JSON, exige Bearer JWT válido. FUNCIONARIO atua somente na unidade de destino; GESTOR tem o escopo global do MVP. CIDADAO e funcionário de outra unidade recebem 403. Sucesso: 204 sem corpo. Transporte inexistente segue J4: 403 para funcionário e 404 para gestor; estado diferente de EM_TRANSPORTE, inclusive repetição, retorna 409. Ausência de autenticação ou JWT inválido retorna 401.
-
-O transporte passa a RECEBIDO; somente lotes EM_MONITORAMENTO passam a AGUARDANDO_CONFERENCIA. BLOQUEADO_PREVENTIVAMENTE e demais estados são preservados. Não há liberação, descarte, confirmação de disponibilidade, encerramento automático de ocorrência ou finalização. Eventos imutáveis RECEBIDO (Transporte) e AGUARDANDO_CONFERENCIA (cada Lote efetivamente alterado) registram UUID do autor autenticado e o mesmo instante do Clock do backend. Não há campos de entrada para identidade, perfil, unidade ou horário.
-
-FluxoOperacionalService coordena uma transação única. Reutiliza o lock pessimista, refresh e revalidação da unidade de MonitoramentoService; a regra de telemetria foi compartilhada minimamente no mesmo pacote. Antes da transição, verifica silêncio maior que o limite configurado desde a última recepção/início. Se necessário, abre PERDA_DE_TELEMETRIA uma única vez com auditoria SISTEMA, sem bloquear ou liberar lotes. Ocorrências existentes permanecem abertas. Nenhuma tabela, coluna, migration, dependência ou configuração de segurança foi alterada.
-
-Testes novos reaproveitam fixtures HTTP/JWT e integração transacional existentes. Os resultados atuais estão no relatório privado A–L e são distintos das evidências históricas acima. H2 não comprova comportamento de locks/índices no PostgreSQL. No marco J5-A, J5-B/J5-C/J5-D, J6 e DevOps não foram executados. Codex foi usado na implementação, testes e documentação da J5-A; a revisão posterior aprovou essa entrega, com PostgreSQL reservado à J5-E.
-
-
-## Decisão técnica humana — J5-B — 13/11/2026
-
-`POST /api/v1/lotes/{id}/decisao-tecnica`, com JWT Bearer válido, é exclusivo de GESTOR ativo. Entrada: `{"decisao":"LIBERAR","justificativa":"Conferência humana realizada."}`; a outra decisão é `DESCARTAR`. O enum de comando DecisaoTecnica não é persistido. Justificativa obrigatória, não branca e até 1000 caracteres, validada também no domínio. Campos adicionais de autor/perfil/unidade/horário/estado/disponibilidade são rejeitados pela política JSON existente. Sucesso: 204 sem corpo; os GETs de lote/histórico existentes permitem consultar o resultado.
-
-| Estado inicial (transporte RECEBIDO) | LIBERAR | DESCARTAR |
+| Ambiente / data | Resultado histórico comprovado | Limite da evidência |
 |---|---|---|
-| AGUARDANDO_CONFERENCIA | LIBERADO | DESCARTADO |
-| BLOQUEADO_PREVENTIVAMENTE | LIBERADO | DESCARTADO |
+| Java 21 + test/H2, 16/11/2026 | Regressão final de 304 testes, zero falhas, erros ou ignorados; BUILD SUCCESS | Resultado registrado da entrega J6; não é uma execução nova nem prova de todos os cenários no PostgreSQL |
+| PostgreSQL 17.6, 12/11/2026 | 109 verificações operacionais aprovadas no recorte de segurança/fluxo térmico; provisionamento e login dos quatro usuários demonstrativos | Verificações operacionais, não 109 testes JUnit |
+| PostgreSQL 17.6, 14/11/2026 | 57 verificações HTTP aprovadas, incluindo recebimento, decisão, disponibilidade, paginação e privacidade | Não comprova carga nem concorrência integral PostgreSQL |
+| Azure, confirmação do responsável | Infraestrutura, CRUD (201/200/200/204/404), SELECTs e um JOIN confirmados; banco saudável, V0/V1/V2 e usuários provisionados | Não é nova execução nesta revisão nem prova de todos os fluxos Java na nuvem |
 
-LIBERADO e DESCARTADO são terminais nesta entrega. EM_MONITORAMENTO, transporte diferente de RECEBIDO e decisões repetidas retornam 409. Entrada inválida retorna 400; autenticação ausente/inválida/inativa, 401; funcionário/cidadão com comando válido, 403; lote inexistente para gestor, 404. AcessoService.gestor é chamado antes de consultar o lote; a proteção HTTP/JWT e o Advice da J4 permanecem. Nenhum dado operacional é exposto a perfis não autorizados.
+Os registros de resultados existentes foram conferidos no README anterior e em DUVIDAS.md; não houve build, teste ou comando de infraestrutura nesta reestruturação. A persistência após stop/start na Azure **não foi comprovada** e não será demonstrada nesta etapa. A configuração de volume, sozinha, não encerra essa limitação.
 
-FluxoOperacionalService reutiliza o lock pessimista do transporte, com refresh/revalidação existentes, e recarrega explicitamente o lote após o lock para evitar estado antigo no contexto JPA. Domínio e evento são persistidos na mesma transação. Cada decisão efetiva insere exatamente um EventoAuditoria de Lote, ação LIBERADO/DESCARTADO, UUID do gestor autenticado, instante do Clock e justificativa integral. Não altera outros lotes, transporte, leituras, recebimento ou ocorrências. Ocorrência térmica/perda de telemetria aberta não impede por si só essa conferência humana nem é encerrada automaticamente. Disponibilidade permanece NAO_DISPONIVEL.
+## Cobertura da rubrica Java Advanced
 
-A liberação é registro operacional acadêmico, sem declaração de segurança clínica. Nenhuma tabela, coluna, migration, dependência, autenticação ou infraestrutura foi alterada. Codex foi usado para implementar, testar e documentar a J5-B. Os resultados atuais e limitações estão no relatório privado A–L; as evidências J1–J5-A acima são históricas. PostgreSQL e três regressões independentes permanecem para J5-E. Não foram implementadas J5-C/J5-D/J5-E, J6 ou DevOps; sem confirmação de disponibilidade, consulta cidadã ou finalização. OpenAPI/Swagger segue pendente (distribuição de etapas registrada em DUVIDAS).
+Referência: seção **Java Advanced**, páginas 52–56 do material “2TDS Agosto — Global Solution 2026-2”, conferida na cópia oficial disponibilizada ao grupo. Os oito critérios e pesos abaixo descrevem a rubrica, não uma nota obtida. A entrega no Portal FIAP ainda não foi confirmada.
 
+| Critério oficial | Peso | Funcionalidade / classes relevantes | Evidência disponível | Situação real |
+|---|---|---|---|---|
+| API REST e modelagem | 20 | Oito controllers, DTOs, entidades e `CadastroService` | Mappings, migrations, testes HTTP e validações PostgreSQL históricas | IMPLEMENTADO no MVP, com restrições de estado/vínculo documentadas |
+| Consultas JPA | 15 | `LeituraTemperaturaRepository`, `OcorrenciaRepository`, Filtros, Paginacao | Query Method, JPQL, `Specification` e testes de consulta/paginação | IMPLEMENTADO |
+| Validação e erros | 10 | DTOs, `Validacoes`, `ErroApiAdvice`, `ErrosSeguranca` | Testes de entrada inválida e respostas HTTP padronizadas | IMPLEMENTADO; CORS possui tratamento próprio |
+| Cache | 10 | Sem `@Cacheable`/`@CacheEvict` ou configuração Spring Cache | Ausência do recurso no código e decisão D-046 | NÃO IMPLEMENTADO |
+| HATEOAS | 10 | DTOs sem RepresentationModel/links de ações | Ausência de Spring HATEOAS | NÃO IMPLEMENTADO; Location de 201 não substitui HATEOAS |
+| Actuator | 5 | Sem endpoints Actuator health/info/metrics | Ausência da dependência e dos endpoints | NÃO IMPLEMENTADO; OpenAPI e pg_isready não substituem Actuator |
+| Swagger e README | 10 | `OpenApiConfig`, anotações nos controllers/DTOs, este README | 34 mappings, teste de equivalência e validações históricas da UI | IMPLEMENTADO; documentação/execução sujeitas à avaliação do professor |
+| JWT, papéis e CORS | 20 | `SegurancaConfig`, `AutenticacaoService`, `AcessoService`, `ChavesJwtConfig` | Testes de segurança; validações históricas de login e isolamento | IMPLEMENTADO no backend; integração real do app não comprovada |
 
-## Disponibilidade informativa interna — J5-C — 13/11/2026
+Spring Cache, HATEOAS e Actuator foram excluídos por decisão expressa de escopo, registrada em [D-046](DUVIDAS.md#d-046--decisão-definitiva-de-escopo--12112026). Essa escolha não equivale a dispensa concedida pelo professor e não atende aos três critérios oficiais. Não há consultas cacheadas nem invalidação de cache de aplicação. As consultas JPA e o EntityGraph são escolhas de acesso ao banco, não substitutos de `@Cacheable`. O contexto de persistência do Hibernate também não deve ser apresentado como implementação de Spring Cache.
 
-`POST /api/v1/lotes/{id}/disponibilidade`, com JWT Bearer válido, aceita somente `{"disponibilidade":"CONFIRMADA"}` ou `{"disponibilidade":"NAO_DISPONIVEL"}`. FUNCIONARIO ativo só opera na unidade responsável pelo lote; GESTOR ativo mantém escopo global do MVP. Essa interpretação concilia RN07/RN11/RN22 com o endpoint da especificação e foi explicitamente aprovada para J5-C. CIDADAO não tem acesso. Não há nova consulta cidadã nesta entrega.
+## Roteiro para apresentação presencial
 
-Transporte deve estar RECEBIDO e lote LIBERADO, tanto para confirmar quanto retirar ou repetir uma solicitação. Essas pré-condições e a autorização são verificadas antes da idempotência: lote bloqueado/descartado/em conferência/em monitoramento não recebe sucesso apenas porque já está NAO_DISPONIVEL. A retirada muda só a disponibilidade; não descarta nem revoga a decisão LIBERADO. Outros lotes, leituras, recebimento e ocorrências são preservados; decisão técnica não confirma disponibilidade automaticamente.
+Prepare o ambiente local, os usuários fictícios e registros com códigos exclusivos antes da aula. As falas abaixo são sugestões para explicar o que estiver na tela; não representam resultados já obtidos na apresentação.
 
-Sucesso 204 sem corpo: NAO_DISPONIVEL → CONFIRMADA ou CONFIRMADA → NAO_DISPONIVEL. Repetição válida também retorna 204, sem novo evento ou horário. Erros seguem ProblemDetail/J4: 400 JSON/UUID/valor inválido, nulo/ausente ou campos extras; 401 autenticação ausente/inválida/inativa; 403 cidadão ou funcionário de outra unidade, incluindo UUID inexistente para funcionário; 404 lote inexistente para gestor; 409 transporte ou estado técnico incompatível. Autor/perfil/unidade/horário/estado técnico não integram o DTO.
+| Momento | Mostrar e fazer | Explicação sugerida / cuidado |
+|---|---|---|
+| 1. Problema e equipe | Objetivo CitizenTech, integrantes, turma e pitch | “Um desvio térmico precisa de rastreabilidade e conferência; usamos dados fictícios e não tomamos decisão clínica.” |
+| 2. Modelo de domínio | Mermaid e entidades `Lote`, `Transporte`, `Usuario` | Relacionar vacina, lote, transporte e unidade; explicar que cidadão não acessa a logística interna |
+| 3. Arquitetura | `VacinaController` → `CadastroService` → `VacinaRepository` | “O Controller recebe o contrato; o Service verifica as condições e coordena a transação.” |
+| 4. Consultas JPA | Query Method de leitura, `@Query` de ocorrência e Filtros | Mostrar por que cada forma atende uma necessidade; paginar e ordenar com `campos` permitidos |
+| 5. Erros e validação | Enviar nome vazio ou sort não permitido | Esperar 400 e ProblemDetail; não usar falhas artificiais de produção para mostrar 500 |
+| 6. Identidade e JWT | Login, Authorize e /auth/me | Não capturar senha/`token`; explicar assinatura, expiração e reconsulta do usuário |
+| 7. CRUD | Criar/consultar/atualizar/excluir vacina descartável | Conferir 201/200/200/204 e 404 posterior; não excluir a vacina ligada ao lote |
+| 8. Monitoramento térmico | Criar transporte/lote, iniciar e enviar 5.2, 7.5 e 9.3 em condições válidas | Explicar `NORMAL`, `ATENCAO` e bloqueio por faixa; data da leitura deve ser atual e válida |
+| 9. Conferência humana | Receber transporte e decidir com gestor | O bloqueio persiste no recebimento; a decisão exige `justificativa` e não publica disponibilidade |
+| 10. Cidadão e simulação | Confirmar/retirar disponibilidade, consultar com cidadão e verificar aplicação | Visão pública sem logística; tentativa não LIBERADA retorna 409 e mantém auditoria |
+| 11. Isolamento | Funcionário B tenta acessar recurso da unidade A | Esperar 403; não oferecer bypass ou promover conta por SQL |
+| 12. Integração e limites | Contrato Mobile, matriz da rubrica e limitações | “O contrato do backend está documentado; não temos comprovação de integração Mobile ponta a ponta. Cache, HATEOAS e Actuator não foram implementados.” |
 
-O serviço reutiliza AcessoService.lote, lock pessimista do transporte e revalidação de unidade sob lock, seguido de refresh explícito do lote. Somente alterações efetivas geram um evento de Lote DISPONIBILIDADE_CONFIRMADA ou DISPONIBILIDADE_RETIRADA, com UUID autenticado, Clock e descrição técnica fixa. Campo e evento são persistidos na mesma transação; sem justificativa humana adicional. Concorrências são serializadas: comandos iguais auditam uma vez; comandos opostos seguem uma ordem serial válida, sem prometer deduplicação de um reenvio após alteração oposta interveniente.
+Para mostrar aplicação rejeitada, use um lote não `LIBERADO` e consulte seu histórico com usuário autorizado. Para o caso permitido, use outro lote liberado após recebimento e decisão. Normalização e recebimento não são atalhos de liberação.
 
-Sem alterações de tabelas/colunas/migrations/dependências/segurança. Nenhuma coluna atualizadoEm foi criada; a futura J5-D poderá derivar horário dos eventos de disponibilidade e deverá definir o caso sem evento, sem inventar data. Testes atuais e resultados reais no relatório privado A–L; as evidências anteriores de 214 testes J5-B são históricas. Codex foi usado para implementar, testar e documentar a J5-C. PostgreSQL e três regressões independentes permanecem reservados à J5-E. Não há reserva, dose garantida, agendamento, consulta cidadã, finalização ou implementação J5-D/J5-E/J6/DevOps.
+A infraestrutura e o vídeo DevOps têm documentação própria. Não é necessário reprovisionar Azure, reconstruir containers ou reiniciar o banco para explicar a camada Java.
 
+## Estudo — perguntas e respostas técnicas
 
-## Consulta informativa ao cidadão — J5-D — 13/11/2026
-
-`GET /api/v1/disponibilidade` exige Bearer JWT válido e usuário ativo. CIDADAO, FUNCIONARIO e GESTOR recebem a mesma visão pública global; funcionário pode consultar qualquer unidade por esta rota. As permissões operacionais J4/J5-A/J5-B/J5-C permanecem preservadas. Somente o GET da rota exata recebe a nova autorização; não há acesso cidadão aos catálogos operacionais, lotes, transportes, leituras, ocorrências ou auditoria.
-
-Filtros UUID opcionais e cumulativos: `unidadeId` e `vacinaId`. Paginação `page=0`, `size=20`, máximo 100. Ordenação somente por `unidadeNome` e `vacinaNome`, asc/desc; padrão nessa ordem ascendente, sempre com desempate por unidadeId e vacinaId ascendentes. Exemplo: `/api/v1/disponibilidade?unidadeId=<UUID>&page=0&size=20&sort=vacinaNome,asc`. Sort inválido ou UUID malformado retorna 400/ProblemDetail. UUID válido inexistente ou página além do total retorna 200 com conteúdo vazio; autenticação ausente/inválida/inativa retorna 401.
-
-Envelope `PaginaDto`: conteudo, pagina, tamanho, totalElementos, totalPaginas. Cada item contém exclusivamente vacina e unidade (cada uma com id/nome públicos), situacao, atualizadoEm e mensagem. Os nomes/UUIDs de catálogo são identificações públicas do protótipo fictício, não dados pessoais ou códigos de remessa; os parâmetros térmicos de Vacina não integram essa projeção.
-
-O universo é o produto dos catálogos de unidades e vacinas, filtrado e paginado no banco. A presença de um par NÃO afirma oferta da vacina pela unidade, existência de estoque, transporte ou recebimento. Pares sem lotes e com logística ainda não publicada têm o mesmo resultado SEM_INFORMACAO. A existência de lote/transporte não define quais linhas aparecem.
-
-| situacao | Significado informativo |
+| Pergunta | Resposta ligada ao VaciSmart |
 |---|---|
-| CONFIRMADA | Há pelo menos um lote LIBERADO + CONFIRMADA em transporte RECEBIDO, sem divulgar quantidades |
-| CONFIRMACAO_RETIRADA | Nenhuma confirmação válida atual, há evento explícito de retirada e não há flag CONFIRMADA residual inconsistente; não significa falta real de estoque |
-| SEM_INFORMACAO | Sem evidência suficiente; inclui pares sem lotes/publicação e estados operacionais não publicados. NAO_DISPONIVEL não significa ausência de doses |
+| O que é Spring Boot? | Organiza a inicialização e a configuração da aplicação Spring. No projeto, os starters integram HTTP, JPA, validação e segurança, e os perfis escolhem banco e documentação. |
+| Por que usamos JPA? | Para mapear o domínio Java para tabelas e trabalhar com relações, transações e consultas. Isso não elimina SQL: FKs, constraints e a consulta agregada de disponibilidade continuam importantes. |
+| Qual é a diferença entre Entity e DTO? | `Lote` representa estado persistido e suas regras; `LoteEntradaDto` descreve só o que a API aceita no cadastro. Separar os dois impede que o cliente envie estado, autor ou relações internas livremente. |
+| O que fica no Controller e no Service? | O Controller traduz HTTP e DTOs. O Service coordena autorização, transação, consultas e regras de negócio; as entidades mantêm invariantes. Classificar leitura no Controller deixaria o fluxo preso ao HTTP. |
+| Query Method, JPQL ou `Specification`? | Query Method resolve a leitura por transporte com condição fixa. JPQL expressa a consulta de ocorrências com estado opcional. `Specification` combina filtros de lote/transporte sem criar um método para cada combinação. |
+| Por que usar `Page` e `Pageable`? | Para limitar e ordenar a consulta no banco, junto da contagem. `PaginaDto` dá ao cliente um contrato estável; não carregamos tudo para depois recortar uma página em memória. |
+| LAZY é sempre mais rápido? | Não automaticamente. Evita carregar relações desnecessárias, mas pode gerar consultas repetidas quando o fluxo precisa delas. O EntityGraph de lotes carrega vacina para a classificação; não há benchmark geral comprovado. |
+| Por que não usar cascade? | `Vacina`, transporte e lote têm ciclos próprios. Excluir ou salvar um filho não deve propagar operações aos pais nem apagar o histórico. Serviços e FKs controlam esses vínculos. |
+| Como funcionam transação e rollback? | Estado e auditoria do fluxo normalmente são gravados juntos. Se houver falha transacional, o rollback impede alterações parciais. Na aplicação rejeitada, o Service retorna antes de o Controller produzir o 409, preservando o evento. |
+| Por que usar lock pessimista e refresh? | Duas operações sobre o mesmo transporte não devem decidir com estados incompatíveis. O lock serializa o fluxo, e o refresh evita reutilizar uma entidade carregada antes de uma mudança concorrente; a unidade é revalidada. |
+| Bean Validation substitui regra de negócio? | Não. `@NotBlank` e `@NotNull` validam `campos`, mas só o domínio/Service sabe se o transporte foi recebido ou se a vacina já tem lotes. Essas condições podem exigir consulta ao banco. |
+| O que faz `@RestControllerAdvice`? | Centraliza a tradução de exceções em respostas. `ErroApiAdvice` retorna ProblemDetail, mas falhas no filtro de segurança também precisam de `ErrosSeguranca`, pois podem ocorrer antes do Controller. |
+| Qual é a diferença entre 401 e 403? | 401 indica autenticação ausente ou inválida; 403 indica acesso negado para perfil ou unidade. O funcionário também recebe 403 para lote/transporte inexistente, evitando revelar recursos de outra unidade. |
+| JWT é uma senha criptografada? | Não. É um conjunto de claims assinado. A chave pública verifica se o `token` foi assinado pela privada correta; assinatura não esconde o conteúdo. Por isso não colocamos senhas ou segredos nas claims. |
+| Por que consultar o banco se o JWT tem perfil? | O usuário pode ter sido desativado ou mudado de papel/unidade depois do login. `SegurancaConfig` e `AcessoService` usam os dados atuais; a claim de perfil não é a fonte final de privilégio. |
+| O que BCrypt protege? | A senha é armazenada como hash com salt, usando custo 12. No login, PasswordEncoder compara a senha informada ao hash; a aplicação não precisa recuperar a senha original. |
+| CORS substitui autenticação? | Não. Ele controla quais origens de navegador podem ler respostas. O JWT e o escopo de unidade continuam obrigatórios; uma chamada por Postman não demonstra o funcionamento do navegador Mobile. |
+| Qual é o papel do Swagger? | Apresenta o contrato, os DTOs, permissões e respostas e permite testar operações com Bearer. Abrir a UI não autentica o usuário nem libera as rotas técnicas. |
+| Como acontece o bloqueio preventivo? | `MonitoramentoService` compara a leitura com cada vacina e bloqueia os lotes afetados ainda em monitoramento. A pior classificação fica na leitura; normalização posterior não libera o lote. |
+| Por que a decisão depende do gestor? | O sistema registra um indício térmico e exige conferência humana. `AcessoService`.gestor restringe LIBERAR/DESCARTAR; o fluxo exige recebimento e `justificativa` e audita a autoria, sem conclusão clínica automática. |
+| O que significa `SEM_INFORMACAO`? | Não há confirmação pública válida nem retirada explícita que determine o outro estado. Não significa que a unidade está sem estoque, e não permite inferir se existe transporte ou lote interno. |
+| Por que o teste H2 não encerra a validação PostgreSQL? | O perfil test cria o schema pelo Hibernate e não executa Flyway. Migrations, índice parcial e comportamento específico do PostgreSQL precisam de conferência nesse banco. |
+| O que não foi implementado? | Spring Cache, HATEOAS e Actuator, além de credencial de dispositivo, finalização de transporte e recursos fora do MVP. Mobile ponta a ponta e persistência após reinício Azure não têm comprovação nesta entrega. |
 
-AtualizadoEm é o maior dataHora dos eventos de Lote DISPONIBILIDADE_CONFIRMADA/DISPONIBILIDADE_RETIRADA de todos os lotes da mesma unidade/vacina, inclusive os já retirados. Sem evento pertinente, null, inclusive para uma flag elegível legada sem auditoria. Não é o horário da consulta, de leitura, decisão técnica ou último evento genérico. Representa a última alteração efetiva de publicação no grupo, mesmo se a situação agregada continuar igual. Repetição idempotente não muda horário.
+## Declaração de uso de IA
 
-Exemplo: A e B confirmados; retirar B mantém CONFIRMADA pelo lote A, com horário da retirada de B. Retirar A muda para CONFIRMACAO_RETIRADA; reconfirmar A volta a CONFIRMADA. Estado agregado prevalece sobre a ação mais recente, inclusive com horários empatados. Flag CONFIRMADA inelegível não sustenta positividade e, sem outra confirmação válida, produz SEM_INFORMACAO em vez de inventar retirada.
-
-Mensagem fixa em todas as situações: "Disponibilidade informada pela unidade. Consulte as condições de atendimento; não há reserva ou garantia de dose." Sem identificadores de lotes, transportes, pessoas/dispositivos, parâmetros térmicos, ocorrências, justificativas, histórico ou quantidades no JSON.
-
-Repository específico usa projeção escalar, página de pares em CTE e agregações independentes de estado e eventos, evitando N+1 e multiplicação de pares por eventos. Conteúdo e contagem usam os mesmos filtros vinculados; ordenação passa por whitelist de fragmentos constantes. Serviço somente leitura valida identidade ativa, mapeia apenas a página e não executa mutações, auditoria ou locks operacionais. Sem novas entidades, dependências, migrations, índices ou alterações de configuração.
-
-Registro do marco J5-D de 13/11/2026 (planejamento posterior atualizado na seção J5-E acima): Testes e resultados reais estão no relatório privado A–L; 234 testes J5-C são evidência histórica. Codex foi usado para implementar, testar e documentar a J5-D. H2 não comprova PostgreSQL nem desempenho em carga; validação PostgreSQL e três regressões independentes permanecem reservadas à J5-E. D-002 de integração Mobile segue aberta. Sem commit/push, finalização de transporte ou avanço J5-E/J6/DevOps/J7; a J5 inteira permanece incompleta.
-
-Validação J5-D em 13/11/2026 com Java 21.0.13: testes direcionados finais, 22 aprovados (27.566 s, conclusão 14:25:44-03:00); regressão completa `./mvnw -B test`, 256 aprovados, 0 falhas/erros/ignorados (01:24 min, conclusão 14:29:02-03:00). Primeira rodada direcionada teve três falhas de status de sort inválido (500 em vez de 400), corrigidas com validação no serviço antes do proxy de persistência. A regressão final inclui a fixture reforçada de múltiplos transportes da mesma unidade. Nenhuma mudança de código após essa execução; alterações finais apenas documentais.
-
-
-## Swagger/OpenAPI — fechamento D-053 — 15/11/2026
-
-Implementado com `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0`, mantendo Java 21 e Spring Boot 4.1.2. O responsável confirmou a exigência de Swagger/OpenAPI e endpoints operáveis na UI nas páginas 52–56 do material da GS FIAP 2026/2. A D-053 foi atendida na J5, sem transferência para J6; Cache/HATEOAS/Actuator permanecem excluídos por decisão expressa D-046.
-
-Com a API dev iniciada conforme as instruções existentes, acesse [Swagger UI local](http://127.0.0.1:8080/swagger-ui.html). JSON em `/v3/api-docs`, YAML em `/v3/api-docs.yaml`; ajuste somente a porta se a API tiver sido iniciada em outra. Esses caminhos são da documentação, sem prefixo `/api/v1`.
-
-A documentação fica desligada por padrão. Somente a expressão de perfis `(dev | test) & !prod & !production` habilita geração/UI e libera GET dos caminhos documentais. `prod`/`production` prevalecem mesmo combinados com dev/test; perfis desconhecidos sozinhos e ausência de perfil de desenvolvimento não habilitam a documentação. Não ativar perfis dev/test em uma implantação de produção. Fora desses ambientes, os caminhos documentais são negados, inclusive a gestores autenticados. Não há mudança nos matchers ou na autorização dos endpoints de negócio.
-
-Para experimentar a API, expanda `POST /api/v1/auth/login`, clique em **Try it out**, preencha as credenciais fictícias locais e execute. Copie somente o valor de `token`, clique em **Authorize**, informe o token sem o prefixo Bearer e confirme. A UI acrescenta o cabeçalho Authorization. Cadastro/login são públicos; demais operações mantêm JWT, usuário ativo, perfis e isolamento por unidade. O Swagger não armazena autorização entre recargas. Não inclua credenciais/tokens/chaves reais em exemplos, capturas ou arquivos.
-
-As **33 combinações método/rota** dos sete controllers estão documentadas e comparadas automaticamente com os mappings reais. A descrição inclui DTOs e validações, IDs UUID, datas/offset/nulabilidade, filtros, campos de sort, paginação SQL (page base zero, size 20/máximo 100), permissões, regras dos comandos, 201/Location, 204 sem corpo e erros ProblemDetail. O schema `ProblemaApi` mantém `instance` e `campos` opcionais; filtros 401/403 e rejeições CORS têm seus limites descritos. Schemas públicos usam DTOs; nenhuma entidade JPA ou endpoint futuro foi exposto. A ingestão de leituras continua sendo simulação humana autenticada, sem credencial de dispositivo.
-
-Validação em 15/11/2026: **17 testes direcionados aprovados** e regressão final Java 21/test/H2 com **273 testes (256 anteriores + 17 novos), zero falhas/erros/ignorados, BUILD SUCCESS**. A revisão final completou a descrição de 404 para referências inexistentes no cadastro de transporte/lote e foi validada na regressão final. No Chrome headless, a UI exibiu 33 operações e executou cadastro 201, login 200, própria conta 200 e disponibilidade 200, enviando Bearer pela interface, com zero erros JavaScript. Essa demonstração usou API temporária em loopback, H2 exclusivo e chaves efêmeras; não acessou PostgreSQL nem executou migrations. Evidências e histórico das rodadas estão no relatório privado ignorado.
-
-Codex foi utilizado nesta etapa para implementar a documentação OpenAPI, os testes, conferir a UI no navegador e consolidar os resultados. A declaração acadêmica anterior de uso de IA foi preservada. D-053 encerrada tecnicamente para revisão no ChatGPT; nenhum commit/push ou início de J6/DevOps nesta atividade. D-002 e D-042 continuam nos seus escopos próprios.
-
-## Verificação simulada de aplicação — J6 — 16/11/2026
-
-`POST /api/v1/aplicacoes`, com Bearer JWT, aceita somente `{"loteId":"UUID_DO_LOTE"}`. FUNCIONARIO ativo verifica lotes da própria unidade; GESTOR ativo mantém escopo global. CIDADAO é negado. Autor, perfil e unidade vêm da identidade autenticada e dos vínculos persistidos, nunca do corpo.
-
-Lote LIBERADO retorna 200 com `{"resultado":"PERMITIDA","mensagem":"Verificação demonstrativa permitiu a aplicação. Não autoriza nem registra administração real de vacina."}`. Não exige disponibilidade CONFIRMADA, não altera a disponibilidade nem estoque e não cria paciente, dose ou registro clínico.
-
-Todo estado não LIBERADO retorna 409/ProblemDetail, com mensagem segura, preservando lote e histórico. Cada tentativa autorizada rejeitada gera um EventoAuditoria imutável: entidade Lote, referenciaId do lote, ação APLICACAO_REJEITADA, UUID autenticado do autor, instante do Clock e motivo incluindo o estado impeditivo. O serviço transacional retorna normalmente após inserir o evento; o controller gera o conflito somente depois do commit. Falha de persistência não é tratada como rejeição de negócio auditada. Repetições rejeitadas são novas tentativas e geram novos eventos.
-
-Reutilizados AcessoService, FluxoOperacionalService, repositories e lock pessimista do transporte, com revalidação da unidade e refresh explícito do lote. 400 para entrada inválida/campos extras; 401 para autenticação ausente/inválida/usuário inativo; 403 para cidadão ou funcionário com lote alheio/inexistente; 404 para lote inexistente ao gestor. Negações de acesso não geram auditoria de aplicação. Os 33 contratos anteriores permanecem preservados; Swagger/OpenAPI documenta agora 34 operações.
-
-Validações reais com JDK 21.0.13.0.3 e perfil test/H2: direcionados `./mvnw -B -Dtest=AplicacaoIntegrationTest,OpenApiIntegrationTest test`, **38 testes aprovados**, 24.022 s, concluídos às 00:04:33-03:00 de 16/11/2026. Após acrescentar cobertura de recarga de lote com decisão concorrente, uma regressão completa `./mvnw -B test`: **304 testes, 0 falhas, 0 erros, 0 ignorados, BUILD SUCCESS**, 01:33 min, concluída às 00:07:28-03:00. São 273 anteriores + 30 casos J6 + 1 caso OpenAPI. As consultas em outra transação após respostas HTTP 409 confirmaram a persistência da auditoria nos quatro estados impeditivos e a preservação de eventos anteriores; testes também cobrem repetição, perfis, isolamento, usuário inativo, UUID/corpo e disponibilidade nos sucessos.
-
-As evidências anteriores foram preservadas; não houve clean nem acesso/alteração ao PostgreSQL, migrations, dependências ou DevOps. H2 não comprova concorrência PostgreSQL, implantação ou integração Flutter. Codex foi utilizado para implementar, testar e documentar a J6; a declaração acadêmica anterior permanece preservada. **Registro histórico da J6: tecnicamente implementada e validada no recorte autorizado; revisão/staging ainda aguardados naquela execução de 16/11.** Esse texto não determina o estado Git atual. DevOps foi realizado posteriormente, com deploy/CRUD Azure confirmados em 18/11; esta tarefa atualiza apenas documentação e não autoriza commit/push.
-
-## Docker — D1 DevOps — 16/11/2026
-
-Infraestrutura local da API existente, com Java 21, build multi-stage via Maven
-Wrapper 3.3.4, Maven 3.9.11 e runtime JRE 21. O build executa `package` com
-`-Dmaven.test.skip=true`, sem clean nem repetição dos 304 testes históricos da J6.
-O perfil `dev` mantém PostgreSQL/Flyway e Hibernate `validate`, incluindo Swagger
-local. Esta configuração não representa uma implantação de produção.
-`compose.dev.yml` continua disponível para a execução anterior, com Java no host.
-
-### Ambiente e chaves externas
-
-Use Docker Engine ativo e Compose com suporte a `bind.create_host_path`.
-Prepare um arquivo local `.env.docker` a partir de `.env.example` **somente se
-ainda não existir**; preserve `.env` e quaisquer configurações privadas existentes.
-Preencha DB_NAME, DB_USER e DB_PASSWORD e acrescente os caminhos absolutos
-DOCKER_JWT_PUBLIC_KEY e DOCKER_JWT_PRIVATE_KEY (caminhos do host, sem `file:`).
-API_PORT controla somente a porta do host (8080 por padrão); escolha outra livre
-se houver API em execução. `.env.docker` já é ignorado pelo Git.
-O DB_URL do exemplo atende ao Java no host; no novo Compose ele é definido como
-`jdbc:postgresql://postgres:5432/${DB_NAME}` para usar o DNS da rede Docker.
-JWT_EMISSOR, JWT_VALIDADE e CORS_ORIGENS são opcionais, conforme a J4.
-O provisionamento de usuários demo permanece desabilitado.
-
-As chaves devem formar um par RSA de pelo menos 2048 bits: pública PEM/X.509 e
-privada PEM/PKCS#8. Use arquivos externos já provisionados ou gere um novo par
-exclusivo da demonstração em um diretório externo privado, sem sobrescrever chaves.
-Não copie as chaves para o projeto. No Docker Linux convencional, o processo da
-API usa UID/GID **10001:10001** e precisa conseguir ler os dois arquivos montados.
-Por exemplo, para cópias dedicadas da demonstração em diretório externo com modo
-0700, conceda leitura por ACL ao UID do container:
-
-```bash
-# Substitua os caminhos pelos arquivos externos dedicados já existentes.
-chmod 600 /caminho/externo/publica.pem /caminho/externo/privada.pem
-setfacl -m u:10001:r-- /caminho/externo/publica.pem /caminho/externo/privada.pem
-```
-
-Isso concede leitura ao UID 10001 sem tornar a chave privada legível para todos.
-Em Docker rootless ou com user namespace, ajuste para o UID mapeado no host.
-Os mounts são somente leitura; arquivos ausentes provocam erro, sem criação
-automática de diretórios. Os caminhos internos são `/run/keys/publica.pem` e
-`/run/keys/privada.pem`; a configuração Spring usa URIs `file:` correspondentes.
-
-### Build e inicialização isolada
-
-Execute na raiz, usando sempre o mesmo arquivo e nome de projeto. Para um ensaio
-separado, escolha outro nome exclusivo (por exemplo `vacismart-d1-ensaio`) e outra
-API_PORT em um arquivo de ambiente dedicado. Não reutilize o projeto de um banco
-existente. Rede e volume recebem automaticamente o prefixo do projeto; não há
-`container_name`, nome global de volume nem porta do PostgreSQL publicada no host.
-
-```bash
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml config --quiet
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml build api
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml up -d
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml ps
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml logs --tail=100 api postgres
-```
-
-Para construir somente a imagem: `docker build -t vacismart-java-api:d1 .`.
-O build precisa acessar o registry e Maven Central. O contexto permite apenas
-Wrapper, pom e `src/main`, com exclusões adicionais de material sensível.
-Nenhum arquivo de ambiente, chave externa, target, histórico Git ou relatório é
-incorporado. A imagem não inclui o banco nem os dados do volume.
-
-A API aguarda o healthcheck do PostgreSQL antes de iniciar. `up -d` retorna antes
-de comprovar o startup da API: confira nos logs o perfil dev, Flyway V0/V1/V2,
-Hibernate validate e `Started VaciSmartApplication`. Em volume novo as migrations
-são aplicadas; em volume existente são validadas. A porta interna é 8080 e o bind
-interno é 0.0.0.0; a publicação no host fica limitada a 127.0.0.1.
-Acesse `http://127.0.0.1:8080/swagger-ui.html`, ajustando API_PORT quando necessário.
-Sem token, uma rota protegida deve retornar 401; isso não constitui falha de startup.
-Não use `config` sem `--quiet` em evidências, pois a saída pode revelar senhas.
-
-### Inspeção dos containers e persistência
-
-```bash
-# Usuário efetivo e leitura das chaves, sem revelar conteúdo.
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api id
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api sh -c 'test -r /run/keys/publica.pem && test -r /run/keys/privada.pem'
-# Shell da API (usuário não-root).
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec api sh
-# Cliente PostgreSQL dentro da rede/serviço, sem publicar 5432.
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-```
-
-No psql, consulte `SELECT version();` e
-`SELECT installed_rank, version, description, success FROM flyway_schema_history ORDER BY installed_rank;`.
-Use `\q` para sair. Nunca exiba variáveis completas, tokens ou chaves em capturas.
-Para conferir a comunicação HTTP, startup e JWT, valide cadastro/login e uma rota
-autenticada com dados fictícios, sem publicar o token nos logs ou evidências.
-
-```bash
-# Encerra e remove containers/rede, preservando o volume nomeado.
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml down
-# Retoma os mesmos dados usando o mesmo projeto e ambiente.
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml up -d
-```
-
-Para parar e iniciar os mesmos containers, preservando seus IDs e o volume:
-```bash
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml stop
-docker compose --env-file .env.docker -p vacismart-d1 -f docker-compose.yml start
-```
-Após `start`, aguarde PostgreSQL healthy e a API responder antes de repetir o SELECT
-dos registros usados como referência. Reutilize sempre o projeto e os arquivos de
-ambiente/Compose originais da execução; os exemplos acima usam `vacismart-d1`.
-
-Não use `down -v`, remoção de volumes ou prune. O nome do projeto identifica o
-volume persistente; mudar o nome cria outro banco. Alterar DB_USER/DB_PASSWORD/
-DB_NAME não reconfigura automaticamente um volume PostgreSQL já inicializado.
-Preserve o ambiente e as chaves junto da identificação do volume; volume não
-substitui backup. Backups e evidências devem ficar fora do contexto de build.
-
-Validação local D1/D2 concluída e aprovada pelo responsável após revisão no
-ChatGPT, conforme encerramento de 17/11/2026: build Java 21 com Maven Wrapper 3.3.4
-e Maven 3.9.11, PostgreSQL 17.6 healthy, JDBC, Flyway V0/V1/V2, UID/GID 10001:10001,
-JWT RS256, CRUD completo, SELECT e relacionamentos. A persistência foi comprovada
-após `stop`/`start` dos mesmos containers, com os mesmos registros, UUIDs e volume.
-O DELETE foi validado somente em uma vacina descartável criada para o teste, sem
-dependências; os registros anteriores permaneceram intactos. A correção de `unzip`
-fica restrita ao estágio de build e preserva a verificação SHA-256 do Wrapper.
-Essas evidências são das validações D1/D2 aprovadas; não representam novas
-execuções na revisão documental. Relatórios, credenciais e auxiliares permanecem
-externos ao Git. Codex foi utilizado na D1/D2 para infraestrutura, documentação e
-verificações relatadas, preservando a declaração acadêmica de uso de IA e a API J1–J6.
-
-
-## Consolidação documental DevOps — 18/11/2026
-
-O [How To DevOps](README_DEVOPS.md) reúne acesso rápido ao deploy existente, instalação nova em seção própria, SSH, configuração privada de RSA e banco, Compose, inspeções, demonstração, SELECT/JOIN/persistência e perguntas técnicas. O roteiro resumido tem dez momentos e mantém as 24 etapas detalhadas. A divergência do script atual (NSG na NIC) em relação ao deploy real (NSG na subnet) continua registrada, sem alteração do script. O estado corrente no início deste README prevalece sobre pendências históricas de deploy. Preservados os cinco integrantes e as declarações acadêmicas de IA; Codex foi utilizado nesta revisão para conferir e atualizar documentação, sem executar Azure/SSH/Docker, testes Java, commits ou push. Nome da equipe permanece pendente de confirmação. O vídeo de demonstração DevOps foi publicado e o PDF final foi preparado pelo responsável; a submissão no Portal FIAP não está confirmada. O Draw.io final está disponível na seção [Arquitetura DevOps](#arquitetura-devops).
+Codex e ChatGPT foram utilizados como apoio ao desenvolvimento, à revisão técnica e à documentação. Codex auxiliou na estrutura do projeto, implementação de domínio/API/segurança/OpenAPI, testes, infraestrutura e validações registradas; ChatGPT apoiou a revisão do material e a organização das entregas. Os resultados de testes citados são os efetivamente registrados e não foram repetidos nesta reestruturação documental.
