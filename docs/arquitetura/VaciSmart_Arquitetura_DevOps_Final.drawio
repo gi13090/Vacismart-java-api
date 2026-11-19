@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mxfile host="app.diagrams.net" modified="2026-11-19T01:50:22Z" agent="diagrams.net" version="24.7.17" type="device">
+  <diagram id="vacismart-simple" name="VaciSmart - Arquitetura DevOps">
+    <mxGraphModel dx="1400" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="1710" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="external" value="NOTEBOOK DO OPERADOR&lt;br&gt;Postman / navegador · acesso por SSH" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=19;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="455" y="25" width="410" height="76" as="geometry"/>
+        </mxCell>
+        <mxCell id="internet" value="INTERNET" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=20;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="520" y="143" width="280" height="59" as="geometry"/>
+        </mxCell>
+        <mxCell id="azure" value="MICROSOFT AZURE   |   Spain Central" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#566575;strokeWidth=1.7;fillColor=#F8F9FB;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=24;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="95" y="254" width="1130" height="1400" as="geometry"/>
+        </mxCell>
+        <mxCell id="rg" value="Resource Group: rg-vacismart" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#7C8A96;strokeWidth=1.7;fillColor=#FFFFFF;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=21;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="154" y="336" width="1012" height="1265" as="geometry"/>
+        </mxCell>
+        <mxCell id="publicip" value="IP público&lt;br&gt;pip-vacismart" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=18;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="543" y="406" width="300" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="vnet" value="Virtual Network (VNet): vnet-vacismart" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#97A4AF;strokeWidth=1.7;fillColor=#FAFBFC;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=19;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="218" y="520" width="894" height="1035" as="geometry"/>
+        </mxCell>
+        <mxCell id="subnet" value="Subnet: subnet-vacismart" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#9AA6B0;strokeWidth=1.7;fillColor=#FFFFFF;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=19;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="265" y="600" width="796" height="911" as="geometry"/>
+        </mxCell>
+        <mxCell id="nsg" value="NSG: nsg-vacismart&lt;br&gt;Associado à subnet · SSH restrito" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#657586;strokeWidth=1.8;fillColor=#F7F9FB;align=center;verticalAlign=middle;fontSize=16;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="299" y="677" width="340" height="73" as="geometry"/>
+        </mxCell>
+        <mxCell id="vm_boundary" value="VM: vm-vacismart" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#52616F;strokeWidth=1.7;fillColor=#FAFBFC;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=20;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="314" y="810" width="708" height="671" as="geometry"/>
+        </mxCell>
+        <mxCell id="ubuntu" value="Ubuntu Server 22.04" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=19;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="463" y="879" width="410" height="61" as="geometry"/>
+        </mxCell>
+        <mxCell id="docker_engine" value="Docker Engine" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=19;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="466" y="980" width="403" height="59" as="geometry"/>
+        </mxCell>
+        <mxCell id="compose" value="Docker Compose&lt;br&gt;Projeto vacismart-azure" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=18;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="466" y="1076" width="403" height="78" as="geometry"/>
+        </mxCell>
+        <mxCell id="network" value="Rede Docker: vacismart (bridge)" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;container=0;strokeColor=#66798A;strokeWidth=1.7;fillColor=#F5F8FA;align=left;verticalAlign=top;spacingLeft=20;spacingTop=15;fontSize=18;fontFamily=Arial;fontColor=#263442;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="349" y="1200" width="638" height="181" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="api · Java 21 / Spring Boot&lt;br&gt;HTTP no host: 127.0.0.1:8080&lt;br&gt;UID 10001" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#42636E;strokeWidth=1.8;fillColor=#EFF5F5;align=center;verticalAlign=middle;fontSize=16;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="373" y="1252" width="275" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="db" value="postgres · PostgreSQL 17.6&lt;br&gt;porta interna 5432" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#5A6A77;strokeWidth=1.8;fillColor=#F1F4F7;align=center;verticalAlign=middle;fontSize=17;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="715" y="1252" width="245" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="volume" value="Volume: postgres_data&lt;br&gt;Persistência no disco da VM" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#65717B;strokeWidth=1.8;fillColor=#F6F7F9;align=center;verticalAlign=middle;fontSize=16;fontFamily=Arial;fontColor=#263442;spacing=9;" vertex="1" parent="1">
+          <mxGeometry x="696" y="1407" width="272" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="nic" value="NIC: nic-vacismart&lt;br&gt;IP público associado" vertex="1" parent="1" style="rounded=1;arcSize=13;whiteSpace=wrap;html=1;strokeColor=#455461;strokeWidth=1.8;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=17;fontFamily=Arial;fontColor=#263442;spacing=9;">
+          <mxGeometry x="688" y="677" width="333" height="73" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="external" target="internet">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="SSH · TCP/22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="internet" target="publicip">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="publicip" target="nic">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nic" target="ubuntu">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="854" y="860"/>
+              <mxPoint x="668" y="860"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ubuntu" target="docker_engine">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="docker_engine" target="compose">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.35;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="compose" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="compose" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="JDBC" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="api" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4A5965;strokeWidth=2;endArrow=block;endFill=1;fontSize=15;fontFamily=Arial;fontColor=#263442;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="db" target="volume">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="nota_tunel" value="A API não tem acesso HTTP público. O Postman usa um túnel SSH até a porta 8080 no loopback da VM." vertex="1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=15;fontFamily=Arial;fontColor=#52606D;spacing=4;">
+          <mxGeometry x="255" y="1620" width="810" height="32" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

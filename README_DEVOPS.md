@@ -45,12 +45,13 @@ Repositório identificado no Git local: [Vacismart-java-api](https://github.com/
 | Banco e integração | PostgreSQL saudável pela rede Docker; Flyway V0/V1/V2 aplicadas; nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados |
 | Acesso | API publicada em `127.0.0.1:8080` da VM; notebook acessa por túnel SSH; chaves JWT RSA externas ao repositório |
 | CRUD na Azure | POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404 |
-| Demonstrações pendentes | JOIN e persistência após reinício ainda não comprovados na Azure; organizar capturas das verificações já confirmadas |
-| Entrega acadêmica | Draw.io a fornecer separadamente; prints, vídeo, PDF, turma e links finais ainda precisam ser concluídos ou confirmados |
+| SQL na Azure | SELECTs e um JOIN confirmados pelo responsável; organizar as evidências sanitizadas correspondentes |
+| Persistência após reinício | Não comprovada na Azure; não será demonstrada nesta etapa. Volume configurado não substitui esse teste |
+| Entrega acadêmica | Draw.io final e imagem PNG incluídos; prints, vídeo, PDF, turma e links finais ainda precisam ser concluídos ou confirmados |
 
 ### Como interpretar os resultados e os comandos
 
-- **Confirmado pelo responsável:** o estado Azure da consulta rápida e a associação do NSG à subnet foram informados pelo responsável. Esta revisão não fez uma nova inspeção do ambiente.
+- **Confirmado pelo responsável:** o estado Azure da consulta rápida, os SELECTs, um JOIN e a associação do NSG à subnet foram informados pelo responsável. Esta revisão não fez uma nova inspeção do ambiente.
 - **Verificado na revisão documental:** leitura dos arquivos, coerência dos exemplos, links, sintaxe e diff. Não foram executados Azure CLI, SSH, Docker, SQL ou testes Java.
 - **Histórico local:** D1 validou Dockerfile multi-stage, build, JDBC/Flyway, RSA externo e usuário não-root; D2 validou JWT RS256, CRUD, SELECT, JOIN e persistência após stop/start, com dados anteriores preservados. D1/D2 foram aprovadas no recorte local e não comprovam execução na nuvem. D3/D4 registram o provisionamento Azure e a preparação do host informados pelo responsável.
 - **Procedimento a executar:** os comandos são instruções, e os campos “Resultado esperado” descrevem o que conferir. Eles não registram novos testes aprovados. Repetir operações de escrita ou interromper serviços exige preparar os dados e a janela de demonstração indicados no roteiro.
@@ -86,7 +87,12 @@ A arquitetura separa hospedagem, execução da aplicação e persistência. Regr
 
 ### Arquitetura implantada e diagrama de entrega
 
-O esquema abaixo mostra os componentes do deploy descrito na consulta rápida. **Não foi encontrado arquivo Draw.io (`.drawio` ou `.drawio.*`) no repositório; o diagrama Draw.io será fornecido separadamente.** O Mermaid auxilia a leitura técnica e não é apresentado como esse arquivo de entrega. O NSG está associado à subnet, a NIC está vinculada à subnet e o Public IP está associado à NIC. Os demais detalhes de rede/disco foram mantidos do registro anterior.
+O esquema abaixo mostra os componentes do deploy descrito na consulta rápida. O diagrama final fornecido pelo responsável foi incluído em `docs/arquitetura/`, preservando o conteúdo e a editabilidade. O Mermaid abaixo permanece como apoio à leitura técnica.
+
+- [Diagrama editável Draw.io](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Final.drawio).
+- [Imagem PNG da arquitetura](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Preview.png): prévia fornecida pelo responsável, preservada sem alterações.
+
+ O NSG está associado à subnet, a NIC está vinculada à subnet e o Public IP está associado à NIC. Os demais detalhes de rede/disco foram mantidos do registro anterior.
 
 ```mermaid
 flowchart LR
@@ -601,7 +607,7 @@ dc start --wait --wait-timeout 120
 dc ps
 ```
 
-Repetir readiness HTTP e SELECT. Não remover o volume. `stop/start` mantém os containers; é diferente de remover/recriar serviços. O roteiro usa esse procedimento para provar persistência.
+Repetir readiness HTTP e SELECT. Não remover o volume. `stop/start` mantém os containers; é diferente de remover/recriar serviços. Esse procedimento fica como referência para uma validação futura de persistência; não será executado na D5-B.
 
 **[AZURE CLI, após encerrar a sessão SSH quando for apropriado]:**
 
@@ -631,10 +637,10 @@ Antes da aula, abra o [guia rápido](#acessar-e-verificar-o-vacismart-já-implan
 | 6. Acessar com segurança | Swagger pelo túnel e autenticação sem capturar token | “O notebook acessa o loopback da VM pelo SSH. O JWT controla as operações da API.” | 14–15 |
 | 7. Demonstrar o CRUD | Criar, consultar, atualizar e excluir o descartável | “Vou usar uma vacina criada para a apresentação. Os registros ligados ao lote ficam preservados.” | 16–19 |
 | 8. Conferir o banco | SELECT, migrations, tabelas, FKs e JOIN | “Vamos comparar os UUIDs da API com os registros e os relacionamentos no PostgreSQL.” | 20–21 |
-| 9. Demonstrar persistência | Baseline e comparação após stop/start | “Com a referência salva, vamos parar e iniciar os mesmos containers e conferir se os dados permanecem.” | 22 |
+| 9. Explicar a persistência | Volume e limites da comprovação, sem reiniciar serviços | “O banco usa um volume no disco da VM. Nesta etapa não demonstraremos stop/start; a persistência após reinício continua sem comprovação.” | 22, somente explicação |
 | 10. Fechar a explicação | Diagrama, decisões e limites | “O desenho reúne os componentes que mostramos. Vou retomar as escolhas e o que ainda depende de comprovação.” | 23–24 e estudo |
 
-A repetição do CRUD altera dados; use o descartável indicado no roteiro. Combine a interrupção do momento 9 antes de executar `stop/start`. JOIN e persistência Azure permanecem pendentes até que as respectivas verificações tenham sucesso; a fala sugerida não substitui a evidência.
+A repetição do CRUD altera dados; use o descartável indicado no roteiro. SELECTs e um JOIN Azure já foram confirmados pelo responsável. No momento 9, explique o volume e a limitação do teste: não haverá stop/start nesta etapa. O procedimento detalhado de reinício permanece apenas como referência futura; nenhuma fala sugerida substitui a evidência.
 
 ### 1. Introduzir o VaciSmart
 
@@ -643,7 +649,7 @@ A repetição do CRUD altera dados; use o descartável indicado no roteiro. Comb
 - **Procedimento:** apresentar problema, bloqueio preventivo, decisão humana e disponibilidade informativa; mostrar a tabela de estado real.
 - **Resultado esperado:** relação clara entre aplicação Java e infraestrutura entregue.
 - **Fala:** “Nosso projeto registra a temperatura durante um transporte simulado e informa a disponibilidade ao cidadão. Usamos dados fictícios, e a decisão clínica não é feita pelo sistema.”
-- **Precaução:** não afirmar integração clínica, funcionalidades não implementadas ou JOIN/persistência Azure ainda não comprovados.
+- **Precaução:** não afirmar integração clínica, funcionalidades não implementadas ou persistência após reinício Azure ainda não comprovada.
 
 ### 2. Mostrar a VM e seu estado no Azure CLI
 
@@ -946,7 +952,7 @@ FROM lote WHERE id = :'lote_id'::uuid;
 
 ### 21. Demonstrar relacionamentos por JOIN
 
-- **Situação Azure:** ainda não comprovado; o comando é roteiro, não resultado.
+- **Situação Azure:** um JOIN foi confirmado pelo responsável. O comando abaixo permanece como referência de demonstração; não foi executado novamente nesta revisão documental.
 - **Objetivo:** comprovar pelo menos duas tabelas relacionadas; aqui são quatro.
 - **Terminal:** [PSQL], mesma sessão com `lote_id` definido; se necessário, repetir `\prompt`.
 
@@ -975,7 +981,7 @@ ORDER BY conrelid::regclass::text;
 
 ### 22. Demonstrar persistência após stop/start
 
-- **Situação Azure:** ainda não comprovada; volume configurado não comprova este teste.
+- **Situação Azure:** ainda não comprovada; volume configurado não comprova este teste. **Na D5-B não haverá demonstração de stop/start.** O bloco abaixo fica preservado para uma validação futura, fora desta etapa.
 - **Objetivo:** comparar os mesmos dados antes e depois de interromper os serviços. O teste cobre stop/start de containers, não reboot, desalocação da VM ou restauração de backup.
 - **Terminal:** [VM], após sair do psql; avisar o professor e registrar evidência anterior **antes da parada**.
 - **Procedimento:** usar o lote persistente real; salvar baseline privado sem sobrescrever evidências anteriores.
@@ -1051,11 +1057,11 @@ dc ps
 ### 23. Explicar o diagrama de arquitetura real
 
 - **Objetivo:** ligar evidências aos componentes efetivamente usados na VM.
-- **Ferramenta:** Mermaid deste guia como apoio; arquivo Draw.io ausente e a ser fornecido separadamente, compatível com o deploy confirmado.
+- **Ferramenta:** [Diagrama editável Draw.io](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Final.drawio), fornecido pelo responsável e incluído sem alterações; Mermaid deste guia como apoio. Prévia disponível em [Imagem PNG da arquitetura](docs/arquitetura/VaciSmart_Arquitetura_DevOps_Preview.png).
 - **Procedimento:** apontar computador/túnel SSH, IP/NSG/NIC, VNet/sub-rede, VM, Engine, API, PostgreSQL, rede bridge, volume no disco e RSA somente leitura. Conferir nomes com as inspeções da apresentação.
 - **Resultado esperado:** diagrama correspondente ao ambiente demonstrado, sem serviços fictícios ou fluxo genérico.
 - **Fala:** “Este desenho mostra onde cada componente executa e como os dados e acessos passam entre eles.”
-- **Precaução:** não declarar o Draw.io entregue antes de recebê-lo e conferir seus componentes; não incluir IPs, contas ou segredos no desenho.
+- **Precaução:** distinguir a conferência documental do desenho da validação operacional da Azure; não incluir IPs públicos reais, contas ou segredos no material de entrega.
 
 ### 24. Responder às perguntas técnicas
 
@@ -1071,7 +1077,7 @@ dc ps
 
 | Pergunta provável | Resposta técnica |
 |---|---|
-| O que já funciona e o que ainda precisa ser demonstrado? | API e PostgreSQL na Azure, CRUD completo, migrations e usuários estão confirmados pelo responsável. JOIN e persistência após reinício Azure continuam sem comprovação; o roteiro fornece os comandos. |
+| O que já funciona e o que ainda precisa ser demonstrado? | Infraestrutura Azure, CRUD, SELECTs, um JOIN, migrations e usuários estão confirmados pelo responsável. A persistência após stop/start continua sem comprovação e não será demonstrada nesta etapa; o roteiro mantém o procedimento para consulta futura. |
 | VM e container são a mesma coisa? | A VM tem seu próprio sistema operacional. Os containers são processos isolados que compartilham o kernel Linux dessa VM. Neste projeto, Azure CLI cuida dos recursos de nuvem e Compose cuida dos serviços dentro da VM. |
 | Por que usar multi-stage e Java 21? | Java 21 é a versão definida no pom e usada para compilar e executar a API. No build, precisamos do JDK e do Maven; para rodar o JAR, usamos o JRE. O multi-stage deixa as ferramentas de compilação fora da imagem final. As tags Java podem receber atualizações de patch; sem fixar digest, um build futuro pode baixar uma imagem diferente. |
 | Qual é a função do WORKDIR? | É o diretório de trabalho padrão da imagem. Usamos `/build` para compilar e `/app` para executar a API; por isso `dc exec api pwd` deve mostrar `/app`. O volume do PostgreSQL tem seu próprio caminho e não depende desse WORKDIR. |
@@ -1089,7 +1095,7 @@ dc ps
 | Como provar persistência sem recriar serviços? | Primeiro salvamos uma consulta com dados reais e os UUIDs, IDs dos containers, StartedAt e nome do volume. Depois fazemos stop/start, aguardamos banco e HTTP e comparamos tudo. Os dados devem permanecer, e os horários de início devem mudar. Esse teste não comprova reboot da VM nem recuperação de desastre. |
 | Há restart automático e alta disponibilidade? | O Compose atual não define restart automático. Ao retomar a VM, precisamos conferir o Docker e iniciar os containers existentes com `dc start`. Como há uma única VM e um volume local, uma falha no host pode afetar toda a solução; não implementamos alta disponibilidade. |
 | Por que não demonstrar Cache, HATEOAS ou Actuator? | Esses recursos foram excluídos do escopo pela decisão D-046. OpenAPI está implementado. Na apresentação, mostramos o que existe e conferimos a rubrica com o professor, sem atribuir cobertura a recursos ausentes. |
-| Todos os fluxos Java foram testados na Azure? | A confirmação atual cobre CRUD, banco/rede, migrations e usuários. Os testes Java/H2 e verificações PostgreSQL locais anteriores são históricos e não comprovam todos os fluxos J5/J6 na nuvem nem integração Mobile/Arduino. |
+| Todos os fluxos Java foram testados na Azure? | A confirmação atual cobre infraestrutura, CRUD, SELECTs, um JOIN, banco/rede, migrations e usuários. Os testes Java/H2 e verificações PostgreSQL locais anteriores são históricos e não comprovam todos os fluxos J5/J6 na nuvem nem integração Mobile/Arduino. |
 | Por que hospedar na Azure em uma VM? | A VM coloca API e banco em um host de nuvem acessível pela equipe por SSH e permite demonstrar Linux, rede e containers. Ela também deixa conosco a administração do sistema e dos dados. Os dois serviços deste protótipo não usam AKS nem banco gerenciado. |
 | Por que Docker e Compose? | O Dockerfile descreve como montar a imagem da API. O Compose reúne serviços, variáveis externas, rede, volume e dependência do banco em um arquivo, reduzindo a quantidade de comandos manuais. A reprodução também depende dos arquivos privados corretos; uma imagem não inclui o volume do banco. |
 | Por que PostgreSQL? | O modelo tem relações entre unidades, transportes, vacinas e lotes. O PostgreSQL permite persistir esses vínculos, usar transações e reforçar a integridade com FKs e constraints. Os testes H2 continuam úteis, mas não substituem a conferência no PostgreSQL real. |
@@ -1099,7 +1105,7 @@ dc ps
 
 ### Capturas e comprovações a organizar
 
-Organizar capturas do deploy já confirmado e obter separadamente as comprovações faltantes de JOIN/persistência. Revisar antes de publicar evidências de Azure CLI/VM, Docker Engine/Compose, dois containers em background, logs, exec, UID não-root, WORKDIR, portas, rede, volume, JWT sem token visível, POST/GET/PUT/DELETE, SELECT/JOIN e comparação antes/depois do stop/start.
+Organizar capturas do deploy, CRUD, SELECTs e JOIN já confirmados pelo responsável. A persistência após stop/start não será demonstrada nesta etapa e deve permanecer identificada como não comprovada. Revisar antes de publicar evidências de Azure CLI/VM, Docker Engine/Compose, dois containers em background, logs, exec, UID não-root, WORKDIR, portas, rede, volume, JWT sem token visível, POST/GET/PUT/DELETE e SELECT/JOIN. A comparação antes/depois de stop/start fica para uma validação futura e não compõe as evidências desta etapa.
 
 Para classificar as evidências, siga a [origem dos resultados](#como-interpretar-os-resultados-e-os-comandos). Não publicar credenciais, chaves, tokens, env-files, logs privados, IDs de assinatura ou IP residencial. Recortar/ocultar dados de conta e origem SSH; mostrar somente o necessário. Conservar evidências brutas em diretório privado externo ao Git.
 
@@ -1109,10 +1115,11 @@ Para classificar as evidências, siga a [origem dos resultados](#como-interpreta
 - [x] Projeto `vacismart-azure`, banco saudável, rede Docker, RSA externo e Flyway V0/V1/V2 aplicadas confirmados.
 - [x] CRUD Azure confirmado: POST 201, GET 200, PUT 200, DELETE 204, GET posterior 404.
 - [x] Usuários demonstrativos criados; banco com nove tabelas e seis FKs, conforme responsável.
-- [ ] Organizar capturas sanitizadas de login/rota protegida e SELECT de dados de negócio na Azure; não inferir o conteúdo de uma captura ausente.
-- [ ] JOIN na Azure com UUID real e resultado não vazio comprovado.
-- [ ] Persistência na Azure após stop/start com comparação antes/depois comprovada.
-- [ ] Arquivo Draw.io da arquitetura fornecido separadamente e conferido com o ambiente real.
+- [x] SELECTs e um JOIN na Azure confirmados pelo responsável.
+- [ ] Organizar capturas sanitizadas de login/rota protegida, SELECTs e JOIN na Azure; não inferir o conteúdo de uma captura ausente nem usar prints locais como prova da Azure.
+- [ ] Persistência na Azure após stop/start: não comprovada e não será demonstrada nesta etapa.
+- [x] Arquivo Draw.io final incluído, íntegro e coerente com a topologia informada pelo responsável.
+- [x] Imagem PNG da arquitetura incluída e íntegra, preservando o arquivo fornecido pelo responsável.
 - [ ] GitHub público acessível com Java, Dockerfile, docker-compose.yml, script Azure CLI e How To na versão publicada.
 - [ ] Vídeo YouTube **não listado**, mínimo **720p**, legível, com narração ou legendas explicativas; mostrar VM, Compose, containers, CRUD, logs e SELECT.
 - [ ] Link do vídeo inserido na entrega: **pendente, não inventado**.
@@ -1126,10 +1133,10 @@ A documentação anterior registra que foi localizado e consultado o material **
 
 | Critério do material oficial | Peso indicado | Cobertura / pendência real |
 |---|---|---|
-| Arquitetura macro da solução | 10 | Topologia implantada descrita; arquivo Draw.io será fornecido separadamente |
+| Arquitetura macro da solução | 10 | Draw.io final incluído e topologia conferida documentalmente; prévia PNG incluída e vinculada nos dois READMEs |
 | VM Azure e provisionamento CLI | 10 | D3 informada como concluída; script e comandos documentados; registrar evidências |
 | Container da aplicação e Dockerfile | 15 | API Java 21 funcionando na VM; multi-stage, UID/WORKDIR documentados; organizar capturas |
-| Container do banco e persistência | 15 | PostgreSQL 17.6 saudável na VM, nove tabelas/seis FKs; JOIN e prova de persistência pendentes |
+| Container do banco e persistência | 15 | PostgreSQL 17.6 saudável na VM, nove tabelas/seis FKs, SELECTs e JOIN confirmados; persistência após stop/start não comprovada e fora desta demonstração |
 | Compose e integração API/banco | 5 | Projeto `vacismart-azure` funcionando; serviços/rede/volume, loopback e dependências documentados |
 | GitHub, README/How To e evidências | 15 | How To revisado; publicação depende de autorização explícita; evidências e links finais pendentes |
 | Apresentação presencial | 30 | Roteiro cobre nuvem, aplicação, integração, banco, arquitetura e domínio; ensaio/apresentação pendentes |
@@ -1151,4 +1158,4 @@ Codex foi utilizado para infraestrutura e validações locais D1/D2 já relatada
 
 ### Revisão e publicação
 
-Esta etapa altera somente README.md e README_DEVOPS.md. Código, configurações e script Azure permanecem intactos. Não houve staging, commit ou push. Os relatórios privados de revisões anteriores não substituem o diff atual dos dois READMEs; a publicação aguarda revisão do ChatGPT e autorização explícita do responsável.
+A D5-A foi aprovada e encerrada no commit local `8e47d99`. Na D5-B, as alterações ficam restritas aos READMEs e aos arquivos de arquitetura fornecidos pelo responsável, sem mudar código, configurações ou script Azure. Não houve staging, commit ou push nesta etapa; publicação aguarda revisão do ChatGPT e autorização explícita do responsável.
