@@ -4,7 +4,7 @@ Protótipo acadêmico FIAP Global Solution 2026/2 (CitizenTech) de monitoramento
 
 > **DevOps — Azure e apresentação:** comece por [Acessar e verificar o VaciSmart já implantado](README_DEVOPS.md#acessar-e-verificar-o-vacismart-já-implantado). O guia reúne a consulta rápida do estado Azure, o roteiro presencial, as perguntas técnicas e o procedimento separado para instalação nova; SELECTs e JOIN na Azure foram confirmados pelo responsável; persistência após stop/start continua sem comprovação e não será demonstrada nesta etapa.
 
-**Estado corrente — 18/11/2026:** API Java 21 e PostgreSQL 17.6 implantados e funcionando na Azure Spain Central, `rg-vacismart`, VM `vm-vacismart` Standard_D2s_v4, Ubuntu 22.04. Docker Engine 29.10.0, Compose v5.8.0 e projeto `vacismart-azure`. Banco saudável e acessível pela rede Docker, Flyway V0/V1/V2 aplicadas, nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados. API publicada somente em `127.0.0.1:8080` da VM, acesso pelo notebook via túnel SSH e chaves JWT RSA externas ao repositório. CRUD Azure confirmado pelo responsável: POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404. **Atualização D5-B:** infraestrutura, CRUD, SELECTs e um JOIN na Azure confirmados pelo responsável. A persistência após stop/start não foi comprovada e não será demonstrada nesta etapa. Vídeo e PDF final permanecem pendentes. O diagrama editável e sua imagem PNG estão incluídos em `docs/arquitetura/`, conforme links abaixo. Esta revisão foi documental, sem nova execução operacional.
+**Estado corrente — 18/11/2026:** API Java 21 e PostgreSQL 17.6 implantados e funcionando na Azure Spain Central, `rg-vacismart`, VM `vm-vacismart` Standard_D2s_v4, Ubuntu 22.04. Docker Engine 29.10.0, Compose v5.8.0 e projeto `vacismart-azure`. Banco saudável e acessível pela rede Docker, Flyway V0/V1/V2 aplicadas, nove tabelas (oito de negócio + histórico Flyway), seis FKs e usuários demonstrativos criados. API publicada somente em `127.0.0.1:8080` da VM, acesso pelo notebook via túnel SSH e chaves JWT RSA externas ao repositório. CRUD Azure confirmado pelo responsável: POST 201, GET 200, PUT 200, DELETE 204 e GET posterior 404. **Atualização D5-B:** infraestrutura, CRUD, SELECTs e um JOIN na Azure confirmados pelo responsável. A persistência após stop/start não foi comprovada e não será demonstrada nesta etapa. Conforme informado pelo responsável, o vídeo de demonstração DevOps foi publicado e o relatório PDF final foi preparado; a submissão no Portal FIAP não está confirmada. O diagrama editável e sua imagem PNG estão incluídos em `docs/arquitetura/`, conforme links abaixo. Esta revisão foi documental, sem nova execução operacional.
 
 Os marcos datados abaixo preservam o histórico. Recebimento, decisão técnica, disponibilidade e aplicação simulada já estão implementados em J5/J6; pendências de implementação citadas nos marcos J2–J4 não descrevem o estado atual. Não se infere a validação Azure de todos esses fluxos a partir do CRUD confirmado.
 
@@ -30,7 +30,7 @@ Registro de 16/11/2026 (histórico): J5 concluída no escopo aprovado pelo respo
 O projeto demonstra como registrar ocorrências térmicas e apoiar a conferência humana. A consulta informativa de disponibilidade ao cidadão foi implementada na J5-D e validada no PostgreSQL na J5-E, sem reserva ou garantia de dose. Beneficiário final: cidadão; usuários operacionais: funcionário de unidade e gestor. ODS principal 3 (Saúde e Bem-Estar); secundários 9 e 10.
 
 ## Equipe
-Nome da equipe e turma: pendentes de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni Sacristan — RM 567548. Não foram confirmadas responsabilidades dos demais integrantes.
+**Turma: 2TDPA.** Nome da equipe: pendente de confirmação para o VaciSmart. Responsável por Java Advanced e DevOps: Giovanni Sacristan — RM 567548. Não foram confirmadas responsabilidades dos demais integrantes.
 
 | Nome | RM |
 |---|---|
@@ -41,8 +41,11 @@ Nome da equipe e turma: pendentes de confirmação para o VaciSmart. Responsáve
 | Gianluca Kenis de Araujo | 566765 |
 
 ## Pitch
-Link: a preencher.
-Demais links de entrega: pendentes de confirmação; nenhum endereço foi anunciado sem validação.
+[**Vídeo pitch do VaciSmart — Global Solution 2026/2**](https://youtu.be/bewo6oRARp8)
+
+Vídeo de demonstração DevOps: [VaciSmart — DevOps na Azure](https://youtu.be/3u34dh-gbf0).
+
+Relatório PDF final: preparado pelo responsável. A submissão no Portal FIAP não está confirmada.
 
 ## Como executar
 Pré-requisitos: JDK 21, Docker Engine e Docker Compose, porta 5432 disponível e acesso ao Maven Central no primeiro uso. O Maven Wrapper fixa Maven 3.9.11. Spring Boot 4.1.2 ([versão estável](https://spring.io/projects/spring-boot/), [compatibilidade Java](https://docs.spring.io/spring-boot/system-requirements.html)); decisões em DUVIDAS.md.
@@ -796,4 +799,4 @@ verificações relatadas, preservando a declaração acadêmica de uso de IA e a
 
 ## Consolidação documental DevOps — 18/11/2026
 
-O [How To DevOps](README_DEVOPS.md) reúne acesso rápido ao deploy existente, instalação nova em seção própria, SSH, configuração privada de RSA e banco, Compose, inspeções, demonstração, SELECT/JOIN/persistência e perguntas técnicas. O roteiro resumido tem dez momentos e mantém as 24 etapas detalhadas. A divergência do script atual (NSG na NIC) em relação ao deploy real (NSG na subnet) continua registrada, sem alteração do script. O estado corrente no início deste README prevalece sobre pendências históricas de deploy. Preservados os cinco integrantes e as declarações acadêmicas de IA; Codex foi utilizado nesta revisão para conferir e atualizar documentação, sem executar Azure/SSH/Docker, testes Java, commits ou push. Turma, nome da equipe, links de pitch/vídeo e PDF final continuam dependentes de confirmação/entrega. O Draw.io final está disponível na seção [Arquitetura DevOps](#arquitetura-devops).
+O [How To DevOps](README_DEVOPS.md) reúne acesso rápido ao deploy existente, instalação nova em seção própria, SSH, configuração privada de RSA e banco, Compose, inspeções, demonstração, SELECT/JOIN/persistência e perguntas técnicas. O roteiro resumido tem dez momentos e mantém as 24 etapas detalhadas. A divergência do script atual (NSG na NIC) em relação ao deploy real (NSG na subnet) continua registrada, sem alteração do script. O estado corrente no início deste README prevalece sobre pendências históricas de deploy. Preservados os cinco integrantes e as declarações acadêmicas de IA; Codex foi utilizado nesta revisão para conferir e atualizar documentação, sem executar Azure/SSH/Docker, testes Java, commits ou push. Nome da equipe permanece pendente de confirmação. O vídeo de demonstração DevOps foi publicado e o PDF final foi preparado pelo responsável; a submissão no Portal FIAP não está confirmada. O Draw.io final está disponível na seção [Arquitetura DevOps](#arquitetura-devops).
